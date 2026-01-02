@@ -1,0 +1,47 @@
+# IRS API Credentials and Keys - NEVER COMMIT
+IRIS_KEYS/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Client ID and sensitive IRS docs
+IRS API Client ID*.txt
+IRS API Client ID*.pdf
+*TCC*.txt
+*Client ID*.txt
+*Client ID*.pdf
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+slipstream_log.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test data with real TINs (add specific filenames as needed)
+*_test_data.csv
+*_real_data.csv

@@ -1,0 +1,55 @@
+[i] Slipstream 1099 starting... 
+ - Folder: C:\Slipstream 1099 
+ - Timestamp: Tue 09/30/2025 17:07:09.16 
+ 
+[i] Using interpreter: py -3 
+[i] Upgrading pip and installing requirements (user site-packages)... 
+Requirement already satisfied: pip in c:\program files\windowsapps\pythonsoftwarefoundation.python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\lib\site-packages (25.2)
+Requirement already satisfied: streamlit in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from -r requirements.txt (line 1)) (1.48.0)
+Requirement already satisfied: pandas in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from -r requirements.txt (line 2)) (2.3.1)
+Requirement already satisfied: openpyxl in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from -r requirements.txt (line 3)) (3.1.5)
+Requirement already satisfied: altair!=5.4.0,!=5.4.1,<6,>=4.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (5.5.0)
+Requirement already satisfied: blinker<2,>=1.5.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (1.9.0)
+Requirement already satisfied: cachetools<7,>=4.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (6.1.0)
+Requirement already satisfied: click<9,>=7.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (8.1.8)
+Requirement already satisfied: numpy<3,>=1.23 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (2.2.0)
+Requirement already satisfied: packaging<26,>=20 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (25.0)
+Requirement already satisfied: pillow<12,>=7.1.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (11.3.0)
+Requirement already satisfied: protobuf<7,>=3.20 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (6.31.1)
+Requirement already satisfied: pyarrow>=7.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (21.0.0)
+Requirement already satisfied: requests<3,>=2.27 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (2.32.3)
+Requirement already satisfied: tenacity<10,>=8.1.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (9.1.2)
+Requirement already satisfied: toml<2,>=0.10.1 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (0.10.2)
+Requirement already satisfied: typing-extensions<5,>=4.4.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (4.14.1)
+Requirement already satisfied: watchdog<7,>=2.1.5 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (6.0.0)
+Requirement already satisfied: gitpython!=3.1.19,<4,>=3.0.7 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (3.1.45)
+Requirement already satisfied: pydeck<1,>=0.8.0b4 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (0.9.1)
+Requirement already satisfied: tornado!=6.5.0,<7,>=6.0.3 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from streamlit->-r requirements.txt (line 1)) (6.5.2)
+Requirement already satisfied: python-dateutil>=2.8.2 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from pandas->-r requirements.txt (line 2)) (2.9.0.post0)
+Requirement already satisfied: pytz>=2020.1 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from pandas->-r requirements.txt (line 2)) (2025.2)
+Requirement already satisfied: tzdata>=2022.7 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from pandas->-r requirements.txt (line 2)) (2025.2)
+Requirement already satisfied: jinja2 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (3.1.6)
+Requirement already satisfied: jsonschema>=3.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (4.25.0)
+Requirement already satisfied: narwhals>=1.14.2 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (2.1.1)
+Requirement already satisfied: colorama in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from click<9,>=7.0->streamlit->-r requirements.txt (line 1)) (0.4.6)
+Requirement already satisfied: gitdb<5,>=4.0.1 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from gitpython!=3.1.19,<4,>=3.0.7->streamlit->-r requirements.txt (line 1)) (4.0.12)
+Requirement already satisfied: smmap<6,>=3.0.1 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from gitdb<5,>=4.0.1->gitpython!=3.1.19,<4,>=3.0.7->streamlit->-r requirements.txt (line 1)) (5.0.2)
+Requirement already satisfied: charset-normalizer<4,>=2 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from requests<3,>=2.27->streamlit->-r requirements.txt (line 1)) (3.4.2)
+Requirement already satisfied: idna<4,>=2.5 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from requests<3,>=2.27->streamlit->-r requirements.txt (line 1)) (3.10)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from requests<3,>=2.27->streamlit->-r requirements.txt (line 1)) (2.4.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from requests<3,>=2.27->streamlit->-r requirements.txt (line 1)) (2025.4.26)
+Requirement already satisfied: et-xmlfile in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from openpyxl->-r requirements.txt (line 3)) (2.0.0)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from jinja2->altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (3.0.2)
+Requirement already satisfied: attrs>=22.2.0 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (25.3.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (2025.4.1)
+Requirement already satisfied: referencing>=0.28.4 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (0.36.2)
+Requirement already satisfied: rpds-py>=0.7.1 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<6,>=4.0->streamlit->-r requirements.txt (line 1)) (0.27.0)
+Requirement already satisfied: six>=1.5 in c:\users\ken2\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from python-dateutil>=2.8.2->pandas->-r requirements.txt (line 2)) (1.17.0)
+[i] Launching app... 
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.0.231:8501
+
+^C
