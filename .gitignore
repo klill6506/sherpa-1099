@@ -12,11 +12,11 @@ IRS API Client ID*.pdf
 *Client ID*.txt
 *Client ID*.pdf
 
-# Environment files
+# Environment files (keep .env.example)
 .env
-.env.*
 .env.local
 .env.production
+!.env.example
 
 # Python
 __pycache__/

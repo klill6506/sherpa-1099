@@ -1,3 +1,9 @@
 streamlit
 pandas
 openpyxl
+
+# IRIS API Integration
+requests>=2.28.0
+PyJWT>=2.8.0
+python-dotenv>=1.0.0
+cryptography>=41.0.0
