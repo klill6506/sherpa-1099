@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Import Data - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Import Data</h1>
+    <p class="text-gray-600">Upload an Excel (.xlsx) or CSV file to import 1099 data</p>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6" x-data="uploadForm()">
+    <form @submit.prevent="submitForm" enctype="multipart/form-data">
+        <!-- Operating Year Selection -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tax Year</label>
+            <select x-model="operatingYearId" required
+                class="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                {% for year in operating_years %}
+                <option value="{{ year.id }}" {% if year.id == current_year_id %}selected{% endif %}>
+                    {{ year.year }}{% if year.is_active %} (Active){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Filer Selection (optional) -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Filer (Optional)</label>
+            <select x-model="filerId"
+                class="w-full md:w-96 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                <option value="">-- Select later during review --</option>
+                {% for filer in filers %}
+                <option value="{{ filer.id }}">{{ filer.name }} ({{ filer.tin }})</option>
+                {% endfor %}
+            </select>
+            <p class="text-sm text-gray-500 mt-1">You can assign a filer during the review step if not selected now.</p>
+        </div>
+
+        <!-- File Upload Area -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center"
+                 :class="{ 'border-primary bg-blue-50': isDragging }"
+                 @dragover.prevent="isDragging = true"
+                 @dragleave.prevent="isDragging = false"
+                 @drop.prevent="handleDrop($event)">
+
+                <template x-if="!selectedFile">
+                    <div>
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-600">
+                            <label class="cursor-pointer text-primary hover:underline">
+                                <span>Click to upload</span>
+                                <input type="file" class="hidden" accept=".xlsx,.xls,.csv" @change="handleFileSelect($event)">
+                            </label>
+                            or drag and drop
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">Excel (.xlsx, .xls) or CSV files</p>
+                    </div>
+                </template>
+
+                <template x-if="selectedFile">
+                    <div class="flex items-center justify-center">
+                        <svg class="h-8 w-8 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="text-left">
+                            <p class="text-sm font-medium text-gray-900" x-text="selectedFile.name"></p>
+                            <p class="text-xs text-gray-500" x-text="formatFileSize(selectedFile.size)"></p>
+                        </div>
+                        <button type="button" @click="clearFile()" class="ml-4 text-red-600 hover:text-red-800">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Upload Progress -->
+        <template x-if="isUploading">
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm text-gray-600">Uploading...</span>
+                    <span class="text-sm text-gray-600" x-text="uploadProgress + '%'"></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-primary h-2 rounded-full transition-all" :style="'width: ' + uploadProgress + '%'"></div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template x-if="errorMessage">
+            <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+                <p x-text="errorMessage"></p>
+            </div>
+        </template>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end">
+            <button type="submit"
+                    :disabled="!selectedFile || isUploading"
+                    class="px-6 py-2 bg-primary text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span x-show="!isUploading">Upload & Process</span>
+                <span x-show="isUploading">Processing...</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Expected Format Info -->
+<div class="bg-white rounded-lg shadow p-6 mt-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Expected File Format</h2>
+    <p class="text-sm text-gray-600 mb-4">
+        Your file should contain columns for recipient information and payment amounts.
+        Column names will be auto-mapped to the following fields:
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+        <div>
+            <h3 class="font-medium text-gray-900 mb-2">Recipient Info</h3>
+            <ul class="text-gray-600 space-y-1">
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">name</span> - Recipient name</li>
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">tin</span> or <span class="font-mono text-xs bg-gray-100 px-1 rounded">ssn</span> - Tax ID</li>
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">address</span> - Street address</li>
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">city</span>, <span class="font-mono text-xs bg-gray-100 px-1 rounded">state</span>, <span class="font-mono text-xs bg-gray-100 px-1 rounded">zip</span></li>
+            </ul>
+        </div>
+        <div>
+            <h3 class="font-medium text-gray-900 mb-2">1099-NEC</h3>
+            <ul class="text-gray-600 space-y-1">
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">amount</span> or <span class="font-mono text-xs bg-gray-100 px-1 rounded">compensation</span> - Box 1</li>
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">federal withheld</span> - Box 4</li>
+            </ul>
+        </div>
+        <div>
+            <h3 class="font-medium text-gray-900 mb-2">1099-MISC</h3>
+            <ul class="text-gray-600 space-y-1">
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">rents</span> - Box 1</li>
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">royalties</span> - Box 2</li>
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">other income</span> - Box 3</li>
+                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">medical</span> - Box 6</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function uploadForm() {
+    return {
+        operatingYearId: '{{ current_year_id or "" }}',
+        filerId: '',
+        selectedFile: null,
+        isDragging: false,
+        isUploading: false,
+        uploadProgress: 0,
+        errorMessage: '',
+
+        handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) this.validateAndSetFile(file);
+        },
+
+        handleDrop(event) {
+            this.isDragging = false;
+            const file = event.dataTransfer.files[0];
+            if (file) this.validateAndSetFile(file);
+        },
+
+        validateAndSetFile(file) {
+            const validTypes = ['.xlsx', '.xls', '.csv'];
+            const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+            if (!validTypes.includes(ext)) {
+                this.errorMessage = 'Invalid file type. Please upload .xlsx, .xls, or .csv';
+                return;
+            }
+
+            this.selectedFile = file;
+            this.errorMessage = '';
+        },
+
+        clearFile() {
+            this.selectedFile = null;
+            this.errorMessage = '';
+        },
+
+        formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        },
+
+        async submitForm() {
+            if (!this.selectedFile || !this.operatingYearId) return;
+
+            this.isUploading = true;
+            this.errorMessage = '';
+            this.uploadProgress = 0;
+
+            const formData = new FormData();
+            formData.append('file', this.selectedFile);
+            formData.append('operating_year_id', this.operatingYearId);
+            if (this.filerId) {
+                formData.append('filer_id', this.filerId);
+            }
+
+            try {
+                const response = await fetch('/api/imports/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Upload failed');
+                }
+
+                const batch = await response.json();
+                // Redirect to review page
+                window.location.href = '/imports/' + batch.id;
+
+            } catch (error) {
+                this.errorMessage = error.message;
+                this.isUploading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

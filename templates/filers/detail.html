@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}{{ filer.name }} - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Filer Header -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ filer.name }}</h1>
+                {% if filer.name_line_2 %}
+                <p class="text-gray-600">{{ filer.name_line_2 }}</p>
+                {% endif %}
+                <p class="text-gray-500 mt-1">TIN: {{ filer.tin }} ({{ filer.tin_type or 'EIN' }})</p>
+                <p class="text-gray-500">{{ filer.address1 }}{% if filer.address2 %}, {{ filer.address2 }}{% endif %}</p>
+                <p class="text-gray-500">{{ filer.city }}, {{ filer.state }} {{ filer.zip }}</p>
+                {% if filer.phone %}
+                <p class="text-gray-500">Phone: {{ filer.phone }}</p>
+                {% endif %}
+            </div>
+            <div class="flex space-x-2">
+                <a href="/" class="text-blue-600 hover:text-blue-800 text-sm">&larr; Back to Filers</a>
+                <a href="/filers/{{ filer.id }}/edit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm ml-4">
+                    Edit Filer
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white shadow rounded-lg p-4">
+            <div class="text-sm font-medium text-gray-500">Recipients</div>
+            <div class="text-2xl font-bold text-gray-900">{{ recipients|length }}</div>
+        </div>
+        <div class="bg-white shadow rounded-lg p-4">
+            <div class="text-sm font-medium text-gray-500">1099 Forms</div>
+            <div class="text-2xl font-bold text-gray-900">{{ forms|length }}</div>
+        </div>
+        <div class="bg-white shadow rounded-lg p-4">
+            <div class="text-sm font-medium text-gray-500">Total NEC Amount</div>
+            <div class="text-2xl font-bold text-green-600">${{ "%.2f"|format(total_amount) }}</div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="bg-white shadow rounded-lg p-4">
+        <div class="flex flex-wrap gap-3">
+            {% if forms|length > 0 %}
+            <a href="/api/pdf/filer/{{ filer.id }}/all" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Download All PDFs
+            </a>
+            <a href="/api/pdf/filer/{{ filer.id }}/all?view=true" target="_blank" class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm font-medium">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                Print All
+            </a>
+            <button disabled class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium opacity-50 cursor-not-allowed" title="Coming soon">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Email All
+            </button>
+            <button disabled class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium opacity-50 cursor-not-allowed" title="Coming soon">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                E-File to IRS
+            </button>
+            {% endif %}
+            <a href="/filers/{{ filer.id }}/tin-match" class="inline-flex items-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-sm font-medium">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                TIN Matching
+            </a>
+        </div>
+    </div>
+
+    <!-- Recipients List -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Recipients ({{ forms|length }})</h2>
+        </div>
+
+        {% if forms|length == 0 %}
+        <div class="text-center py-8 text-gray-500">
+            <p>No recipients yet.</p>
+            <p class="text-sm mt-2">Import a spreadsheet to create recipients and forms.</p>
+        </div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">TIN</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Form Type</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Box 1 Amount</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for form in forms %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900">{{ form.recipients.name if form.recipients else 'Unknown' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ form.recipients.tin if form.recipients else '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ form.form_type }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 text-right">${{ "%.2f"|format(form.nec_box1 or 0) }}</td>
+                        <td class="px-4 py-3 text-sm text-right space-x-2">
+                            <a href="/api/pdf/{{ form.id }}/view" target="_blank" class="text-blue-600 hover:text-blue-800">View</a>
+                            <a href="/api/pdf/{{ form.id }}" class="text-green-600 hover:text-green-800">Download</a>
+                            <a href="/api/pdf/{{ form.id }}/view?print=1" target="_blank" class="text-gray-600 hover:text-gray-800">Print</a>
+                            <button disabled class="text-gray-400 cursor-not-allowed" title="Coming soon">Email</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

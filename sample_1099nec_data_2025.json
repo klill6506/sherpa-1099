@@ -1,0 +1,19 @@
+{
+  "year": 2025,
+  "payer_name": "Euguene Baldwin",
+  "payer_street": "280 High Ridge Dr",
+  "payer_city": "Athens, GA 30606",
+  "payer_phone": "706-549-6503",
+  "recipient_name": "Arnolds Home Healthcare LLC",
+  "recipient_line2": "Patricia Arnold",
+  "recipient_street": "875 Belmont Rd",
+  "recipient_city": "Athens, GA 30605",
+  "account_number": "EFM3993900",
+  "payer_tin": "420-52-8244",
+  "recipient_tin": "XX-XXX2488",
+  "box1_amount": "118,734.00",
+  "docid": "DocID: 8113145",
+  "challenge_key": "Challenge Key: GREATPLAINS",
+  "get_form_url": "www.efilemagic.com/get-my-form",
+  "qr_url": "https://www.efilemagic.com/get-my-form"
+}

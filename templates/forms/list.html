@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}1099 Forms - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">1099 Forms</h1>
+        <p class="text-gray-600">Tax Year {{ operating_year.year if operating_year else '2024' }}</p>
+    </div>
+    {% if forms %}
+    <div class="flex gap-2" x-data="{ showBatchMenu: false }">
+        <div class="relative">
+            <button @click="showBatchMenu = !showBatchMenu"
+                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Download All PDFs
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="showBatchMenu" @click.away="showBatchMenu = false" x-cloak
+                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                <a href="#" onclick="downloadBatchPDF('B')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Copy B (Recipient)
+                </a>
+                <a href="#" onclick="downloadBatchPDF('C')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Copy C (Payer)
+                </a>
+                <a href="#" onclick="downloadBatchPDF('1')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Copy 1 (State)
+                </a>
+                <a href="#" onclick="downloadBatchPDF('2')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Copy 2 (Extra)
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if forms %}
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">TIN</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Form Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            {% for form in forms %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">
+                        {{ form.recipients.name if form.recipients else '-' }}
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-sm font-mono text-gray-600">
+                    {{ form.recipients.tin if form.recipients else '-' }}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        {{ form.form_type }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    {% if form.form_type == '1099-NEC' and form.nec_box1 %}
+                        ${{ "{:,.2f}".format(form.nec_box1) }}
+                    {% elif form.form_type == '1099-MISC' %}
+                        {% set total = (form.misc_box1 or 0) + (form.misc_box2 or 0) + (form.misc_box3 or 0) + (form.misc_box6 or 0) + (form.misc_box10 or 0) %}
+                        ${{ "{:,.2f}".format(total) }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 text-xs rounded-full
+                        {% if form.status == 'filed' %}bg-green-100 text-green-800
+                        {% elif form.status == 'ready' %}bg-blue-100 text-blue-800
+                        {% elif form.status == 'error' %}bg-red-100 text-red-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ form.status }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-right" x-data="{ open: false }">
+                    <div class="relative inline-block">
+                        <button @click="open = !open" class="text-primary hover:text-blue-800">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                            <a href="/api/pdf/{{ form.id }}/view?copy=B" target="_blank"
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                View PDF
+                            </a>
+                            <a href="/api/pdf/{{ form.id }}?copy=B"
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Download Copy B
+                            </a>
+                            <a href="/api/pdf/{{ form.id }}?copy=C"
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Download Copy C
+                            </a>
+                            <a href="/api/pdf/{{ form.id }}/all-copies"
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                                </svg>
+                                Download All Copies
+                            </a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+// Collect all form IDs for batch download
+const formIds = [{% for form in forms %}"{{ form.id }}"{% if not loop.last %},{% endif %}{% endfor %}];
+
+async function downloadBatchPDF(copyType) {
+    if (formIds.length === 0) {
+        alert('No forms to download');
+        return;
+    }
+
+    // Create a form and submit it to trigger the download
+    const response = await fetch(`/api/pdf/batch?copy=${copyType}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formIds)
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        alert(error.detail || 'Download failed');
+        return;
+    }
+
+    // Download the response as a blob
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `1099_Batch_${formIds.length}_forms_Copy${copyType}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+}
+</script>
+{% else %}
+<div class="bg-white rounded-lg shadow p-12 text-center">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+    </svg>
+    <h3 class="mt-4 text-lg font-medium text-gray-900">No 1099 forms yet</h3>
+    <p class="mt-2 text-sm text-gray-500">Forms are created when you promote imported data.</p>
+    <a href="/imports/upload" class="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700">
+        Import Data
+    </a>
+</div>
+{% endif %}
+{% endblock %}

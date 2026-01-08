@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Filers - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Filers</h1>
+            <p class="text-gray-500">Tax Year {{ operating_year.year if operating_year else '2024' }}</p>
+        </div>
+        <div class="space-x-3">
+            <a href="/imports/upload" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-700">
+                Import Data
+            </a>
+            <a href="/filers/new" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Add Filer
+            </a>
+        </div>
+    </div>
+
+    <!-- Filers List -->
+    <div class="bg-white shadow rounded-lg">
+        {% if filers|length == 0 %}
+        <div class="p-8 text-center">
+            <p class="text-gray-500 mb-4">No filers yet. Import data or add a filer to get started.</p>
+            <a href="/imports/upload" class="text-primary hover:underline">Import your first workbook</a>
+        </div>
+        {% else %}
+        <ul class="divide-y divide-gray-200">
+            {% for filer in filers %}
+            <li class="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
+                <div>
+                    <p class="text-sm font-medium text-gray-900">{{ filer.name }}</p>
+                    <p class="text-sm text-gray-500">{{ filer.tin or 'No TIN' }}</p>
+                </div>
+                <a href="/filers/{{ filer.id }}" class="px-4 py-2 text-sm font-medium text-primary hover:text-blue-700">
+                    Open
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

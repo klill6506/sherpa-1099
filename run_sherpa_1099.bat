@@ -29,9 +29,15 @@ echo [i] Using: %PY%
 echo [i] Installing/updating dependencies...
 %PY% -m pip install --user -r requirements.txt -q
 
-echo [i] Starting Sherpa 1099 (Streamlit) on port 8002
+echo.
+echo [i] Starting Sherpa 1099 (FastAPI) on port 8002
+echo [i] API Docs: http://127.0.0.1:8002/docs
 echo [i] Press Ctrl+C to stop the server
 echo.
-%PY% -m streamlit run app_streamlit_1099.py --server.port 8002
+
+REM --- Open browser after short delay ---
+start "" cmd /c "timeout /t 2 /nobreak >nul && start http://127.0.0.1:8002"
+
+%PY% -m uvicorn api.main:app --reload --port 8002 --host 127.0.0.1
 
 pause

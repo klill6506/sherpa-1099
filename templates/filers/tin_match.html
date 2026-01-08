@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}TIN Matching - {{ filer.name }} - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">TIN Matching</h1>
+            <p class="text-gray-500">{{ filer.name }}</p>
+        </div>
+        <a href="/filers/{{ filer.id }}" class="text-blue-600 hover:text-blue-800">&larr; Back to Filer</a>
+    </div>
+
+    <!-- Info Box -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 class="text-blue-800 font-medium">About TIN Matching</h3>
+        <p class="text-blue-700 text-sm mt-1">
+            TIN Matching allows you to verify that the TIN (SSN or EIN) and name combination
+            for each recipient matches IRS records before filing. This helps avoid penalties
+            for incorrect TINs on information returns.
+        </p>
+    </div>
+
+    <!-- Recipients to Match -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Recipients ({{ recipients|length }})</h2>
+        </div>
+
+        {% if recipients|length == 0 %}
+        <div class="p-8 text-center text-gray-500">
+            No recipients to match.
+        </div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <input type="checkbox" id="select-all" class="rounded border-gray-300">
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">TIN</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Checked</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for recipient in recipients %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <input type="checkbox" name="recipient_ids" value="{{ recipient.id }}" class="recipient-checkbox rounded border-gray-300">
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">{{ recipient.name }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500 font-mono">{{ recipient.tin }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ recipient.tin_type or 'SSN' }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if recipient.tin_status == 'verified' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Verified</span>
+                            {% elif recipient.tin_status == 'failed' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Failed</span>
+                            {% elif recipient.tin_status == 'pending' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Not Checked</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500">
+                            {{ recipient.tin_checked_at[:10] if recipient.tin_checked_at else '-' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Actions -->
+        <div class="p-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    Select recipients to verify their TINs with the IRS.
+                </div>
+                <div class="space-x-3">
+                    <button disabled class="px-4 py-2 bg-yellow-600 text-white rounded-md text-sm font-medium opacity-50 cursor-not-allowed" title="IRIS TIN Matching integration coming soon">
+                        Verify Selected TINs
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Info about TIN Matching -->
+    <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+        <h3 class="font-medium text-gray-900 mb-2">TIN Matching Requirements</h3>
+        <ul class="list-disc list-inside space-y-1">
+            <li>You must be registered with the IRS e-Services TIN Matching program</li>
+            <li>Results are typically available within 24-48 hours for bulk requests</li>
+            <li>Interactive matching provides instant results for up to 25 TINs</li>
+            <li>Match codes: 0 = Match, 1 = TIN not issued, 2-8 = Various mismatches</li>
+        </ul>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+    // Select all checkbox
+    document.getElementById('select-all')?.addEventListener('change', function() {
+        document.querySelectorAll('.recipient-checkbox').forEach(cb => {
+            cb.checked = this.checked;
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

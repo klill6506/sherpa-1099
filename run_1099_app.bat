@@ -1,11 +1,10 @@
-
 @echo off
 SETLOCAL ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set LOG=slipstream_log.txt
+set LOG=sherpa_1099_log.txt
 echo. > "%LOG%"
-echo [i] Slipstream 1099 starting... > "%LOG%"
+echo [i] Sherpa 1099 starting... > "%LOG%"
 echo  - Folder: %CD% >> "%LOG%"
 echo  - Timestamp: %DATE% %TIME% >> "%LOG%"
 echo. >> "%LOG%"
@@ -37,12 +36,25 @@ IF %ERRORLEVEL% NEQ 0 goto :pip_fail
 %PY% -m pip install --user -r requirements.txt >> "%LOG%" 2>&1
 IF %ERRORLEVEL% NEQ 0 goto :pip_fail
 
-echo [i] Launching app... >> "%LOG%"
-%PY% -m streamlit run "app_streamlit_1099.py" >> "%LOG%" 2>&1
+echo [i] Launching FastAPI app on port 8002... >> "%LOG%"
+echo.
+echo ============================================
+echo   Sherpa 1099 - FastAPI Backend
+echo ============================================
+echo   URL: http://127.0.0.1:8002
+echo   API Docs: http://127.0.0.1:8002/docs
+echo   Press Ctrl+C to stop
+echo ============================================
+echo.
+
+REM --- Open browser after short delay ---
+start "" cmd /c "timeout /t 2 /nobreak >nul && start http://127.0.0.1:8002"
+
+%PY% -m uvicorn api.main:app --reload --port 8002 --host 127.0.0.1 >> "%LOG%" 2>&1
 set CODE=%ERRORLEVEL%
 
 echo. >> "%LOG%"
-echo [i] Streamlit exited with code %CODE% >> "%LOG%"
+echo [i] FastAPI exited with code %CODE% >> "%LOG%"
 type "%LOG%"
 echo.
 echo Press any key to close...
@@ -55,5 +67,4 @@ type "%LOG%"
 echo.
 echo Press any key to close...
 pause >nul
-%PY% -m streamlit run "app_streamlit_1099.py" --server.port 8503 --server.address 0.0.0.0
-pause
+exit /b 1

@@ -45,3 +45,30 @@ Thumbs.db
 # Test data with real TINs (add specific filenames as needed)
 *_test_data.csv
 *_real_data.csv
+
+# Test output PDFs
+test_*.pdf
+*_output*.pdf
+
+# Client-specific files
+Eugene Baldwin*.pdf
+validated_1099s.csv
+error_log.csv
+
+# Template files with client data
+Sherpa*Template*.xlsx
+
+# Official IRS form PDFs (keep blank template)
+*official*.pdf
+Official*.pdf
+New Official*.pdf
+
+# Zip archives
+*.zip
+
+# Windows null file
+NUL
+
+# Database files
+database/*.db
+*.db

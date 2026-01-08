@@ -1,0 +1,64 @@
+{
+  "_comment": "1099-NEC Copy B PDF Generator Configuration - All coordinates use y-down (from top of page)",
+
+  "year": 2025,
+
+  "data": {
+    "payer_name": "Euguene Baldwin",
+    "payer_street": "280 High Ridge Dr",
+    "payer_city": "Athens, GA 30606",
+    "payer_phone": "",
+    "recipient_name": "Arnolds Home Healthcare LLC",
+    "recipient_line2": "Patricia Arnold",
+    "recipient_street": "875 Belmont Rd",
+    "recipient_city": "Athens, GA 30605",
+    "account_number": "ACCT-2025-001234",
+    "payer_tin": "58-1234567",
+    "recipient_tin": "123-45-6789",
+    "box1_amount": 15750.00,
+    "box3_amount": "",
+    "box4_amount": "",
+    "docid": "",
+    "challenge_key": "",
+    "get_form_url": "",
+    "qr_url": ""
+  },
+
+  "coords": {
+    "_comment": "Text field positions: x, y (y-down from top), font_size, font_name",
+
+    "payer_label":     { "x": 47,     "y": 26,     "size": 6,  "font": "Helvetica" },
+    "payer_name":      { "x": 47,     "y": 88,     "size": 10, "font": "Helvetica" },
+    "payer_street":    { "x": 47,     "y": 101,    "size": 10, "font": "Helvetica" },
+    "payer_city":      { "x": 47,     "y": 114,    "size": 10, "font": "Helvetica" },
+    "payer_phone":     { "x": 47,     "y": 127,    "size": 9,  "font": "Helvetica" },
+
+    "recipient_label": { "x": 47,     "y": 128,    "size": 6,  "font": "Helvetica" },
+    "recipient_name":  { "x": 47,     "y": 182,    "size": 10, "font": "Helvetica" },
+    "recipient_line2": { "x": 47,     "y": 195,    "size": 10, "font": "Helvetica" },
+    "recipient_street":{ "x": 47,     "y": 212,    "size": 10, "font": "Helvetica" },
+    "recipient_city":  { "x": 47,     "y": 225,    "size": 10, "font": "Helvetica" },
+
+    "account_label":   { "x": 47,     "y": 262,    "size": 7,  "font": "Helvetica" },
+    "account_number":  { "x": 47,     "y": 274,    "size": 9,  "font": "Helvetica" },
+    "payer_tin":       { "x": 47,     "y": 298,    "size": 9,  "font": "Helvetica" },
+    "recipient_tin":   { "x": 168,    "y": 298,    "size": 9,  "font": "Helvetica" },
+
+    "box1_amount":     { "x": 319,    "y": 117,    "size": 10, "font": "Helvetica" },
+    "box3_amount":     { "x": 310,    "y": 178,    "size": 10, "font": "Helvetica" },
+    "box4_amount":     { "x": 310,    "y": 214,    "size": 10, "font": "Helvetica" }
+  },
+
+  "wipe_rects": {
+    "_comment": "White rectangles to cover old data. Each is [x0, y0, x1, y1] in y-down coords.",
+    "barcode_bottom": [340, 650, 612, 792]
+  },
+
+  "qr_box": {
+    "_comment": "QR code bounding box (not used with blank template)",
+    "x0": 537,
+    "y0": 677,
+    "x1": 571,
+    "y1": 711
+  }
+}
