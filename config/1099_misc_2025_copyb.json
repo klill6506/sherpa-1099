@@ -1,0 +1,55 @@
+{
+  "_comment": "1099-MISC Copy B PDF Generator Configuration - All coordinates use y-down (from top of page)",
+  "_template": "1099-Misc Official 2025.pdf",
+
+  "year": 2025,
+
+  "sample_data": {
+    "payer_name": "Euguene Baldwin",
+    "payer_street": "280 High Ridge Dr",
+    "payer_city_state_zip": "Athens, GA 30606",
+    "payer_phone": "",
+    "recipient_name": "Arnolds Home Healthcare LLC",
+    "recipient_line2": "Patricia Arnold",
+    "recipient_street": "875 Belmont Rd",
+    "recipient_city_state_zip": "Athens, GA 30605",
+    "account_number": "ACCT-2025-001234",
+    "payer_tin": "58-1234567",
+    "recipient_tin": "123-45-6789",
+    "box1_rents": 15750.00
+  },
+
+  "coords": {
+    "_comment": "Text field positions: x, y (y-down from top), font_size, font_name. Coordinates copied from NEC for shared fields, Box 1 tuned for MISC layout.",
+
+    "payer_name":            { "x": 47,  "y": 88,  "size": 10, "font": "Helvetica" },
+    "payer_street":          { "x": 47,  "y": 101, "size": 10, "font": "Helvetica" },
+    "payer_city_state_zip":  { "x": 47,  "y": 114, "size": 10, "font": "Helvetica" },
+    "payer_phone":           { "x": 200, "y": 114, "size": 9,  "font": "Helvetica-Bold" },
+
+    "payer_tin":             { "x": 47,  "y": 298, "size": 9,  "font": "Helvetica-Bold" },
+    "recipient_tin":         { "x": 168, "y": 298, "size": 9,  "font": "Helvetica-Bold" },
+
+    "recipient_name":        { "x": 47,  "y": 182, "size": 10, "font": "Helvetica" },
+    "recipient_line2":       { "x": 47,  "y": 195, "size": 10, "font": "Helvetica" },
+    "recipient_street":      { "x": 47,  "y": 212, "size": 10, "font": "Helvetica" },
+    "recipient_city_state_zip": { "x": 47, "y": 225, "size": 10, "font": "Helvetica" },
+
+    "account_number":        { "x": 47,  "y": 274, "size": 9,  "font": "Helvetica" },
+
+    "box1_rents":            { "x": 319, "y": 37, "size": 10, "font": "Helvetica" },
+
+    "box4_federal_withheld": { "x": 310, "y": 214, "size": 10, "font": "Helvetica" },
+
+    "box15_state_withheld":  { "x": 310, "y": 250, "size": 9,  "font": "Helvetica" },
+    "box16_state":           { "x": 380, "y": 250, "size": 9,  "font": "Helvetica" },
+    "box17_state_income":    { "x": 480, "y": 250, "size": 9,  "font": "Helvetica" },
+
+    "corrected_x":           { "x": 502, "y": 20,  "size": 12, "font": "Helvetica-Bold" }
+  },
+
+  "wipe_rects": {
+    "_comment": "White rectangles to cover areas like barcodes. Each is [x0, y0, x1, y1] in y-down coords.",
+    "barcode_bottom": [340, 650, 612, 792]
+  }
+}

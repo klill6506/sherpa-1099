@@ -72,3 +72,16 @@ NUL
 # Database files
 database/*.db
 *.db
+
+# Project-specific virtual environment
+sherpa-1099.venv/
+
+# Claude Code config
+.claude/
+
+# Test scripts
+test_*.py
+test_*.bat
+
+# Supabase local config (contains credentials)
+Supabase/

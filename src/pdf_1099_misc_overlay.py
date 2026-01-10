@@ -1,13 +1,17 @@
 """
-1099-NEC PDF Generator - Official Template Overlay Approach.
+1099-MISC PDF Generator - Official Template Overlay Approach.
 
-Generates IRS Form 1099-NEC Copy B by overlaying data onto the official IRS template.
+Generates IRS Form 1099-MISC Copy B by overlaying data onto the official IRS template.
 This produces forms that match the official IRS layout exactly.
 
-Template: 1099-NEC_template_blank.pdf (Official IRS Form 1099-NEC Rev. April 2025)
+Template: 1099-Misc Official 2025.pdf (Official IRS Form 1099-MISC Rev. 2025)
+
+NOTE: This module is separate from the NEC generator to avoid any risk of
+changing NEC output. They share similar patterns but are maintained independently.
 """
 
 import io
+import json
 from pathlib import Path
 from typing import Optional, cast
 from decimal import Decimal
@@ -19,12 +23,19 @@ from reportlab.lib.colors import black
 
 PAGE_W, PAGE_H = letter  # 612 x 792 points
 
-# Template file path (relative to project root)
-# Using the official IRS template that produces output matching test_2025_v11.pdf
-TEMPLATE_PATH = Path(__file__).parent.parent / "New Official 1099-NEC.pdf"
+# Template and config paths (relative to project root)
+PROJECT_ROOT = Path(__file__).parent.parent
+TEMPLATE_PATH = PROJECT_ROOT / "1099-Misc Official 2025.pdf"
+CONFIG_PATH = PROJECT_ROOT / "config" / "1099_misc_2025_copyb.json"
 
-if not TEMPLATE_PATH.exists():
-    raise FileNotFoundError(f"NEC template not found: {TEMPLATE_PATH}")
+
+def load_config(config_path: Optional[Path] = None) -> dict:
+    """Load MISC coordinate configuration from JSON file."""
+    path = config_path or CONFIG_PATH
+    if not path.exists():
+        raise FileNotFoundError(f"MISC config not found: {path}")
+    with open(path, "r") as f:
+        return json.load(f)
 
 
 def fitz_to_rl_y(y_fitz: float) -> float:
@@ -76,56 +87,8 @@ def mask_tin(tin: str) -> str:
     return '*' * masked_len + last_4
 
 
-# =============================================================================
-# COORDINATE CONFIGURATION - Matched to 1099-NEC_template_blank.pdf
-# All y values are y-down (from top of page)
-# =============================================================================
-
-# Coordinates from 1099nec_config.json that produced test_2025_v11.pdf
-COORDS = {
-    # Payer section
-    "payer_name": {"x": 47, "y": 88, "size": 10, "font": "Helvetica"},
-    "payer_street": {"x": 47, "y": 101, "size": 10, "font": "Helvetica"},
-    "payer_city_state_zip": {"x": 47, "y": 114, "size": 10, "font": "Helvetica"},
-    "payer_phone": {"x": 200, "y": 114, "size": 9, "font": "Helvetica-Bold"},  # Same line as city/state/zip, bold for visibility
-
-    # TINs row - using bold for better visibility
-    "payer_tin": {"x": 47, "y": 298, "size": 9, "font": "Helvetica-Bold"},
-    "recipient_tin": {"x": 168, "y": 298, "size": 9, "font": "Helvetica-Bold"},
-
-    # Recipient section
-    "recipient_name": {"x": 47, "y": 182, "size": 10, "font": "Helvetica"},
-    "recipient_line2": {"x": 47, "y": 195, "size": 10, "font": "Helvetica"},
-    "recipient_street": {"x": 47, "y": 212, "size": 10, "font": "Helvetica"},
-    "recipient_city_state_zip": {"x": 47, "y": 225, "size": 10, "font": "Helvetica"},
-
-    # Account number
-    "account_number": {"x": 47, "y": 274, "size": 9, "font": "Helvetica"},
-
-    # Box 1 - Nonemployee compensation
-    "box1_amount": {"x": 319, "y": 117, "size": 10, "font": "Helvetica"},
-
-    # Box 3 - Excess golden parachute payments
-    "box3_amount": {"x": 310, "y": 178, "size": 10, "font": "Helvetica"},
-
-    # Box 4 - Federal income tax withheld
-    "box4_amount": {"x": 310, "y": 214, "size": 10, "font": "Helvetica"},
-
-    # Box 5 - State tax withheld
-    "box5_amount": {"x": 310, "y": 250, "size": 9, "font": "Helvetica"},
-
-    # Box 6 - State/Payer's state no.
-    "box6_state": {"x": 380, "y": 250, "size": 9, "font": "Helvetica"},
-
-    # Box 7 - State income
-    "box7_amount": {"x": 480, "y": 250, "size": 9, "font": "Helvetica"},
-
-    # CORRECTED checkbox (X mark position)
-    "corrected_x": {"x": 502, "y": 20, "size": 12, "font": "Helvetica-Bold"},
-}
-
-
 def create_overlay(
+    coords: dict,
     payer_name: str,
     payer_street: str,
     payer_city_state_zip: str,
@@ -137,22 +100,21 @@ def create_overlay(
     recipient_city_state_zip: str = "",
     recipient_tin: str = "",
     account_number: str = "",
-    box1_amount: Decimal = Decimal("0"),
-    box3_amount: Decimal = Decimal("0"),
-    box4_amount: Decimal = Decimal("0"),
-    box5_amount: Decimal = Decimal("0"),
-    box6_state: str = "",
-    box7_amount: Decimal = Decimal("0"),
+    box1_rents: Decimal = Decimal("0"),
+    box4_federal_withheld: Decimal = Decimal("0"),
+    box15_state_withheld: Decimal = Decimal("0"),
+    box16_state: str = "",
+    box17_state_income: Decimal = Decimal("0"),
     corrected: bool = False,
 ) -> bytes:
-    """Create the overlay PDF with form data."""
+    """Create the overlay PDF with form data using coordinates from config."""
     packet = io.BytesIO()
     c = canvas.Canvas(packet, pagesize=letter)
 
     def draw_text(key: str, text: str):
-        if not text or key not in COORDS:
+        if not text or key not in coords:
             return
-        info = COORDS[key]
+        info = coords[key]
         font = info.get("font", "Helvetica")
         size = info.get("size", 10)
         c.setFont(font, size)
@@ -185,15 +147,15 @@ def create_overlay(
     # Draw account number
     draw_text("account_number", account_number)
 
-    # Draw amounts
-    draw_text("box1_amount", format_money(box1_amount))
-    draw_text("box3_amount", format_money(box3_amount))
-    draw_text("box4_amount", format_money(box4_amount))
-    draw_text("box5_amount", format_money(box5_amount))
-    # Only draw box6_state if it has a real value (not None or empty)
-    if box6_state and box6_state != "None":
-        draw_text("box6_state", box6_state)
-    draw_text("box7_amount", format_money(box7_amount))
+    # Draw amounts - MISC Box 1 is Rents (different from NEC Box 1 which is compensation)
+    draw_text("box1_rents", format_money(box1_rents))
+    draw_text("box4_federal_withheld", format_money(box4_federal_withheld))
+    draw_text("box15_state_withheld", format_money(box15_state_withheld))
+
+    # Only draw state if it has a real value
+    if box16_state and box16_state != "None":
+        draw_text("box16_state", box16_state)
+    draw_text("box17_state_income", format_money(box17_state_income))
 
     # Draw CORRECTED checkbox if needed
     if corrected:
@@ -227,12 +189,7 @@ def merge_overlay_with_template(template_path: Path, overlay_bytes: bytes) -> by
         overlay=True,  # Place on top
     )
 
-    # Barcode location (measured from user):
-    # - Right side: 0.5 inches from right edge
-    # - Left side: 2 inches from right edge
-    # - Bottom: 0.75 inches from bottom
-    # - Top: 1.75 inches from bottom
-    # Convert to points (72 points = 1 inch)
+    # Barcode location (same area as NEC - bottom right corner)
     page_height = template_page.rect.height
     barcode_rect = fitz.Rect(
         468,                        # left (612 - 2*72 = 468)
@@ -259,7 +216,7 @@ def merge_overlay_with_template(template_path: Path, overlay_bytes: bytes) -> by
     return output.getvalue()
 
 
-def generate_1099_nec_overlay(
+def generate_1099_misc_overlay(
     payer_name: str,
     payer_address_lines: list,
     payer_tin: str,
@@ -269,18 +226,18 @@ def generate_1099_nec_overlay(
     payer_phone: str = "",
     recipient_account: str = "",
     tax_year: int = 2025,
-    box1_compensation: Decimal = Decimal("0"),
-    box3_golden_parachute: Decimal = Decimal("0"),
+    box1_rents: Decimal = Decimal("0"),
     box4_federal_withheld: Decimal = Decimal("0"),
-    box5_state_withheld: Decimal = Decimal("0"),
-    box6_state_payer_no: str = "",
-    box7_state_income: Decimal = Decimal("0"),
+    box15_state_withheld: Decimal = Decimal("0"),
+    box16_state_payer_no: str = "",
+    box17_state_income: Decimal = Decimal("0"),
     corrected: bool = False,
     template_path: Optional[Path] = None,
+    config_path: Optional[Path] = None,
     mask_recipient_tin: bool = True,
 ) -> bytes:
     """
-    Generate 1099-NEC PDF using official IRS template overlay.
+    Generate 1099-MISC PDF using official IRS template overlay.
 
     Args:
         payer_name: Payer/Filer name
@@ -292,31 +249,35 @@ def generate_1099_nec_overlay(
         payer_phone: Optional phone number
         recipient_account: Optional account number
         tax_year: Tax year (for template selection)
-        box1_compensation: Nonemployee compensation amount
-        box3_golden_parachute: Excess golden parachute payments
+        box1_rents: Rents amount (MISC Box 1)
         box4_federal_withheld: Federal income tax withheld
-        box5_state_withheld: State tax withheld
-        box6_state_payer_no: State/Payer's state no.
-        box7_state_income: State income
+        box15_state_withheld: State tax withheld
+        box16_state_payer_no: State/Payer's state no.
+        box17_state_income: State income
         corrected: Whether this is a corrected form
         template_path: Optional custom template path
+        config_path: Optional custom config path
         mask_recipient_tin: Mask recipient TIN showing only last 4 digits (default True for Copy B)
 
     Returns:
         PDF as bytes
     """
+    # Load config
+    config = load_config(config_path)
+    coords = config.get("coords", {})
+
+    # Use provided template or default
     if template_path is None:
         template_path = TEMPLATE_PATH
 
     if not template_path.exists():
-        raise FileNotFoundError(f"Template not found: {template_path}")
+        raise FileNotFoundError(f"MISC template not found: {template_path}")
 
     # Build address strings
     payer_street = payer_address_lines[0] if len(payer_address_lines) > 0 else ""
     payer_city_state_zip = payer_address_lines[1] if len(payer_address_lines) > 1 else ""
 
     # Handle recipient address - may have name_line_2, street, and city_state_zip
-    # The template has separate fields for each line
     recipient_line2 = ""
     if len(recipient_address_lines) == 1:
         # Only city/state/zip
@@ -340,6 +301,7 @@ def generate_1099_nec_overlay(
 
     # Create overlay
     overlay_bytes = create_overlay(
+        coords=coords,
         payer_name=payer_name,
         payer_street=payer_street,
         payer_city_state_zip=payer_city_state_zip,
@@ -351,12 +313,11 @@ def generate_1099_nec_overlay(
         recipient_city_state_zip=recipient_city_state_zip,
         recipient_tin=display_recipient_tin,
         account_number=recipient_account,
-        box1_amount=box1_compensation,
-        box3_amount=box3_golden_parachute,
-        box4_amount=box4_federal_withheld,
-        box5_amount=box5_state_withheld,
-        box6_state=box6_state_payer_no,
-        box7_amount=box7_state_income,
+        box1_rents=box1_rents,
+        box4_federal_withheld=box4_federal_withheld,
+        box15_state_withheld=box15_state_withheld,
+        box16_state=box16_state_payer_no,
+        box17_state_income=box17_state_income,
         corrected=corrected,
     )
 
@@ -369,8 +330,8 @@ def generate_1099_nec_overlay(
 # =============================================================================
 
 if __name__ == "__main__":
-    # Test with sample data matching test_2025_v11.pdf
-    pdf_bytes = generate_1099_nec_overlay(
+    # Test with sample data
+    pdf_bytes = generate_1099_misc_overlay(
         payer_name="Euguene Baldwin",
         payer_address_lines=[
             "280 High Ridge Dr",
@@ -387,9 +348,9 @@ if __name__ == "__main__":
         recipient_tin="123-45-6789",
         recipient_account="ACCT-2025-001234",
         tax_year=2025,
-        box1_compensation=Decimal("15750.00"),
+        box1_rents=Decimal("15750.00"),
     )
 
-    output_path = Path(__file__).parent.parent / "test_overlay_output.pdf"
+    output_path = Path(__file__).parent.parent / "test_misc_output.pdf"
     output_path.write_bytes(pdf_bytes)
     print(f"Generated {output_path} ({len(pdf_bytes)} bytes)")

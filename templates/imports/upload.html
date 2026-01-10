@@ -4,17 +4,17 @@
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Import Data</h1>
-    <p class="text-gray-600">Upload an Excel (.xlsx) or CSV file to import 1099 data</p>
+    <h1 class="text-2xl font-bold text-sherpa-text">Import Data</h1>
+    <p class="text-sherpa-muted">Upload an Excel (.xlsx) or CSV file to import 1099 data</p>
 </div>
 
-<div class="bg-white rounded-lg shadow p-6" x-data="uploadForm()">
+<div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6" x-data="uploadForm()">
     <form @submit.prevent="submitForm" enctype="multipart/form-data">
         <!-- Operating Year Selection -->
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Tax Year</label>
+            <label class="block text-sm font-medium text-sherpa-text mb-2">Tax Year</label>
             <select x-model="operatingYearId" required
-                class="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                class="w-full md:w-64 px-3 py-2 bg-sherpa-panel border border-sherpa-border rounded-xl text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:border-sherpa-blue">
                 {% for year in operating_years %}
                 <option value="{{ year.id }}" {% if year.id == current_year_id %}selected{% endif %}>
                     {{ year.year }}{% if year.is_active %} (Active){% endif %}
@@ -25,52 +25,56 @@
 
         <!-- Filer Selection (optional) -->
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Filer (Optional)</label>
+            <label class="block text-sm font-medium text-sherpa-text mb-2">Filer (Optional)</label>
             <select x-model="filerId"
-                class="w-full md:w-96 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                class="w-full md:w-96 px-3 py-2 bg-sherpa-panel border border-sherpa-border rounded-xl text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:border-sherpa-blue">
                 <option value="">-- Select later during review --</option>
                 {% for filer in filers %}
                 <option value="{{ filer.id }}">{{ filer.name }} ({{ filer.tin }})</option>
                 {% endfor %}
             </select>
-            <p class="text-sm text-gray-500 mt-1">You can assign a filer during the review step if not selected now.</p>
+            <p class="text-sm text-sherpa-subtle mt-1">You can assign a filer during the review step if not selected now.</p>
         </div>
 
         <!-- File Upload Area -->
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center"
-                 :class="{ 'border-primary bg-blue-50': isDragging }"
+            <label class="block text-sm font-medium text-sherpa-text mb-2">Upload File</label>
+            <div class="border-2 border-dashed border-sherpa-border rounded-2xl p-8 text-center transition-colors"
+                 :class="{ 'border-sherpa-blue bg-sherpa-blue/5': isDragging }"
                  @dragover.prevent="isDragging = true"
                  @dragleave.prevent="isDragging = false"
                  @drop.prevent="handleDrop($event)">
 
                 <template x-if="!selectedFile">
                     <div>
-                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-600">
-                            <label class="cursor-pointer text-primary hover:underline">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-sherpa-panel flex items-center justify-center">
+                            <svg class="w-8 h-8 text-sherpa-subtle" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm text-sherpa-muted">
+                            <label class="cursor-pointer text-sherpa-blue hover:text-sherpa-blue/80 font-medium">
                                 <span>Click to upload</span>
                                 <input type="file" class="hidden" accept=".xlsx,.xls,.csv" @change="handleFileSelect($event)">
                             </label>
                             or drag and drop
                         </p>
-                        <p class="text-xs text-gray-500 mt-1">Excel (.xlsx, .xls) or CSV files</p>
+                        <p class="text-xs text-sherpa-subtle mt-1">Excel (.xlsx, .xls) or CSV files</p>
                     </div>
                 </template>
 
                 <template x-if="selectedFile">
                     <div class="flex items-center justify-center">
-                        <svg class="h-8 w-8 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <div class="text-left">
-                            <p class="text-sm font-medium text-gray-900" x-text="selectedFile.name"></p>
-                            <p class="text-xs text-gray-500" x-text="formatFileSize(selectedFile.size)"></p>
+                        <div class="w-10 h-10 rounded-xl bg-sherpa-teal/15 flex items-center justify-center mr-3">
+                            <svg class="h-5 w-5 text-sherpa-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
                         </div>
-                        <button type="button" @click="clearFile()" class="ml-4 text-red-600 hover:text-red-800">
+                        <div class="text-left">
+                            <p class="text-sm font-medium text-sherpa-text" x-text="selectedFile.name"></p>
+                            <p class="text-xs text-sherpa-subtle" x-text="formatFileSize(selectedFile.size)"></p>
+                        </div>
+                        <button type="button" @click="clearFile()" class="ml-4 text-sherpa-red hover:text-sherpa-red/80">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -84,18 +88,18 @@
         <template x-if="isUploading">
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-sm text-gray-600">Uploading...</span>
-                    <span class="text-sm text-gray-600" x-text="uploadProgress + '%'"></span>
+                    <span class="text-sm text-sherpa-muted">Uploading...</span>
+                    <span class="text-sm text-sherpa-muted" x-text="uploadProgress + '%'"></span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-primary h-2 rounded-full transition-all" :style="'width: ' + uploadProgress + '%'"></div>
+                <div class="w-full bg-sherpa-panel rounded-full h-2">
+                    <div class="bg-sherpa-blue h-2 rounded-full transition-all" :style="'width: ' + uploadProgress + '%'"></div>
                 </div>
             </div>
         </template>
 
         <!-- Error Message -->
         <template x-if="errorMessage">
-            <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+            <div class="mb-6 p-4 rounded-xl bg-sherpa-red/15 border border-sherpa-red/30 text-sherpa-red">
                 <p x-text="errorMessage"></p>
             </div>
         </template>
@@ -104,7 +108,7 @@
         <div class="flex justify-end">
             <button type="submit"
                     :disabled="!selectedFile || isUploading"
-                    class="px-6 py-2 bg-primary text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="px-6 py-2 bg-sherpa-amber text-sherpa-bg rounded-xl font-semibold hover:bg-sherpa-amber/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <span x-show="!isUploading">Upload & Process</span>
                 <span x-show="isUploading">Processing...</span>
             </button>
@@ -113,37 +117,52 @@
 </div>
 
 <!-- Expected Format Info -->
-<div class="bg-white rounded-lg shadow p-6 mt-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Expected File Format</h2>
-    <p class="text-sm text-gray-600 mb-4">
-        Your file should contain columns for recipient information and payment amounts.
+<div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6 mt-6">
+    <h2 class="text-lg font-semibold text-sherpa-text mb-4">Expected File Format</h2>
+
+    <!-- Multi-sheet explanation -->
+    <div class="rounded-xl bg-sherpa-blue/10 border border-sherpa-blue/20 p-4 mb-4">
+        <h3 class="font-medium text-sherpa-blue mb-2">Multi-Sheet Import</h3>
+        <p class="text-sm text-sherpa-muted">
+            Your workbook can contain multiple form types. Each sheet will be imported separately:
+        </p>
+        <ul class="text-sm text-sherpa-muted mt-2 list-disc list-inside space-y-1">
+            <li><strong class="text-sherpa-text">Filer Information</strong> - Filer/payer details (required)</li>
+            <li><strong class="text-sherpa-text">1099-NEC</strong> - Nonemployee compensation</li>
+            <li><strong class="text-sherpa-text">1099-MISC</strong> - Miscellaneous income (rents, royalties, etc.)</li>
+            <li><strong class="text-sherpa-text">1099-S</strong> - Real estate transactions</li>
+            <li><strong class="text-sherpa-text">1098</strong> - Mortgage interest</li>
+        </ul>
+    </div>
+
+    <p class="text-sm text-sherpa-muted mb-4">
         Column names will be auto-mapped to the following fields:
     </p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
         <div>
-            <h3 class="font-medium text-gray-900 mb-2">Recipient Info</h3>
-            <ul class="text-gray-600 space-y-1">
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">name</span> - Recipient name</li>
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">tin</span> or <span class="font-mono text-xs bg-gray-100 px-1 rounded">ssn</span> - Tax ID</li>
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">address</span> - Street address</li>
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">city</span>, <span class="font-mono text-xs bg-gray-100 px-1 rounded">state</span>, <span class="font-mono text-xs bg-gray-100 px-1 rounded">zip</span></li>
+            <h3 class="font-medium text-sherpa-text mb-2">Recipient Info</h3>
+            <ul class="text-sherpa-muted space-y-1">
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">name</span> - Recipient name</li>
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">tin</span> or <span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">ssn</span> - Tax ID</li>
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">address</span> - Street address</li>
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">city</span>, <span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">state</span>, <span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">zip</span></li>
             </ul>
         </div>
         <div>
-            <h3 class="font-medium text-gray-900 mb-2">1099-NEC</h3>
-            <ul class="text-gray-600 space-y-1">
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">amount</span> or <span class="font-mono text-xs bg-gray-100 px-1 rounded">compensation</span> - Box 1</li>
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">federal withheld</span> - Box 4</li>
+            <h3 class="font-medium text-sherpa-text mb-2">1099-NEC</h3>
+            <ul class="text-sherpa-muted space-y-1">
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">amount</span> or <span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">compensation</span> - Box 1</li>
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">federal withheld</span> - Box 4</li>
             </ul>
         </div>
         <div>
-            <h3 class="font-medium text-gray-900 mb-2">1099-MISC</h3>
-            <ul class="text-gray-600 space-y-1">
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">rents</span> - Box 1</li>
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">royalties</span> - Box 2</li>
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">other income</span> - Box 3</li>
-                <li><span class="font-mono text-xs bg-gray-100 px-1 rounded">medical</span> - Box 6</li>
+            <h3 class="font-medium text-sherpa-text mb-2">1099-MISC</h3>
+            <ul class="text-sherpa-muted space-y-1">
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">rents</span> - Box 1</li>
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">royalties</span> - Box 2</li>
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">other income</span> - Box 3</li>
+                <li><span class="font-mono text-xs bg-sherpa-panel px-1.5 py-0.5 rounded text-sherpa-blue">medical</span> - Box 6</li>
             </ul>
         </div>
     </div>
@@ -212,7 +231,8 @@ function uploadForm() {
             }
 
             try {
-                const response = await fetch('/api/imports/upload', {
+                // Use quick import - one step: parse, validate, create forms
+                const response = await fetch('/api/imports/quick', {
                     method: 'POST',
                     body: formData
                 });
@@ -222,9 +242,36 @@ function uploadForm() {
                     throw new Error(error.detail || 'Upload failed');
                 }
 
-                const batch = await response.json();
-                // Redirect to review page
-                window.location.href = '/imports/' + batch.id;
+                const result = await response.json();
+                console.log('Import result:', result);
+
+                // Check for success
+                if (result.filer_id && result.imported_rows > 0) {
+                    // Success! Redirect to filer page where they can print/email/download
+                    let message = `Imported ${result.imported_rows} forms`;
+                    if (result.row_errors && result.row_errors.length > 0) {
+                        message += ` (${result.row_errors.length} rows skipped due to errors)`;
+                    }
+                    window.location.href = '/filers/' + result.filer_id + '?message=' + encodeURIComponent(message);
+                } else if (result.errors && result.errors.length > 0) {
+                    // Top-level errors
+                    this.errorMessage = result.errors.join('; ');
+                    this.isUploading = false;
+                } else if (result.row_errors && result.row_errors.length > 0) {
+                    // All rows had errors
+                    let errorSummary = `All ${result.total_rows} rows had validation errors. `;
+                    errorSummary += result.row_errors.slice(0, 3).map(re =>
+                        `Row ${re.row}: ${re.errors.map(e => e.message).join(', ')}`
+                    ).join('; ');
+                    if (result.row_errors.length > 3) {
+                        errorSummary += `... and ${result.row_errors.length - 3} more`;
+                    }
+                    this.errorMessage = errorSummary;
+                    this.isUploading = false;
+                } else {
+                    this.errorMessage = 'No data was imported. Check that your sheets have data.';
+                    this.isUploading = false;
+                }
 
             } catch (error) {
                 this.errorMessage = error.message;

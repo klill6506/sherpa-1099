@@ -8,7 +8,7 @@ Reference: Official IRS Form 1099-NEC Copy B layout (2024/2025)
 """
 
 from io import BytesIO
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from decimal import Decimal
 from dataclasses import dataclass
 
@@ -122,7 +122,7 @@ class Form1099NECTemplate:
         self.c = c
         self.tax_year = tax_year
         # Track box positions for data overlay
-        self.data_positions = {}
+        self.data_positions: Dict[str, Any] = {}
 
     def draw_template(self):
         """Draw the complete template layer."""

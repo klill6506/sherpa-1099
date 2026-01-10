@@ -43,8 +43,8 @@ def compute_dashboard_stats(operating_year_id: Optional[str] = None) -> dict:
     total_forms = len(forms_data)
 
     # Count by status
-    forms_by_status = {}
-    forms_by_type = {}
+    forms_by_status: dict[str, int] = {}
+    forms_by_type: dict[str, int] = {}
     for form in forms_data:
         status = form.get("status", "unknown")
         forms_by_status[status] = forms_by_status.get(status, 0) + 1

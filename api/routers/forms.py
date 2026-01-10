@@ -206,7 +206,7 @@ async def validate_form(form_id: str):
         else:
             update_data = {
                 "status": "validated",
-                "validation_errors": None,
+                "validation_errors": [],
             }
 
         updated_form = update_form_1099(form_id, update_data)

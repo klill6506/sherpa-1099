@@ -158,7 +158,7 @@ class Form1099Base(BaseModel):
     filer_id: str
     recipient_id: str
     operating_year_id: str
-    form_type: str = Field(..., pattern="^(1099-NEC|1099-MISC|1099-DIV|1099-INT|1099-B|1099-R|1098)$")
+    form_type: str = Field(..., pattern="^(1099-NEC|1099-MISC|1099-DIV|1099-INT|1099-B|1099-R|1099-S|1098)$")
 
     # 1099-NEC boxes
     nec_box1: Optional[Decimal] = None  # Nonemployee compensation
@@ -179,6 +179,26 @@ class Form1099Base(BaseModel):
     misc_box11: Optional[Decimal] = None  # Fish purchased for resale
     misc_box12: Optional[Decimal] = None  # Section 409A deferrals
     misc_box14: Optional[Decimal] = None  # Nonqualified deferred compensation
+
+    # 1099-S boxes (Proceeds From Real Estate Transactions)
+    s_box1_date_closing: Optional[str] = None  # Date of closing (MM/DD/YYYY)
+    s_box2_gross_proceeds: Optional[Decimal] = None  # Gross proceeds
+    s_box3_property_address: Optional[str] = None  # Address or legal description
+    s_box4_property_services: Optional[bool] = None  # Transferor received property/services
+    s_box5_foreign_person: Optional[bool] = None  # Buyer is foreign person
+    s_box6_buyers_tax: Optional[Decimal] = None  # Buyer's part of real estate tax
+
+    # 1098 boxes (Mortgage Interest Statement)
+    f1098_box1_mortgage_interest: Optional[Decimal] = None  # Mortgage interest received
+    f1098_box2_outstanding_principal: Optional[Decimal] = None  # Outstanding mortgage principal
+    f1098_box3_origination_date: Optional[str] = None  # Mortgage origination date
+    f1098_box4_refund_interest: Optional[Decimal] = None  # Refund of overpaid interest
+    f1098_box5_mortgage_insurance: Optional[Decimal] = None  # Mortgage insurance premiums
+    f1098_box6_points_paid: Optional[Decimal] = None  # Points paid on purchase
+    f1098_box8_property_address: Optional[str] = None  # Property address if different
+    f1098_box9_num_properties: Optional[int] = None  # Number of mortgaged properties
+    f1098_box10_other: Optional[Decimal] = None  # Other
+    f1098_box11_acquisition_date: Optional[str] = None  # Mortgage acquisition date
 
     # State info
     state1_code: Optional[str] = Field(None, max_length=2)
@@ -219,6 +239,26 @@ class Form1099Update(BaseModel):
     misc_box11: Optional[Decimal] = None
     misc_box12: Optional[Decimal] = None
     misc_box14: Optional[Decimal] = None
+
+    # 1099-S boxes
+    s_box1_date_closing: Optional[str] = None
+    s_box2_gross_proceeds: Optional[Decimal] = None
+    s_box3_property_address: Optional[str] = None
+    s_box4_property_services: Optional[bool] = None
+    s_box5_foreign_person: Optional[bool] = None
+    s_box6_buyers_tax: Optional[Decimal] = None
+
+    # 1098 boxes
+    f1098_box1_mortgage_interest: Optional[Decimal] = None
+    f1098_box2_outstanding_principal: Optional[Decimal] = None
+    f1098_box3_origination_date: Optional[str] = None
+    f1098_box4_refund_interest: Optional[Decimal] = None
+    f1098_box5_mortgage_insurance: Optional[Decimal] = None
+    f1098_box6_points_paid: Optional[Decimal] = None
+    f1098_box8_property_address: Optional[str] = None
+    f1098_box9_num_properties: Optional[int] = None
+    f1098_box10_other: Optional[Decimal] = None
+    f1098_box11_acquisition_date: Optional[str] = None
 
     # State info
     state1_code: Optional[str] = Field(None, max_length=2)

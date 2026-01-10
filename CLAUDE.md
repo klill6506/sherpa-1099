@@ -16,18 +16,18 @@ Converts client 1099 workbooks into IRS-compliant format and submits via IRIS e-
 
 ## Quick Start
 ```powershell
-cd "C:\Apps\Sherpa Apps\sherpa-1099"
+cd "T:\sherpa-1099"
 .\.venv\Scripts\activate
-streamlit run app_streamlit_1099.py
+python -m uvicorn api.main:app --port 8002 --host 0.0.0.0
 ```
-Or double-click: `run_1099_app.bat`
+Or double-click: `run_api.bat`
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-05
-**Working on:** FastAPI backend complete
-**Next steps:** Frontend UI (Jinja2/Tailwind), Excel import, XML generation
-**Blockers:** None
+**Last session:** 2026-01-09
+**Working on:** Deployed to server (T:\sherpa-1099) for employee access
+**Next steps:** IRS IRIS integration when credentials are ready
+**Blockers:** Waiting on IRS
 
 ## Key Files
 | File | Purpose |
@@ -44,9 +44,10 @@ Or double-click: `run_1099_app.bat`
 
 ## Running the App
 ```powershell
-# FastAPI Backend (port 8002)
-cd "C:\Apps\Sherpa Apps\sherpa-1099"
-py -3 -m uvicorn api.main:app --reload --port 8002
+# FastAPI Backend (port 8002) - SERVER DEPLOYMENT
+cd "T:\sherpa-1099"
+.\.venv\Scripts\activate
+python -m uvicorn api.main:app --port 8002 --host 0.0.0.0
 # Or double-click: run_api.bat
 # API Docs: http://127.0.0.1:8002/docs
 ```

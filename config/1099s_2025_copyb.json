@@ -1,0 +1,206 @@
+{
+  "_comment": "1099-S Copy B PDF Generator Configuration - Proceeds From Real Estate Transactions",
+  "_template": "Blank 1099S 2025 Official Template.pdf",
+  "_notes": [
+    "All coordinates use y-down (from top of page, 792pt = letter height)",
+    "TINs are positioned differently than NEC/MISC - aligned with account number row",
+    "Box 3 (property description) supports multi-line text wrapping"
+  ],
+  "year": 2025,
+  "sample_data": {
+    "filer_name": "ABC Title Company",
+    "filer_street": "100 Main Street",
+    "filer_city_state_zip": "Atlanta, GA 30301",
+    "filer_phone": "(404) 555-1234",
+    "filer_tin": "58-1234567",
+    "transferor_name": "John Q. Seller",
+    "transferor_line2": "",
+    "transferor_street": "456 Oak Lane",
+    "transferor_city_state_zip": "Marietta, GA 30060",
+    "transferor_tin": "123-45-6789",
+    "account_number": "2025-CLOSE-001",
+    "box1_date_of_closing": "01/15/2025",
+    "box2_gross_proceeds": 350000.00,
+    "box3_property_description": "123 Maple Street, Anytown, GA 30301\nLot 15, Block 3, Sunshine Subdivision",
+    "box4_property_services_checkbox": false,
+    "box5_foreign_checkbox": false,
+    "box6_buyers_real_estate_tax": 2500.00
+  },
+  "coords": {
+    "_comment": "Initial coordinates - tune with debug_form_coords.py",
+    "_section_filer": "--- FILER (PAYER) BLOCK - Left side ---",
+    "filer_name": {
+      "x": 47,
+      "y": 94,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "filer_street": {
+      "x": 47,
+      "y": 107,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "filer_city_state_zip": {
+      "x": 47,
+      "y": 120,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "filer_phone": {
+      "x": 200,
+      "y": 120,
+      "size": 9,
+      "font": "Helvetica-Bold"
+    },
+    "_section_transferor": "--- TRANSFEROR (RECIPIENT) BLOCK ---",
+    "transferor_name": {
+      "x": 47,
+      "y": 182,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "transferor_line2": {
+      "x": 47,
+      "y": 195,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "transferor_street": {
+      "x": 47,
+      "y": 212,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "transferor_city_state_zip": {
+      "x": 47,
+      "y": 234,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "_section_tins": "--- TINs - Different positions than NEC/MISC ---",
+    "filer_tin": {
+      "x": 306,
+      "y": 266,
+      "size": 9,
+      "font": "Helvetica-Bold",
+      "_note": "Middle third, aligned with account number"
+    },
+    "transferor_tin": {
+      "x": 386,
+      "y": 266,
+      "size": 9,
+      "font": "Helvetica-Bold",
+      "_note": "Far right third, aligned with account number"
+    },
+    "_section_account": "--- ACCOUNT NUMBER ---",
+    "account_number": {
+      "x": 47,
+      "y": 263,
+      "size": 9,
+      "font": "Helvetica"
+    },
+    "_section_boxes": "--- FORM BOXES ---",
+    "box1_date_of_closing": {
+      "x": 306,
+      "y": 48,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Date MM/DD/YYYY format"
+    },
+    "box2_gross_proceeds": {
+      "x": 306,
+      "y": 88,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Currency with commas"
+    },
+    "box3_property_description": {
+      "x": 306,
+      "y": 124,
+      "size": 9,
+      "font": "Helvetica-Bold",
+      "max_width": 250,
+      "line_height": 12,
+      "max_lines": 4,
+      "_note": "Large multi-line box for address/legal description"
+    },
+    "box4_checkbox": {
+      "x": 479,
+      "y": 190,
+      "size": 12,
+      "font": "Helvetica-Bold",
+      "_note": "Draw X if checked"
+    },
+    "box5_foreign_checkbox": {
+      "x": 479,
+      "y": 215,
+      "size": 12,
+      "font": "Helvetica-Bold",
+      "_note": "Draw X if checked"
+    },
+    "box6_buyers_tax": {
+      "x": 306,
+      "y": 242,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Currency"
+    },
+    "_section_misc": "--- OTHER FIELDS ---",
+    "corrected_x": {
+      "x": 496,
+      "y": 25,
+      "size": 12,
+      "font": "Helvetica-Bold"
+    }
+  },
+  "wipe_rects": {
+    "_comment": "White rectangles to cover areas like barcodes. Each is [x0, y0, x1, y1] in y-down coords.",
+    "barcode_bottom": [
+      340,
+      650,
+      612,
+      792
+    ]
+  },
+  "static_labels": {
+    "_comment": "Static text labels that are always drawn (missing from blank template)",
+    "filer_label": {
+      "x": 44,
+      "y": 25,
+      "size": 6,
+      "font": "Helvetica",
+      "max_width": 230,
+      "line_height": 7,
+      "text": "FILER'S name, street address, city or town, state or province, country, ZIP or foreign postal code, and telephone number"
+    },
+    "transferor_name_label": {
+      "x": 44,
+      "y": 170,
+      "size": 6,
+      "font": "Helvetica",
+      "text": "TRANSFEROR'S name"
+    },
+    "transferor_street_label": {
+      "x": 47,
+      "y": 200,
+      "size": 6,
+      "font": "Helvetica",
+      "text": "Street address (including apt. no.)"
+    },
+    "transferor_city_label": {
+      "x": 47,
+      "y": 222,
+      "size": 6,
+      "font": "Helvetica",
+      "text": "City or town, state or province, country, and ZIP or foreign postal code"
+    },
+    "account_number_label": {
+      "x": 47,
+      "y": 251,
+      "size": 6,
+      "font": "Helvetica",
+      "text": "Account number"
+    }
+  }
+}

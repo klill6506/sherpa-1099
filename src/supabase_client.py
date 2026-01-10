@@ -8,7 +8,7 @@ This key bypasses Row Level Security and should NEVER be exposed to the frontend
 """
 
 import os
-from typing import Optional
+from typing import Optional, Any, Dict
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
@@ -202,7 +202,7 @@ def update_recipient(recipient_id: str, recipient_data: dict):
     return response.data[0] if response.data else None
 
 
-def update_recipient_tin_status(recipient_id: str, status: str, match_code: str = None):
+def update_recipient_tin_status(recipient_id: str, status: str, match_code: Optional[str] = None):
     """Update the TIN matching status for a recipient."""
     from datetime import datetime
 
@@ -281,7 +281,7 @@ def delete_form_1099(form_id: str):
 # DASHBOARD / VIEWS
 # =============================================================================
 
-def get_filer_status_summary(operating_year_id: str = None):
+def get_filer_status_summary(operating_year_id: Optional[str] = None):
     """Get filer status summary for the dashboard."""
     client = get_supabase_client()
     query = client.table("filer_status_summary").select("*")
@@ -293,7 +293,7 @@ def get_filer_status_summary(operating_year_id: str = None):
     return response.data
 
 
-def get_dashboard_stats(operating_year_id: str = None):
+def get_dashboard_stats(operating_year_id: Optional[str] = None):
     """Get dashboard statistics."""
     client = get_supabase_client()
 
@@ -311,12 +311,12 @@ def get_dashboard_stats(operating_year_id: str = None):
 
 def log_activity(
     action: str,
-    entity_type: str = None,
-    entity_id: str = None,
-    filer_id: str = None,
-    operating_year_id: str = None,
-    details: dict = None,
-    user_id: str = None
+    entity_type: Optional[str] = None,
+    entity_id: Optional[str] = None,
+    filer_id: Optional[str] = None,
+    operating_year_id: Optional[str] = None,
+    details: Optional[Dict[str, Any]] = None,
+    user_id: Optional[str] = None
 ):
     """Log an activity to the activity log."""
     client = get_supabase_client()
@@ -338,7 +338,7 @@ def log_activity(
     return response.data[0] if response.data else None
 
 
-def get_recent_activity(limit: int = 50, filer_id: str = None):
+def get_recent_activity(limit: int = 50, filer_id: Optional[str] = None):
     """Get recent activity log entries."""
     client = get_supabase_client()
     query = client.table("activity_log").select("*").order("created_at", desc=True).limit(limit)
@@ -360,8 +360,8 @@ def log_tin_match(
     name_submitted: str,
     match_code: str,
     match_result: str,
-    irs_response: dict = None,
-    user_id: str = None
+    irs_response: Optional[Dict[str, Any]] = None,
+    user_id: Optional[str] = None
 ):
     """Log a TIN matching request/response."""
     client = get_supabase_client()

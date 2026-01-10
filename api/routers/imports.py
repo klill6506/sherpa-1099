@@ -17,6 +17,47 @@ router = APIRouter()
 
 
 # =============================================================================
+# MULTI-SHEET IMPORT SCHEMAS
+# =============================================================================
+
+class SheetImportResult(BaseModel):
+    sheet_name: str
+    form_type: str
+    batch_id: Optional[str]
+    row_count: int
+    error: Optional[str]
+
+
+class MultiSheetImportResponse(BaseModel):
+    filer_id: Optional[str]
+    filer_name: Optional[str]
+    filer_created: bool
+    sheets_imported: List[SheetImportResult]
+    total_rows: int
+    errors: List[str]
+
+
+class RowError(BaseModel):
+    sheet: str
+    row: int
+    name: Optional[str]
+    errors: List[dict]
+
+
+class QuickImportResponse(BaseModel):
+    """Response for quick import (one-step import, validate, promote)."""
+    filer_id: Optional[str]
+    filer_name: Optional[str]
+    filer_created: bool
+    forms_created: int
+    recipients_created: int
+    total_rows: int
+    imported_rows: int
+    errors: List[str]
+    row_errors: List[RowError]
+
+
+# =============================================================================
 # SCHEMAS
 # =============================================================================
 
@@ -84,17 +125,134 @@ class AutoMapResponse(BaseModel):
 # ENDPOINTS
 # =============================================================================
 
-@router.post("/upload", response_model=ImportBatch, status_code=201)
+@router.post("/quick", response_model=QuickImportResponse, status_code=201)
+async def quick_import(
+    file: UploadFile = File(...),
+    operating_year_id: str = Form(...),
+):
+    """
+    Quick Import: Parse, validate, and create forms in ONE step.
+
+    This is the streamlined import flow:
+    1. Parse filer info from 'Filer Information' sheet
+    2. Create/update filer
+    3. Parse all data sheets
+    4. Validate and normalize data
+    5. Create recipients and 1099 forms directly
+
+    After success, redirect to filer page to print/email/download/efile.
+    """
+    filename = file.filename or "upload"
+    if not filename.lower().endswith(('.xlsx', '.xls')):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Please upload .xlsx or .xls Excel file"
+        )
+
+    try:
+        content = await file.read()
+        service = ImportService()
+
+        result = service.quick_import(
+            file_content=content,
+            filename=filename,
+            operating_year_id=operating_year_id
+        )
+
+        filer_name = None
+        if result.get('filer_data'):
+            filer_name = result['filer_data'].get('name')
+
+        return QuickImportResponse(
+            filer_id=result.get('filer_id'),
+            filer_name=filer_name,
+            filer_created=result.get('filer_created', False),
+            forms_created=len(result.get('forms_created', [])),
+            recipients_created=result.get('recipients_created', 0),
+            total_rows=result.get('total_rows', 0),
+            imported_rows=result.get('imported_rows', 0),
+            errors=result.get('errors', []),
+            row_errors=[RowError(**re) for re in result.get('row_errors', [])]
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload", response_model=MultiSheetImportResponse, status_code=201)
 async def upload_file(
     file: UploadFile = File(...),
     operating_year_id: str = Form(...),
-    filer_id: Optional[str] = Form(None),
 ):
     """
-    Upload an Excel or CSV file for import.
+    Upload an Excel workbook and import ALL data sheets at once (staging mode).
 
-    Accepts .xlsx, .xls, or .csv files.
-    Returns the created batch with auto-detected column mapping suggestions.
+    NOTE: For most users, use /quick instead for streamlined one-step import.
+
+    This endpoint uses the staging flow:
+    - "Filer Information" sheet for filer data
+    - "1099-NEC", "1099-MISC", "1099-S", "1098" sheets for form data
+
+    Each data sheet creates a separate batch. Form type is auto-detected
+    from the sheet name.
+
+    Returns import results for all sheets.
+    """
+    # Validate file type
+    filename = file.filename or "upload"
+    if not filename.lower().endswith(('.xlsx', '.xls')):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Please upload .xlsx or .xls Excel file"
+        )
+
+    try:
+        content = await file.read()
+        service = ImportService()
+
+        # Import all sheets at once
+        result = service.import_all_sheets(
+            file_content=content,
+            filename=filename,
+            operating_year_id=operating_year_id
+        )
+
+        # Build response
+        filer_name = None
+        if result.get('filer_data'):
+            filer_name = result['filer_data'].get('name')
+
+        return MultiSheetImportResponse(
+            filer_id=result.get('filer_id'),
+            filer_name=filer_name,
+            filer_created=result.get('filer_created', False),
+            sheets_imported=[
+                SheetImportResult(**sheet) for sheet in result.get('sheets_imported', [])
+            ],
+            total_rows=result.get('total_rows', 0),
+            errors=result.get('errors', [])
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload-single", response_model=ImportBatch, status_code=201)
+async def upload_single_sheet(
+    file: UploadFile = File(...),
+    operating_year_id: str = Form(...),
+    filer_id: Optional[str] = Form(None),
+    sheet_name: Optional[str] = Form(None),
+):
+    """
+    Upload an Excel or CSV file and import a single sheet.
+
+    Use this endpoint if you want to import just one specific sheet.
+    For multi-sheet import, use /upload instead.
     """
     # Validate file type
     filename = file.filename or "upload"
@@ -120,7 +278,7 @@ async def upload_file(
             raise HTTPException(status_code=500, detail="Failed to create import batch")
 
         # Parse and store raw rows
-        df = service.parse_file(content, filename)
+        df = service.parse_file(content, filename, sheet_name=sheet_name)
         service.store_raw_rows(batch['id'], df)
 
         # Auto-detect column mapping

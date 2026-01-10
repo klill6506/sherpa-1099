@@ -4,9 +4,10 @@ Web Pages Router.
 Serves Jinja2 templates for the frontend UI.
 """
 
+from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 
 import sys
@@ -63,8 +64,8 @@ def get_dashboard_stats(operating_year_id: Optional[str] = None):
         forms_query = forms_query.eq('operating_year_id', operating_year_id)
     forms = forms_query.execute()
 
-    forms_by_status = {}
-    forms_by_type = {}
+    forms_by_status: dict[str, int] = {}
+    forms_by_type: dict[str, int] = {}
     for form in forms.data:
         status = form.get('status', 'draft')
         form_type = form.get('form_type', 'Unknown')
@@ -244,8 +245,17 @@ async def filers_detail(request: Request, filer_id: str):
         forms_query = forms_query.eq('operating_year_id', operating_year['id'])
     forms = forms_query.order('created_at', desc=True).execute().data
 
-    # Calculate total amount
-    total_amount = sum(float(f.get('nec_box1') or 0) for f in forms)
+    # Calculate totals by form type
+    nec_total = sum(float(f.get('nec_box1') or 0) for f in forms if f.get('form_type') == '1099-NEC')
+    misc_total = sum(float(f.get('misc_box1') or 0) for f in forms if f.get('form_type') == '1099-MISC')
+    s_total = sum(float(f.get('s_box2_gross_proceeds') or 0) for f in forms if f.get('form_type') == '1099-S')
+    f1098_total = sum(float(f.get('f1098_box1_mortgage_interest') or 0) for f in forms if f.get('form_type') == '1098')
+
+    # Count forms by type
+    nec_count = sum(1 for f in forms if f.get('form_type') == '1099-NEC')
+    misc_count = sum(1 for f in forms if f.get('form_type') == '1099-MISC')
+    s_count = sum(1 for f in forms if f.get('form_type') == '1099-S')
+    f1098_count = sum(1 for f in forms if f.get('form_type') == '1098')
 
     return templates.TemplateResponse("filers/detail.html", {
         "request": request,
@@ -254,7 +264,14 @@ async def filers_detail(request: Request, filer_id: str):
         "filer": filer,
         "recipients": recipients,
         "forms": forms,
-        "total_amount": total_amount
+        "nec_total": nec_total,
+        "misc_total": misc_total,
+        "s_total": s_total,
+        "f1098_total": f1098_total,
+        "nec_count": nec_count,
+        "misc_count": misc_count,
+        "s_count": s_count,
+        "f1098_count": f1098_count
     })
 
 
@@ -348,3 +365,23 @@ async def forms_list(request: Request):
         "operating_year": operating_year,
         "forms": forms
     })
+
+
+# =============================================================================
+# DOWNLOADS
+# =============================================================================
+
+@router.get("/download-template")
+async def download_template():
+    """Download the 1099 import template Excel file."""
+    template_path = Path(__file__).parent.parent.parent / "1099-Template .xlsx"
+
+    if not template_path.exists():
+        # Try alternate name without trailing space
+        template_path = Path(__file__).parent.parent.parent / "1099-Template.xlsx"
+
+    return FileResponse(
+        path=template_path,
+        filename="1099-Template.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )

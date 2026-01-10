@@ -1,0 +1,213 @@
+{
+  "_comment": "1098 Copy B PDF Generator Configuration - Mortgage Interest Statement",
+  "_template": "Blank 1098 2025 Official Template.pdf",
+  "_notes": [
+    "All coordinates use y-down (from top of page, 792pt = letter height)",
+    "Recipient = Lender (receives interest), Payer = Borrower (pays mortgage)",
+    "Box 7 is a checkbox (not implemented), Box 8 is property address if different"
+  ],
+  "year": 2025,
+  "sample_data": {
+    "recipient_name": "ABC Mortgage Company",
+    "recipient_street": "100 Finance Blvd",
+    "recipient_city_state_zip": "Atlanta, GA 30301",
+    "recipient_phone": "(404) 555-1234",
+    "recipient_tin": "58-1234567",
+    "payer_name": "John Q. Homeowner",
+    "payer_line2": "",
+    "payer_street": "456 Oak Lane",
+    "payer_city_state_zip": "Marietta, GA 30060",
+    "payer_tin": "123-45-6789",
+    "account_number": "LOAN-2025-001",
+    "box1_mortgage_interest": 12500.00,
+    "box2_outstanding_principal": 285000.00,
+    "box3_origination_date": "03/15/2020",
+    "box4_refund_interest": 0.00,
+    "box5_mortgage_insurance": 1200.00,
+    "box6_points_paid": 0.00,
+    "box8_property_address": "",
+    "box9_num_properties": "",
+    "box10_other": 0.00,
+    "box11_acquisition_date": ""
+  },
+  "coords": {
+    "_comment": "Initial coordinates - tune with debug_form_coords.py --form 1098 --grid",
+    "_section_recipient": "--- RECIPIENT (LENDER) BLOCK - Left side ---",
+    "recipient_name": {
+      "x": 47,
+      "y": 107,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "recipient_street": {
+      "x": 47,
+      "y": 120,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "recipient_city_state_zip": {
+      "x": 47,
+      "y": 133,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "recipient_phone": {
+      "x": 200,
+      "y": 133,
+      "size": 9,
+      "font": "Helvetica"
+    },
+    "_section_payer": "--- PAYER (BORROWER) BLOCK ---",
+    "payer_name": {
+      "x": 47,
+      "y": 176,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "payer_line2": {
+      "x": 47,
+      "y": 189,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "payer_street": {
+      "x": 47,
+      "y": 202,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "payer_city_state_zip": {
+      "x": 47,
+      "y": 215,
+      "size": 10,
+      "font": "Helvetica"
+    },
+    "_section_tins": "--- TINs ---",
+    "recipient_tin": {
+      "x": 47,
+      "y": 290,
+      "size": 9,
+      "font": "Helvetica-Bold"
+    },
+    "payer_tin": {
+      "x": 168,
+      "y": 290,
+      "size": 9,
+      "font": "Helvetica-Bold"
+    },
+    "_section_account": "--- ACCOUNT NUMBER ---",
+    "account_number": {
+      "x": 47,
+      "y": 258,
+      "size": 9,
+      "font": "Helvetica"
+    },
+    "_section_boxes": "--- FORM BOXES ---",
+    "box1_mortgage_interest": {
+      "x": 310,
+      "y": 107,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 1 - Mortgage interest received"
+    },
+    "box2_outstanding_principal": {
+      "x": 310,
+      "y": 136,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 2 - Outstanding mortgage principal"
+    },
+    "box3_origination_date": {
+      "x": 400,
+      "y": 136,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 3 - Mortgage origination date"
+    },
+    "box4_refund_interest": {
+      "x": 310,
+      "y": 166,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 4 - Refund of overpaid interest"
+    },
+    "box5_mortgage_insurance": {
+      "x": 400,
+      "y": 166,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 5 - Mortgage insurance premiums"
+    },
+    "box6_points_paid": {
+      "x": 310,
+      "y": 189,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 6 - Points paid on purchase"
+    },
+    "box8_property_address": {
+      "x": 310,
+      "y": 248,
+      "size": 9,
+      "font": "Helvetica",
+      "max_width": 250,
+      "line_height": 12,
+      "max_lines": 2,
+      "_note": "Box 8 - Property address if different from payer"
+    },
+    "box9_num_properties": {
+      "x": 47,
+      "y": 232,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 9 - Number of mortgaged properties"
+    },
+    "box10_other": {
+      "x": 168,
+      "y": 258,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 10 - Other"
+    },
+    "box11_acquisition_date": {
+      "x": 310,
+      "y": 290,
+      "size": 10,
+      "font": "Helvetica",
+      "_note": "Box 11 - Acquisition date of property"
+    },
+    "_section_misc": "--- OTHER FIELDS ---",
+    "corrected_x": {
+      "x": 498,
+      "y": 20,
+      "size": 12,
+      "font": "Helvetica-Bold"
+    }
+  },
+  "wipe_rects": {
+    "_comment": "White rectangles to cover areas like barcodes. Each is [x0, y0, x1, y1] in y-down coords.",
+    "barcode_bottom": [
+      340,
+      650,
+      612,
+      792
+    ]
+  },
+  "static_labels": {
+    "_comment": "Static text labels that are always drawn (missing from blank template)",
+    "recipient_label": {
+      "x": 44,
+      "y": 21,
+      "size": 6.5,
+      "font": "Helvetica",
+      "text": "RECIPIENT'S/LENDER'S name, street address, city, state, ZIP and telephone no."
+    },
+    "payer_tin_label": {
+      "x": 158,
+      "y": 276,
+      "size": 7,
+      "font": "Helvetica",
+      "text": "PAYER'S/BORROWER'S TIN"
+    }
+  }
+}

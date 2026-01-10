@@ -16,7 +16,9 @@ sys.path.insert(0, "src")
 
 from supabase_client import get_supabase_client
 from pdf_1099_nec_overlay import generate_1099_nec_overlay
-from pdf_generator import generate_1099_misc_pdf  # Keep old MISC generator for now
+from pdf_1099_misc_overlay import generate_1099_misc_overlay
+from pdf_1099_s_overlay import generate_1099s_copyb
+from pdf_1098_overlay import generate_1098_copyb
 
 router = APIRouter()
 
@@ -92,54 +94,75 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
             box3_golden_parachute=Decimal(str(form_data.get("nec_box3", 0) or 0)),
             box4_federal_withheld=Decimal(str(form_data.get("nec_box4", 0) or 0)),
             box5_state_withheld=Decimal(str(form_data.get("state1_withheld", 0) or 0)),
-            box6_state_payer_no=f"{form_data.get('state1_code', '')} {form_data.get('state1_id', '')}".strip(),
+            box6_state_payer_no=f"{form_data.get('state1_code') or ''} {form_data.get('state1_id') or ''}".strip(),
             box7_state_income=Decimal(str(form_data.get("state1_income", 0) or 0)),
             corrected=form_data.get("is_correction", False),
         )
 
     elif form_type == "1099-MISC":
-        # Use old generator for MISC (to be updated later)
-        filer_address = filer_data.get("address1", "")
-        if filer_data.get("address2"):
-            filer_address += f", {filer_data['address2']}"
-        filer_city_state_zip = f"{filer_data.get('city', '')}, {filer_data.get('state', '')} {filer_data.get('zip', '')}"
-
-        recipient_address = recipient_data.get("address1", "")
-        if recipient_data.get("address2"):
-            recipient_address += f", {recipient_data['address2']}"
-        recipient_city_state_zip = f"{recipient_data.get('city', '')}, {recipient_data.get('state', '')} {recipient_data.get('zip', '')}"
-
-        return generate_1099_misc_pdf(
+        # Use official IRS template overlay generator (same approach as NEC)
+        return generate_1099_misc_overlay(
             payer_name=filer_data.get("name", ""),
-            payer_address=filer_address,
-            payer_city_state_zip=filer_city_state_zip,
+            payer_address_lines=filer_address_lines,
             payer_tin=filer_data.get("tin", ""),
             recipient_name=recipient_data.get("name", ""),
-            recipient_address=recipient_address,
-            recipient_city_state_zip=recipient_city_state_zip,
+            recipient_address_lines=recipient_address_lines,
             recipient_tin=recipient_data.get("tin", ""),
             payer_phone=filer_data.get("phone", ""),
-            recipient_tin_type=recipient_data.get("tin_type", "SSN"),
             recipient_account=recipient_data.get("account_number", ""),
             tax_year=tax_year,
             box1_rents=Decimal(str(form_data.get("misc_box1", 0) or 0)),
-            box2_royalties=Decimal(str(form_data.get("misc_box2", 0) or 0)),
-            box3_other_income=Decimal(str(form_data.get("misc_box3", 0) or 0)),
             box4_federal_withheld=Decimal(str(form_data.get("misc_box4", 0) or 0)),
-            box5_fishing_boat=Decimal(str(form_data.get("misc_box5", 0) or 0)),
-            box6_medical=Decimal(str(form_data.get("misc_box6", 0) or 0)),
-            box7_payer_direct_sales=form_data.get("misc_box7", False),
-            box8_substitute_payments=Decimal(str(form_data.get("misc_box8", 0) or 0)),
-            box9_crop_insurance=Decimal(str(form_data.get("misc_box9", 0) or 0)),
-            box10_gross_proceeds=Decimal(str(form_data.get("misc_box10", 0) or 0)),
-            box11_fish_purchased=Decimal(str(form_data.get("misc_box11", 0) or 0)),
-            box12_section_409a=Decimal(str(form_data.get("misc_box12", 0) or 0)),
-            box14_excess_golden=Decimal(str(form_data.get("misc_box14", 0) or 0)),
             box15_state_withheld=Decimal(str(form_data.get("state1_withheld", 0) or 0)),
-            box16_state_id=form_data.get("state1_id", "") or "",
+            box16_state_payer_no=f"{form_data.get('state1_code') or ''} {form_data.get('state1_id') or ''}".strip(),
             box17_state_income=Decimal(str(form_data.get("state1_income", 0) or 0)),
-            state_code=form_data.get("state1_code", "") or "",
-            copy_type=copy_type,
+            corrected=form_data.get("is_correction", False),
+        )
+
+    elif form_type == "1099-S":
+        # 1099-S: Proceeds From Real Estate Transactions
+        return generate_1099s_copyb(
+            filer_name=filer_data.get("name", ""),
+            filer_address_lines=filer_address_lines,
+            filer_tin=filer_data.get("tin", ""),
+            transferor_name=recipient_data.get("name", ""),
+            transferor_address_lines=recipient_address_lines,
+            transferor_tin=recipient_data.get("tin", ""),
+            filer_phone=filer_data.get("phone", ""),
+            account_number=recipient_data.get("account_number", ""),
+            tax_year=tax_year,
+            box1_date_of_closing=form_data.get("s_box1_date_closing") or "",
+            box2_gross_proceeds=Decimal(str(form_data.get("s_box2_gross_proceeds", 0) or 0)),
+            box3_property_description=form_data.get("s_box3_property_address") or "",
+            box4_property_services=form_data.get("s_box4_property_services") or False,
+            box5_foreign=form_data.get("s_box5_foreign_person") or False,
+            box6_buyers_tax=Decimal(str(form_data.get("s_box6_buyers_tax", 0) or 0)),
+            corrected=form_data.get("is_correction", False),
+        )
+
+    elif form_type == "1098":
+        # 1098: Mortgage Interest Statement
+        # Note: For 1098, filer = recipient/lender, recipient = payer/borrower
+        return generate_1098_copyb(
+            recipient_name=filer_data.get("name", ""),  # Lender
+            recipient_address_lines=filer_address_lines,
+            recipient_tin=filer_data.get("tin", ""),
+            payer_name=recipient_data.get("name", ""),  # Borrower
+            payer_address_lines=recipient_address_lines,
+            payer_tin=recipient_data.get("tin", ""),
+            recipient_phone=filer_data.get("phone", ""),
+            account_number=recipient_data.get("account_number", ""),
+            tax_year=tax_year,
+            box1_mortgage_interest=Decimal(str(form_data.get("f1098_box1_mortgage_interest", 0) or 0)),
+            box2_outstanding_principal=Decimal(str(form_data.get("f1098_box2_outstanding_principal", 0) or 0)),
+            box3_origination_date=form_data.get("f1098_box3_origination_date") or "",
+            box4_refund_interest=Decimal(str(form_data.get("f1098_box4_refund_interest", 0) or 0)),
+            box5_mortgage_insurance=Decimal(str(form_data.get("f1098_box5_mortgage_insurance", 0) or 0)),
+            box6_points_paid=Decimal(str(form_data.get("f1098_box6_points_paid", 0) or 0)),
+            box8_property_address=form_data.get("f1098_box8_property_address") or "",
+            box9_num_properties=str(form_data.get("f1098_box9_num_properties") or "") if form_data.get("f1098_box9_num_properties") else "",
+            box10_other=Decimal(str(form_data.get("f1098_box10_other", 0) or 0)),
+            box11_acquisition_date=form_data.get("f1098_box11_acquisition_date") or "",
             corrected=form_data.get("is_correction", False),
         )
 
@@ -148,9 +171,9 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
 
 
 @router.get("/{form_id}")
-async def download_form_pdf(form_id: str):
+async def get_form_pdf(form_id: str):
     """
-    Download a single 1099 form as PDF (Copy B for Recipient).
+    View a single 1099 form as PDF (opens inline in browser for viewing/printing).
 
     - **form_id**: UUID of the form
     """
@@ -175,14 +198,14 @@ async def download_form_pdf(form_id: str):
     return StreamingResponse(
         BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f'inline; filename="{filename}"'}
     )
 
 
-@router.get("/{form_id}/view")
-async def view_form_pdf(form_id: str):
+@router.get("/{form_id}/download")
+async def download_form_pdf(form_id: str):
     """
-    View a single 1099 form as PDF (inline, opens in browser for viewing/printing).
+    Download a single 1099 form as PDF (attachment, triggers browser download).
     """
     data = get_form_with_relations(form_id)
 
@@ -205,10 +228,7 @@ async def view_form_pdf(form_id: str):
     return StreamingResponse(
         BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"inline; filename=\"{filename}\"",
-            "Content-Type": "application/pdf"
-        }
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
 
@@ -265,11 +285,12 @@ async def download_batch_pdf(form_ids: List[str]):
 async def download_all_filer_forms(
     filer_id: str,
     form_type: Optional[str] = Query(None, description="Filter by form type (1099-NEC, 1099-MISC)"),
-    view: bool = Query(False, description="View inline instead of download")
+    download: bool = Query(False, description="Download as attachment instead of opening inline")
 ):
     """
-    Download or view all 1099 forms for a specific filer (Copy B).
-    Use ?view=true to open inline for printing.
+    View or download all 1099 forms for a specific filer (Copy B).
+    Default behavior: opens inline for viewing/printing.
+    Use ?download=true to download as attachment.
     """
     from PyPDF2 import PdfReader, PdfWriter
 
@@ -319,20 +340,17 @@ async def download_all_filer_forms(
 
     filename = f"1099s_{filer_name}_{processed}_forms.pdf"
 
-    # If view=true, return inline for viewing/printing in browser
-    if view:
+    # If download=true, return as attachment
+    if download:
         return StreamingResponse(
             output,
             media_type="application/pdf",
-            headers={
-                "Content-Disposition": f"inline; filename=\"{filename}\"",
-                "Content-Type": "application/pdf"
-            }
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
         )
 
-    # Default: download
+    # Default: inline (open for viewing/printing)
     return StreamingResponse(
         output,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""}
+        headers={"Content-Disposition": f'inline; filename="{filename}"'}
     )
