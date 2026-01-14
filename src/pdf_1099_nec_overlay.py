@@ -8,23 +8,52 @@ Template: 1099-NEC_template_blank.pdf (Official IRS Form 1099-NEC Rev. April 202
 """
 
 import io
+import json
+import os
+import sys
 from pathlib import Path
 from typing import Optional, cast
 from decimal import Decimal
+from contextlib import contextmanager
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.colors import black
 
+# Suppress MuPDF warnings at module load time (before any fitz.open calls)
+import fitz
+fitz.TOOLS.mupdf_warnings(False)
+
+
+@contextmanager
+def suppress_stderr():
+    """Temporarily suppress stderr output (for MuPDF C-level errors)."""
+    # Save the original stderr
+    original_stderr = sys.stderr
+    # Redirect stderr to devnull
+    sys.stderr = open(os.devnull, 'w')
+    try:
+        yield
+    finally:
+        sys.stderr.close()
+        sys.stderr = original_stderr
+
 
 PAGE_W, PAGE_H = letter  # 612 x 792 points
 
-# Template file path (relative to project root)
-# Using the official IRS template that produces output matching test_2025_v11.pdf
-TEMPLATE_PATH = Path(__file__).parent.parent / "New Official 1099-NEC.pdf"
+# Template and config paths (relative to project root)
+PROJECT_ROOT = Path(__file__).parent.parent
+TEMPLATE_PATH = PROJECT_ROOT / "New Official 1099-NEC.pdf"
+CONFIG_PATH = PROJECT_ROOT / "config" / "1099_nec_2025_copyb.json"
 
-if not TEMPLATE_PATH.exists():
-    raise FileNotFoundError(f"NEC template not found: {TEMPLATE_PATH}")
+
+def load_config(config_path: Optional[Path] = None) -> dict:
+    """Load NEC coordinate configuration from JSON file."""
+    path = config_path or CONFIG_PATH
+    if not path.exists():
+        raise FileNotFoundError(f"NEC config not found: {path}")
+    with open(path, "r") as f:
+        return json.load(f)
 
 
 def fitz_to_rl_y(y_fitz: float) -> float:
@@ -37,6 +66,41 @@ def format_money(amount: Optional[Decimal]) -> str:
     if amount is None or amount == 0:
         return ""
     return f"{float(amount):,.2f}"
+
+
+def format_phone(phone: str) -> str:
+    """
+    Format phone number with hyphens if needed.
+
+    Examples:
+        "7063531711"    -> "706-353-1711"
+        "706-353-1711"  -> "706-353-1711" (already formatted)
+        "(706) 353-1711" -> "(706) 353-1711" (already formatted)
+        "353-1711"      -> "353-1711" (7 digits, local)
+        ""              -> ""
+    """
+    if not phone:
+        return ""
+
+    # If it already has formatting (hyphens, parens, spaces), return as-is
+    if '-' in phone or '(' in phone or ' ' in phone:
+        return phone
+
+    # Extract digits only
+    digits = ''.join(c for c in phone if c.isdigit())
+
+    if len(digits) == 10:
+        # Standard US format: XXX-XXX-XXXX
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    elif len(digits) == 7:
+        # Local format: XXX-XXXX
+        return f"{digits[:3]}-{digits[3:]}"
+    elif len(digits) == 11 and digits[0] == '1':
+        # With country code: 1-XXX-XXX-XXXX
+        return f"1-{digits[1:4]}-{digits[4:7]}-{digits[7:]}"
+    else:
+        # Unknown format, return original
+        return phone
 
 
 def mask_tin(tin: str) -> str:
@@ -76,56 +140,8 @@ def mask_tin(tin: str) -> str:
     return '*' * masked_len + last_4
 
 
-# =============================================================================
-# COORDINATE CONFIGURATION - Matched to 1099-NEC_template_blank.pdf
-# All y values are y-down (from top of page)
-# =============================================================================
-
-# Coordinates from 1099nec_config.json that produced test_2025_v11.pdf
-COORDS = {
-    # Payer section
-    "payer_name": {"x": 47, "y": 88, "size": 10, "font": "Helvetica"},
-    "payer_street": {"x": 47, "y": 101, "size": 10, "font": "Helvetica"},
-    "payer_city_state_zip": {"x": 47, "y": 114, "size": 10, "font": "Helvetica"},
-    "payer_phone": {"x": 200, "y": 114, "size": 9, "font": "Helvetica-Bold"},  # Same line as city/state/zip, bold for visibility
-
-    # TINs row - using bold for better visibility
-    "payer_tin": {"x": 47, "y": 298, "size": 9, "font": "Helvetica-Bold"},
-    "recipient_tin": {"x": 168, "y": 298, "size": 9, "font": "Helvetica-Bold"},
-
-    # Recipient section
-    "recipient_name": {"x": 47, "y": 182, "size": 10, "font": "Helvetica"},
-    "recipient_line2": {"x": 47, "y": 195, "size": 10, "font": "Helvetica"},
-    "recipient_street": {"x": 47, "y": 212, "size": 10, "font": "Helvetica"},
-    "recipient_city_state_zip": {"x": 47, "y": 225, "size": 10, "font": "Helvetica"},
-
-    # Account number
-    "account_number": {"x": 47, "y": 274, "size": 9, "font": "Helvetica"},
-
-    # Box 1 - Nonemployee compensation
-    "box1_amount": {"x": 319, "y": 117, "size": 10, "font": "Helvetica"},
-
-    # Box 3 - Excess golden parachute payments
-    "box3_amount": {"x": 310, "y": 178, "size": 10, "font": "Helvetica"},
-
-    # Box 4 - Federal income tax withheld
-    "box4_amount": {"x": 310, "y": 214, "size": 10, "font": "Helvetica"},
-
-    # Box 5 - State tax withheld
-    "box5_amount": {"x": 310, "y": 250, "size": 9, "font": "Helvetica"},
-
-    # Box 6 - State/Payer's state no.
-    "box6_state": {"x": 380, "y": 250, "size": 9, "font": "Helvetica"},
-
-    # Box 7 - State income
-    "box7_amount": {"x": 480, "y": 250, "size": 9, "font": "Helvetica"},
-
-    # CORRECTED checkbox (X mark position)
-    "corrected_x": {"x": 502, "y": 20, "size": 12, "font": "Helvetica-Bold"},
-}
-
-
 def create_overlay(
+    coords: dict,
     payer_name: str,
     payer_street: str,
     payer_city_state_zip: str,
@@ -150,9 +166,9 @@ def create_overlay(
     c = canvas.Canvas(packet, pagesize=letter)
 
     def draw_text(key: str, text: str):
-        if not text or key not in COORDS:
+        if not text or key not in coords:
             return
-        info = COORDS[key]
+        info = coords[key]
         font = info.get("font", "Helvetica")
         size = info.get("size", 10)
         c.setFont(font, size)
@@ -170,7 +186,7 @@ def create_overlay(
     draw_text("payer_name", payer_name)
     draw_text("payer_street", payer_street)
     draw_text("payer_city_state_zip", payer_city_state_zip)
-    draw_text("payer_phone", payer_phone)
+    draw_text("payer_phone", format_phone(payer_phone))
 
     # Draw TINs
     draw_text("payer_tin", payer_tin)
@@ -210,10 +226,9 @@ def merge_overlay_with_template(template_path: Path, overlay_bytes: bytes) -> by
 
     Uses PyMuPDF exclusively for efficient merging without resource duplication.
     """
-    import fitz  # PyMuPDF
-
-    # Open template and overlay with PyMuPDF
-    template_doc = fitz.open(str(template_path))
+    # Open template with stderr suppressed to hide MuPDF xref errors
+    with suppress_stderr():
+        template_doc = fitz.open(str(template_path))
     overlay_doc = fitz.open(stream=overlay_bytes, filetype="pdf")
 
     template_page = template_doc[0]
@@ -277,6 +292,7 @@ def generate_1099_nec_overlay(
     box7_state_income: Decimal = Decimal("0"),
     corrected: bool = False,
     template_path: Optional[Path] = None,
+    config_path: Optional[Path] = None,
     mask_recipient_tin: bool = True,
 ) -> bytes:
     """
@@ -300,16 +316,22 @@ def generate_1099_nec_overlay(
         box7_state_income: State income
         corrected: Whether this is a corrected form
         template_path: Optional custom template path
+        config_path: Optional custom config path
         mask_recipient_tin: Mask recipient TIN showing only last 4 digits (default True for Copy B)
 
     Returns:
         PDF as bytes
     """
+    # Load config
+    config = load_config(config_path)
+    coords = config.get("coords", {})
+
+    # Use provided template or default
     if template_path is None:
         template_path = TEMPLATE_PATH
 
     if not template_path.exists():
-        raise FileNotFoundError(f"Template not found: {template_path}")
+        raise FileNotFoundError(f"NEC template not found: {template_path}")
 
     # Build address strings
     payer_street = payer_address_lines[0] if len(payer_address_lines) > 0 else ""
@@ -340,6 +362,7 @@ def generate_1099_nec_overlay(
 
     # Create overlay
     overlay_bytes = create_overlay(
+        coords=coords,
         payer_name=payer_name,
         payer_street=payer_street,
         payer_city_state_zip=payer_city_state_zip,

@@ -1,0 +1,45 @@
+# Sherpa 1099 - Docker Compose for local development/testing
+#
+# Usage:
+#   docker-compose up --build      # Build and start
+#   docker-compose up -d           # Start in background
+#   docker-compose down            # Stop and remove
+#   docker-compose logs -f         # View logs
+
+version: '3.8'
+
+services:
+  sherpa-1099:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      # Supabase (required)
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+
+      # TIN Encryption (required)
+      - TIN_ENCRYPTION_KEY=${TIN_ENCRYPTION_KEY}
+
+      # CORS (set for production domain)
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8002}
+
+      # IRS IRIS API (optional - only needed for IRS submission)
+      - IRIS_CLIENT_ID=${IRIS_CLIENT_ID:-}
+      - IRIS_KEY_ID=${IRIS_KEY_ID:-}
+      - IRIS_JWK=${IRIS_JWK:-}
+      - IRIS_ENV=${IRIS_ENV:-}
+      - IRIS_AUTH_ENDPOINT=${IRIS_AUTH_ENDPOINT:-}
+      - IRIS_API_BASE_URL=${IRIS_API_BASE_URL:-}
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

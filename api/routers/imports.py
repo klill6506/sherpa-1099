@@ -5,8 +5,10 @@ Handles Excel/CSV file uploads, column mapping, validation, and promotion.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form, Request
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 import sys
 sys.path.insert(0, "src")
@@ -14,6 +16,9 @@ sys.path.insert(0, "src")
 from import_service import ImportService, auto_map_columns
 
 router = APIRouter()
+
+# Rate limiter for import endpoints (per-IP to prevent DoS)
+limiter = Limiter(key_func=get_remote_address)
 
 
 # =============================================================================
@@ -126,7 +131,9 @@ class AutoMapResponse(BaseModel):
 # =============================================================================
 
 @router.post("/quick", response_model=QuickImportResponse, status_code=201)
+@limiter.limit("10/minute")  # 10 file uploads per minute per IP
 async def quick_import(
+    request: Request,
     file: UploadFile = File(...),
     operating_year_id: str = Form(...),
 ):
@@ -182,7 +189,9 @@ async def quick_import(
 
 
 @router.post("/upload", response_model=MultiSheetImportResponse, status_code=201)
+@limiter.limit("10/minute")  # 10 file uploads per minute per IP
 async def upload_file(
+    request: Request,
     file: UploadFile = File(...),
     operating_year_id: str = Form(...),
 ):
@@ -242,7 +251,9 @@ async def upload_file(
 
 
 @router.post("/upload-single", response_model=ImportBatch, status_code=201)
+@limiter.limit("10/minute")  # 10 file uploads per minute per IP
 async def upload_single_sheet(
+    request: Request,
     file: UploadFile = File(...),
     operating_year_id: str = Form(...),
     filer_id: Optional[str] = Form(None),

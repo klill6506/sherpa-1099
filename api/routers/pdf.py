@@ -23,6 +23,88 @@ from pdf_1098_overlay import generate_1098_copyb
 router = APIRouter()
 
 
+def get_forms_batch(form_ids: list) -> list:
+    """
+    Fetch multiple forms with their relations in optimized batch queries.
+    Returns list of dicts with form, filer, recipient data.
+    """
+    import logging
+    import copy
+
+    logger = logging.getLogger(__name__)
+
+    if not form_ids:
+        return []
+
+    # Deduplicate input form_ids while preserving order
+    seen_ids = set()
+    unique_form_ids = []
+    for fid in form_ids:
+        if fid not in seen_ids:
+            seen_ids.add(fid)
+            unique_form_ids.append(fid)
+
+    if len(form_ids) != len(unique_form_ids):
+        logger.warning(f"get_forms_batch: Input had {len(form_ids)} IDs, {len(unique_form_ids)} unique")
+
+    client = get_supabase_client()
+
+    # Fetch all forms in one query
+    forms_result = client.table("forms_1099").select("*").in_("id", unique_form_ids).execute()
+    if not forms_result.data:
+        return []
+
+    # Use copy to avoid mutating cached objects
+    forms_by_id = {f["id"]: copy.deepcopy(f) for f in forms_result.data}
+
+    # Collect unique filer and recipient IDs
+    filer_ids = list(set(f["filer_id"] for f in forms_result.data if f.get("filer_id")))
+    recipient_ids = list(set(f["recipient_id"] for f in forms_result.data if f.get("recipient_id")))
+    operating_year_ids = list(set(f["operating_year_id"] for f in forms_result.data if f.get("operating_year_id")))
+
+    # Batch fetch filers
+    filers_by_id = {}
+    if filer_ids:
+        filers_result = client.table("filers").select("*").in_("id", filer_ids).execute()
+        filers_by_id = {f["id"]: copy.deepcopy(f) for f in filers_result.data} if filers_result.data else {}
+
+    # Batch fetch recipients
+    recipients_by_id = {}
+    if recipient_ids:
+        recipients_result = client.table("recipients").select("*").in_("id", recipient_ids).execute()
+        recipients_by_id = {r["id"]: copy.deepcopy(r) for r in recipients_result.data} if recipients_result.data else {}
+
+    # Batch fetch operating years for tax_year
+    years_by_id = {}
+    if operating_year_ids:
+        years_result = client.table("operating_years").select("id, tax_year").in_("id", operating_year_ids).execute()
+        years_by_id = {y["id"]: y["tax_year"] for y in years_result.data} if years_result.data else {}
+
+    # Assemble results in original order (using deduplicated IDs)
+    results = []
+    for form_id in unique_form_ids:
+        form = forms_by_id.get(form_id)
+        if not form:
+            continue
+
+        filer = filers_by_id.get(form.get("filer_id"))
+        recipient = recipients_by_id.get(form.get("recipient_id"))
+
+        if not filer or not recipient:
+            continue
+
+        # Add tax year to form
+        form["tax_year"] = years_by_id.get(form.get("operating_year_id"), 2024)
+
+        results.append({
+            "form": form,
+            "filer": filer,
+            "recipient": recipient
+        })
+
+    return results
+
+
 def get_form_with_relations(form_id: str) -> dict:
     """Get form with filer and recipient data."""
     client = get_supabase_client()
@@ -244,12 +326,18 @@ async def download_batch_pdf(form_ids: List[str]):
     if not form_ids:
         raise HTTPException(status_code=400, detail="No form IDs provided")
 
+    # Use optimized batch fetch - reduces N*4 queries to just 4 queries total
+    forms_data = get_forms_batch(form_ids)
+
+    if not forms_data:
+        raise HTTPException(status_code=400, detail="No valid forms found")
+
     writer = PdfWriter()
     processed = 0
+    errors = []
 
-    for form_id in form_ids:
+    for data in forms_data:
         try:
-            data = get_form_with_relations(form_id)
             pdf_bytes = generate_1099_pdf(
                 form_data=data["form"],
                 filer_data=data["filer"],
@@ -261,12 +349,16 @@ async def download_batch_pdf(form_ids: List[str]):
                 writer.add_page(page)
             processed += 1
         except Exception as e:
-            # Skip failed forms, continue with others
-            print(f"Failed to generate PDF for form {form_id}: {e}")
+            # Track failed forms for debugging
+            form_id = data["form"].get("id", "unknown")
+            errors.append(f"{form_id}: {str(e)}")
             continue
 
     if processed == 0:
-        raise HTTPException(status_code=400, detail="No valid forms to generate")
+        detail = "No valid forms to generate"
+        if errors:
+            detail += f". Errors: {'; '.join(errors[:5])}"  # Show first 5 errors
+        raise HTTPException(status_code=400, detail=detail)
 
     output = BytesIO()
     writer.write(output)
@@ -293,10 +385,13 @@ async def download_all_filer_forms(
     Use ?download=true to download as attachment.
     """
     from PyPDF2 import PdfReader, PdfWriter
+    import logging
+
+    logger = logging.getLogger(__name__)
 
     client = get_supabase_client()
 
-    # Get all forms for this filer
+    # Get all form IDs for this filer
     query = client.table("forms_1099").select("id").eq("filer_id", filer_id)
     if form_type:
         query = query.eq("form_type", form_type)
@@ -307,13 +402,47 @@ async def download_all_filer_forms(
 
     form_ids = [f["id"] for f in forms_result.data]
 
-    # Reuse batch endpoint logic
+    # Check for duplicate form IDs from database query
+    if len(form_ids) != len(set(form_ids)):
+        logger.error(f"DUPLICATE FORM IDS from database query! Total: {len(form_ids)}, Unique: {len(set(form_ids))}")
+
+    # Use optimized batch fetch
+    forms_data = get_forms_batch(form_ids)
+
+    if not forms_data:
+        raise HTTPException(status_code=400, detail="No valid forms to generate")
+
     writer = PdfWriter()
     processed = 0
 
-    for form_id in form_ids:
+    # Track processed forms to detect duplicates
+    processed_form_ids = set()
+    processed_recipient_keys = set()  # (recipient_id, form_type) to catch same person twice
+    duplicates_detected = []
+
+    for data in forms_data:
+        form_id = data["form"].get("id")
+        recipient_id = data["recipient"].get("id")
+        recipient_name = data["recipient"].get("name", "Unknown")
+        form_type_val = data["form"].get("form_type", "Unknown")
+
+        # Check for duplicate form ID
+        if form_id in processed_form_ids:
+            duplicates_detected.append(f"DUPLICATE FORM ID: {form_id} for {recipient_name}")
+            logger.error(f"DUPLICATE FORM ID detected: {form_id} for {recipient_name}")
+            continue
+
+        # Check for duplicate recipient+form_type combo
+        recipient_key = (recipient_id, form_type_val)
+        if recipient_key in processed_recipient_keys:
+            duplicates_detected.append(f"DUPLICATE RECIPIENT: {recipient_name} ({form_type_val})")
+            logger.error(f"DUPLICATE RECIPIENT detected: {recipient_name} ({form_type_val})")
+            continue
+
+        processed_form_ids.add(form_id)
+        processed_recipient_keys.add(recipient_key)
+
         try:
-            data = get_form_with_relations(form_id)
             pdf_bytes = generate_1099_pdf(
                 form_data=data["form"],
                 filer_data=data["filer"],
@@ -321,11 +450,27 @@ async def download_all_filer_forms(
                 copy_type="B"
             )
             reader = PdfReader(BytesIO(pdf_bytes))
+            pages_before = len(writer.pages)
             for page in reader.pages:
                 writer.add_page(page)
+            pages_after = len(writer.pages)
+            pages_added = pages_after - pages_before
+            if pages_added != 1:
+                print(f"WARNING: Added {pages_added} pages for {recipient_name} (expected 1)")
             processed += 1
-        except Exception:
+            print(f"  [{processed}] {recipient_name}: {pages_added} page(s) added, total now {pages_after}")
+        except Exception as e:
+            logger.error(f"Error generating PDF for {recipient_name}: {e}")
+            print(f"  ERROR generating PDF for {recipient_name}: {e}")
             continue
+
+    # Log if duplicates were found
+    if duplicates_detected:
+        logger.error(f"PDF GENERATION DUPLICATES DETECTED ({len(duplicates_detected)}): {duplicates_detected}")
+        print(f"*** PDF DUPLICATES DETECTED ({len(duplicates_detected)}): {duplicates_detected} ***")
+
+    # Always print summary for debugging
+    print(f"PDF Generation: {processed} forms processed, {len(duplicates_detected)} duplicates skipped")
 
     if processed == 0:
         raise HTTPException(status_code=400, detail="No valid forms to generate")
@@ -340,17 +485,24 @@ async def download_all_filer_forms(
 
     filename = f"1099s_{filer_name}_{processed}_forms.pdf"
 
-    # If download=true, return as attachment
-    if download:
-        return StreamingResponse(
-            output,
-            media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    # Build response headers
+    disposition = "attachment" if download else "inline"
+    headers = {"Content-Disposition": f'{disposition}; filename="{filename}"'}
+
+    # Add warning header if duplicates were detected
+    if duplicates_detected:
+        headers["X-Duplicates-Warning"] = f"{len(duplicates_detected)} duplicates detected and skipped"
+        # Return error response instead of PDF if duplicates found
+        raise HTTPException(
+            status_code=409,
+            detail=f"Duplicate detection error: {len(duplicates_detected)} duplicates found and skipped. "
+                   f"Details: {'; '.join(duplicates_detected[:5])}"
+                   f"{' (and more...)' if len(duplicates_detected) > 5 else ''}. "
+                   f"PDF was generated with {processed} unique forms. Please check server logs and re-import data if needed."
         )
 
-    # Default: inline (open for viewing/printing)
     return StreamingResponse(
         output,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{filename}"'}
+        headers=headers
     )

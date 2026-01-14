@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sherpa 1099{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -105,7 +106,16 @@
                     <span class="px-3 py-1 rounded-lg bg-sherpa-card text-sm text-sherpa-muted border border-sherpa-border">
                         TY {{ operating_year.year if operating_year else '2025' }}
                     </span>
+                    {% if user %}
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-sherpa-muted">{{ user.display_name }}</span>
+                        <a href="/logout" class="px-3 py-1 rounded-lg text-sm text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-card transition-colors">
+                            Logout
+                        </a>
+                    </div>
+                    {% else %}
                     <span class="px-2 py-1 rounded text-xs font-medium bg-sherpa-amber/15 text-sherpa-amber">DEV</span>
+                    {% endif %}
                 </div>
             </div>
         </div>

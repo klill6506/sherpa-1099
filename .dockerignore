@@ -1,0 +1,69 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+.env.*
+*.env
+IRIS_KEYS/
+certs/
+Azure Secrets/
+
+# Testing and development
+*.test.py
+tests/
+pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation (not needed in container)
+*.md
+docs/
+
+# Temp files
+*.log
+*.tmp
+tmp*/
+tmpclaude-*
+
+# Database files (if any local)
+*.db
+*.sqlite
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Scripts not needed in production
+scripts/
+tools/
+
+# Legacy files
+app_streamlit_1099.py
+fill_1099nec.py
+create_1099nec_template.py
+generate_1099_nec_copyb.py
+validate_1099s.py
+test_*.py

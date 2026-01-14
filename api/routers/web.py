@@ -2,18 +2,20 @@
 Web Pages Router.
 
 Serves Jinja2 templates for the frontend UI.
+All pages require authentication (except download-template for now).
 """
 
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import APIRouter, Request, Depends
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 import sys
 sys.path.insert(0, "src")
 
 from supabase_client import get_supabase_client
+from api.auth import require_auth_redirect, CurrentUser
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -88,6 +90,11 @@ def get_dashboard_stats(operating_year_id: Optional[str] = None):
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     """Dashboard page - shows filers list."""
+    # Check authentication
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -98,7 +105,8 @@ async def dashboard(request: Request):
         "request": request,
         "active_page": "dashboard",
         "operating_year": operating_year,
-        "filers": filers
+        "filers": filers,
+        "user": user
     })
 
 
@@ -109,6 +117,10 @@ async def dashboard(request: Request):
 @router.get("/imports", response_class=HTMLResponse)
 async def imports_list(request: Request):
     """Import batches list page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -120,13 +132,18 @@ async def imports_list(request: Request):
         "request": request,
         "active_page": "imports",
         "operating_year": operating_year,
-        "batches": batches
+        "batches": batches,
+        "user": user
     })
 
 
 @router.get("/imports/upload", response_class=HTMLResponse)
 async def imports_upload(request: Request):
     """Import upload page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -152,13 +169,18 @@ async def imports_upload(request: Request):
         "operating_year": operating_year,
         "operating_years": operating_years,
         "current_year_id": operating_year['id'] if operating_year else None,
-        "filers": filers
+        "filers": filers,
+        "user": user
     })
 
 
 @router.get("/imports/{batch_id}", response_class=HTMLResponse)
 async def imports_review(request: Request, batch_id: str):
     """Import review page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -182,7 +204,8 @@ async def imports_review(request: Request, batch_id: str):
         "active_page": "imports",
         "operating_year": operating_year,
         "batch": batch,
-        "filers": filers
+        "filers": filers,
+        "user": user
     })
 
 
@@ -193,6 +216,10 @@ async def imports_review(request: Request, batch_id: str):
 @router.get("/filers", response_class=HTMLResponse)
 async def filers_list(request: Request):
     """Filers list page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -202,13 +229,18 @@ async def filers_list(request: Request):
         "request": request,
         "active_page": "filers",
         "operating_year": operating_year,
-        "filers": filers
+        "filers": filers,
+        "user": user
     })
 
 
 @router.get("/filers/new", response_class=HTMLResponse)
 async def filers_new(request: Request):
     """New filer form page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     operating_year = get_operating_year()
 
     return templates.TemplateResponse("filers/form.html", {
@@ -216,13 +248,18 @@ async def filers_new(request: Request):
         "active_page": "filers",
         "operating_year": operating_year,
         "filer": None,
-        "states": US_STATES
+        "states": US_STATES,
+        "user": user
     })
 
 
 @router.get("/filers/{filer_id}", response_class=HTMLResponse)
 async def filers_detail(request: Request, filer_id: str):
     """Filer detail page with recipients and forms."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -271,13 +308,18 @@ async def filers_detail(request: Request, filer_id: str):
         "nec_count": nec_count,
         "misc_count": misc_count,
         "s_count": s_count,
-        "f1098_count": f1098_count
+        "f1098_count": f1098_count,
+        "user": user
     })
 
 
 @router.get("/filers/{filer_id}/edit", response_class=HTMLResponse)
 async def filers_edit(request: Request, filer_id: str):
     """Edit filer form page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -293,13 +335,18 @@ async def filers_edit(request: Request, filer_id: str):
         "active_page": "filers",
         "operating_year": operating_year,
         "filer": filer_result.data[0],
-        "states": US_STATES
+        "states": US_STATES,
+        "user": user
     })
 
 
 @router.get("/filers/{filer_id}/tin-match", response_class=HTMLResponse)
 async def filers_tin_match(request: Request, filer_id: str):
     """TIN matching page for a filer's recipients."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -321,7 +368,8 @@ async def filers_tin_match(request: Request, filer_id: str):
         "active_page": "filers",
         "operating_year": operating_year,
         "filer": filer,
-        "recipients": recipients
+        "recipients": recipients,
+        "user": user
     })
 
 
@@ -332,6 +380,10 @@ async def filers_tin_match(request: Request, filer_id: str):
 @router.get("/recipients", response_class=HTMLResponse)
 async def recipients_list(request: Request):
     """Recipients list page (placeholder)."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -341,7 +393,8 @@ async def recipients_list(request: Request):
         "request": request,
         "active_page": "recipients",
         "operating_year": operating_year,
-        "recipients": recipients
+        "recipients": recipients,
+        "user": user
     })
 
 
@@ -352,6 +405,10 @@ async def recipients_list(request: Request):
 @router.get("/forms", response_class=HTMLResponse)
 async def forms_list(request: Request):
     """1099 Forms list page (placeholder)."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
     client = get_supabase_client()
     operating_year = get_operating_year()
 
@@ -363,7 +420,8 @@ async def forms_list(request: Request):
         "request": request,
         "active_page": "forms",
         "operating_year": operating_year,
-        "forms": forms
+        "forms": forms,
+        "user": user
     })
 
 

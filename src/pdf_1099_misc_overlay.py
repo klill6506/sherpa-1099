@@ -12,13 +12,32 @@ changing NEC output. They share similar patterns but are maintained independentl
 
 import io
 import json
+import os
+import sys
 from pathlib import Path
 from typing import Optional, cast
 from decimal import Decimal
+from contextlib import contextmanager
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.colors import black
+
+# Suppress MuPDF warnings at module load time (before any fitz.open calls)
+import fitz
+fitz.TOOLS.mupdf_warnings(False)
+
+
+@contextmanager
+def suppress_stderr():
+    """Temporarily suppress stderr output (for MuPDF C-level errors)."""
+    original_stderr = sys.stderr
+    sys.stderr = open(os.devnull, 'w')
+    try:
+        yield
+    finally:
+        sys.stderr.close()
+        sys.stderr = original_stderr
 
 
 PAGE_W, PAGE_H = letter  # 612 x 792 points
@@ -48,6 +67,41 @@ def format_money(amount: Optional[Decimal]) -> str:
     if amount is None or amount == 0:
         return ""
     return f"{float(amount):,.2f}"
+
+
+def format_phone(phone: str) -> str:
+    """
+    Format phone number with hyphens if needed.
+
+    Examples:
+        "7063531711"    -> "706-353-1711"
+        "706-353-1711"  -> "706-353-1711" (already formatted)
+        "(706) 353-1711" -> "(706) 353-1711" (already formatted)
+        "353-1711"      -> "353-1711" (7 digits, local)
+        ""              -> ""
+    """
+    if not phone:
+        return ""
+
+    # If it already has formatting (hyphens, parens, spaces), return as-is
+    if '-' in phone or '(' in phone or ' ' in phone:
+        return phone
+
+    # Extract digits only
+    digits = ''.join(c for c in phone if c.isdigit())
+
+    if len(digits) == 10:
+        # Standard US format: XXX-XXX-XXXX
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    elif len(digits) == 7:
+        # Local format: XXX-XXXX
+        return f"{digits[:3]}-{digits[3:]}"
+    elif len(digits) == 11 and digits[0] == '1':
+        # With country code: 1-XXX-XXX-XXXX
+        return f"1-{digits[1:4]}-{digits[4:7]}-{digits[7:]}"
+    else:
+        # Unknown format, return original
+        return phone
 
 
 def mask_tin(tin: str) -> str:
@@ -132,7 +186,7 @@ def create_overlay(
     draw_text("payer_name", payer_name)
     draw_text("payer_street", payer_street)
     draw_text("payer_city_state_zip", payer_city_state_zip)
-    draw_text("payer_phone", payer_phone)
+    draw_text("payer_phone", format_phone(payer_phone))
 
     # Draw TINs
     draw_text("payer_tin", payer_tin)
@@ -172,10 +226,9 @@ def merge_overlay_with_template(template_path: Path, overlay_bytes: bytes) -> by
 
     Uses PyMuPDF exclusively for efficient merging without resource duplication.
     """
-    import fitz  # PyMuPDF
-
-    # Open template and overlay with PyMuPDF
-    template_doc = fitz.open(str(template_path))
+    # Open template with stderr suppressed to hide MuPDF xref errors
+    with suppress_stderr():
+        template_doc = fitz.open(str(template_path))
     overlay_doc = fitz.open(stream=overlay_bytes, filetype="pdf")
 
     template_page = template_doc[0]

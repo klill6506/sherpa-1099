@@ -85,3 +85,6 @@ test_*.bat
 
 # Supabase local config (contains credentials)
 Supabase/
+tmpclaude-*
+Azure Secrets/
+certs/
