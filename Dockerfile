@@ -28,7 +28,6 @@ COPY src/ ./src/
 COPY templates/ ./templates/
 COPY static/ ./static/
 COPY config/ ./config/
-COPY Schemas/ ./Schemas/
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser
