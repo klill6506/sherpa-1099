@@ -542,3 +542,55 @@ async def download_all_filer_forms(
         media_type="application/pdf",
         headers=headers
     )
+
+
+@router.get("/filer/{filer_id}/invoice")
+async def generate_filer_invoice(
+    filer_id: str,
+    download: bool = Query(True, description="Download as attachment instead of opening inline")
+):
+    """
+    Generate a PDF invoice for 1099 preparation services.
+
+    Pricing:
+    - Setup fee: $150
+    - Per form: $7
+
+    Invoice number format: 26XXX (derived from filer ID)
+    """
+    from invoice_generator import generate_invoice_pdf
+
+    client = get_supabase_client()
+
+    # Get filer info
+    filer_result = client.table("filers").select("name").eq("id", filer_id).execute()
+    if not filer_result.data:
+        raise HTTPException(status_code=404, detail="Filer not found")
+
+    filer_name = filer_result.data[0]["name"]
+
+    # Count forms for this filer (current operating year)
+    forms_result = client.table("forms_1099").select("id").eq("filer_id", filer_id).execute()
+    form_count = len(forms_result.data) if forms_result.data else 0
+
+    if form_count == 0:
+        raise HTTPException(status_code=400, detail="No forms found for this filer")
+
+    # Generate invoice PDF
+    pdf_bytes = generate_invoice_pdf(
+        filer_name=filer_name,
+        filer_id=filer_id,
+        form_count=form_count,
+    )
+
+    # Build filename
+    safe_name = filer_name.replace(" ", "_").replace(",", "")[:30]
+    filename = f"Invoice_{safe_name}.pdf"
+
+    disposition = "attachment" if download else "inline"
+
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'{disposition}; filename="{filename}"'}
+    )
