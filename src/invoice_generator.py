@@ -43,6 +43,8 @@ def generate_invoice_pdf(
     filer_name: str,
     filer_id: str,
     form_count: int,
+    filer_address: str = "",
+    filer_city_state_zip: str = "",
     invoice_date: date = None,
 ) -> bytes:
     """
@@ -52,6 +54,8 @@ def generate_invoice_pdf(
         filer_name: Name of the client/filer being invoiced
         filer_id: UUID of the filer (used for invoice number)
         form_count: Number of 1099 forms prepared
+        filer_address: Filer's street address
+        filer_city_state_zip: Filer's city, state, zip
         invoice_date: Date for the invoice (defaults to today)
 
     Returns:
@@ -112,47 +116,52 @@ def generate_invoice_pdf(
         textColor=colors.HexColor('#333333'),
     )
 
+    right_align_style = ParagraphStyle(
+        'RightAlign',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#333333'),
+        alignment=2,  # Right align
+    )
+
     # Build document elements
     elements = []
 
-    # Company Header
-    elements.append(Paragraph(COMPANY_NAME, title_style))
-    elements.append(Paragraph(COMPANY_ADDRESS, company_style))
-    elements.append(Paragraph(COMPANY_CITY_STATE_ZIP, company_style))
-    elements.append(Spacer(1, 0.4*inch))
-
-    # Invoice Title
+    # INVOICE title centered at top
     invoice_title_style = ParagraphStyle(
         'InvoiceLabel',
-        parent=styles['Heading2'],
-        fontSize=18,
+        parent=styles['Heading1'],
+        fontSize=28,
         textColor=colors.HexColor('#d4a537'),  # Sherpa amber
+        alignment=1,  # Center
+        spaceAfter=20,
     )
     elements.append(Paragraph("INVOICE", invoice_title_style))
-    elements.append(Spacer(1, 0.2*inch))
 
-    # Invoice Details (number and date)
-    details_data = [
-        ["Invoice Number:", invoice_number],
-        ["Invoice Date:", invoice_date.strftime("%B %d, %Y")],
+    # Header row: Company info on left, Invoice details on right
+    header_data = [
+        [
+            Paragraph(f"<b>{COMPANY_NAME}</b><br/>{COMPANY_ADDRESS}<br/>{COMPANY_CITY_STATE_ZIP}", company_style),
+            Paragraph(f"<b>Invoice #:</b> {invoice_number}<br/><b>Date:</b> {invoice_date.strftime('%B %d, %Y')}", right_align_style),
+        ]
     ]
-    details_table = Table(details_data, colWidths=[1.5*inch, 2.5*inch])
-    details_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#333333')),
-        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    header_table = Table(header_data, colWidths=[3.5*inch, 3.5*inch])
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
     ]))
-    elements.append(details_table)
-    elements.append(Spacer(1, 0.3*inch))
+    elements.append(header_table)
+    elements.append(Spacer(1, 0.4*inch))
 
-    # Bill To
+    # Bill To with filer address
     elements.append(Paragraph("Bill To:", header_style))
     elements.append(Spacer(1, 0.1*inch))
-    elements.append(Paragraph(f"<b>{filer_name}</b>", normal_style))
+    bill_to_text = f"<b>{filer_name}</b>"
+    if filer_address:
+        bill_to_text += f"<br/>{filer_address}"
+    if filer_city_state_zip:
+        bill_to_text += f"<br/>{filer_city_state_zip}"
+    elements.append(Paragraph(bill_to_text, normal_style))
     elements.append(Spacer(1, 0.4*inch))
 
     # Services Description

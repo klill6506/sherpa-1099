@@ -562,12 +562,19 @@ async def generate_filer_invoice(
 
     client = get_supabase_client()
 
-    # Get filer info
-    filer_result = client.table("filers").select("name").eq("id", filer_id).execute()
+    # Get filer info including address
+    filer_result = client.table("filers").select("name, address1, address2, city, state, zip").eq("id", filer_id).execute()
     if not filer_result.data:
         raise HTTPException(status_code=404, detail="Filer not found")
 
-    filer_name = filer_result.data[0]["name"]
+    filer = filer_result.data[0]
+    filer_name = filer["name"]
+
+    # Build filer address
+    filer_address = filer.get("address1", "")
+    if filer.get("address2"):
+        filer_address += f", {filer['address2']}"
+    filer_city_state_zip = f"{filer.get('city', '')}, {filer.get('state', '')} {filer.get('zip', '')}"
 
     # Count forms for this filer (current operating year)
     forms_result = client.table("forms_1099").select("id").eq("filer_id", filer_id).execute()
@@ -581,6 +588,8 @@ async def generate_filer_invoice(
         filer_name=filer_name,
         filer_id=filer_id,
         form_count=form_count,
+        filer_address=filer_address,
+        filer_city_state_zip=filer_city_state_zip,
     )
 
     # Build filename
