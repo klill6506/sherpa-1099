@@ -29,6 +29,9 @@ COPY templates/ ./templates/
 COPY static/ ./static/
 COPY config/ ./config/
 
+# Copy PDF templates (IRS form templates for overlay generation)
+COPY *.pdf ./
+
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser
 RUN chown -R appuser:appuser /app
