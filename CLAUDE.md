@@ -5,7 +5,8 @@
 **Port:** 8002
 **Stack:** Python, FastAPI, Supabase (PostgreSQL), IRS IRIS API
 **GitHub:** https://github.com/klill6506/sherpa-1099
-**Status:** 🔨 Active Development - Target completion: Tax Season 2025
+**Production URL:** https://sherpa-1099.onrender.com
+**Status:** ✅ LIVE - Deployed to Render.com
 
 ## What This App Does
 Converts client 1099 workbooks into IRS-compliant format and submits via IRIS e-file system.
@@ -24,10 +25,17 @@ Or double-click: `run_api.bat`
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-09
-**Working on:** Deployed to server (T:\sherpa-1099) for employee access
-**Next steps:** IRS IRIS integration when credentials are ready
-**Blockers:** Waiting on IRS
+**Last session:** 2026-01-14
+**Working on:** Successfully deployed to internet via Render.com
+**Completed:** All 5 phases of internet deployment:
+- Phase 0: Security headers (CSP, HSTS, etc.)
+- Phase 1: Microsoft OAuth authentication via Supabase
+- Phase 2: Multi-tenant isolation with RLS policies
+- Phase 3: Rate limiting with SlowAPI
+- Phase 4: TIN encryption (Fernet) - 80 records migrated
+- Phase 5: Docker containerization & Render deployment
+**Next steps:** IRS IRIS integration when credentials are approved
+**Blockers:** Waiting on IRS IRIS access
 
 ## Key Files
 | File | Purpose |
@@ -38,9 +46,10 @@ Or double-click: `run_api.bat`
 | `src/supabase_client.py` | Database operations |
 | `src/iris_auth.py` | IRIS OAuth authentication |
 | `src/iris_client.py` | IRIS API client |
-| `app_streamlit_1099.py` | Main Streamlit UI (legacy) |
+| `src/encryption.py` | TIN encryption (Fernet) |
+| `Dockerfile` | Production container config |
+| `docker-compose.yml` | Local Docker testing |
 | `IRIS_KEYS/` | IRS API credentials (DO NOT COMMIT) |
-| `Schemas/` | IRS XML schema files |
 
 ## Running the App
 ```powershell
@@ -58,14 +67,20 @@ python -m uvicorn api.main:app --port 8002 --host 0.0.0.0
 - **Test endpoint:** https://la.www4.irs.gov/
 - **Prod endpoint:** https://la.irs.gov/
 
+## Deployment
+**Production:** Render.com (auto-deploys from GitHub main branch)
+**Workflow:** Edit locally → `git push origin main` → Render auto-deploys (~2 min)
+
+**Environment Variables (set in Render dashboard):**
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `TIN_ENCRYPTION_KEY`
+- `ALLOWED_ORIGINS=https://sherpa-1099.onrender.com`
+
 ## Dev Notes
-- Ken's workflow: FastAPI/SQLite/Jinja2/Tailwind CDN
+- Ken's workflow: FastAPI/Supabase/Jinja2/Tailwind CDN
 - Can modify files freely; ask before deleting
 - Port 8002 reserved for this app
-- Supabase integration explored but SQLite preferred for local
-
-## Known Issues
-- psycopg2-binary won't install on Python 3.14 (not needed for SQLite)
+- TINs are encrypted at rest (Fernet) with last-4 stored for display
 
 ## Related Docs
 - `README_IRIS.md` - IRIS API documentation

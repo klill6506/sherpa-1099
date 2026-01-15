@@ -10,6 +10,7 @@ from decimal import Decimal
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from io import BytesIO
+import logging
 
 import sys
 sys.path.insert(0, "src")
@@ -19,8 +20,39 @@ from pdf_1099_nec_overlay import generate_1099_nec_overlay
 from pdf_1099_misc_overlay import generate_1099_misc_overlay
 from pdf_1099_s_overlay import generate_1099s_copyb
 from pdf_1098_overlay import generate_1098_copyb
+from encryption import decrypt_tin, format_tin_full
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def get_decrypted_tin(record: dict, record_type: str = "recipient") -> str:
+    """
+    Get decrypted TIN from a filer or recipient record.
+
+    Tries tin_encrypted first (Phase 4 encrypted), falls back to tin (legacy plain text).
+    """
+    tin_encrypted = record.get("tin_encrypted")
+    tin_type = record.get("tin_type", "SSN")
+
+    if tin_encrypted:
+        try:
+            # Decrypt and format with dashes
+            decrypted = decrypt_tin(tin_encrypted, record.get("tin_key_version", 1))
+            return format_tin_full(decrypted, tin_type)
+        except Exception as e:
+            logger.error(f"Failed to decrypt TIN for {record_type} {record.get('id')}: {e}")
+            # Fall through to legacy tin field
+
+    # Legacy: use plain text tin field if encryption not available
+    plain_tin = record.get("tin", "")
+    if plain_tin:
+        return plain_tin
+
+    # Last resort: show masked version
+    tin_last4 = record.get("tin_last4", "0000")
+    return f"XXX-XX-{tin_last4}" if tin_type == "SSN" else f"XX-XXX{tin_last4}"
 
 
 def get_forms_batch(form_ids: list) -> list:
@@ -142,6 +174,10 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
     form_type = form_data.get("form_type", "1099-NEC")
     tax_year = form_data.get("tax_year", 2024)
 
+    # Decrypt TINs for PDF generation
+    filer_tin = get_decrypted_tin(filer_data, "filer")
+    recipient_tin = get_decrypted_tin(recipient_data, "recipient")
+
     # Build filer address lines
     filer_address_lines = []
     if filer_data.get("address1"):
@@ -165,10 +201,10 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
         return generate_1099_nec_overlay(
             payer_name=filer_data.get("name", ""),
             payer_address_lines=filer_address_lines,
-            payer_tin=filer_data.get("tin", ""),
+            payer_tin=filer_tin,
             recipient_name=recipient_data.get("name", ""),
             recipient_address_lines=recipient_address_lines,
-            recipient_tin=recipient_data.get("tin", ""),
+            recipient_tin=recipient_tin,
             payer_phone=filer_data.get("phone", ""),
             recipient_account=recipient_data.get("account_number", ""),
             tax_year=tax_year,
@@ -186,10 +222,10 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
         return generate_1099_misc_overlay(
             payer_name=filer_data.get("name", ""),
             payer_address_lines=filer_address_lines,
-            payer_tin=filer_data.get("tin", ""),
+            payer_tin=filer_tin,
             recipient_name=recipient_data.get("name", ""),
             recipient_address_lines=recipient_address_lines,
-            recipient_tin=recipient_data.get("tin", ""),
+            recipient_tin=recipient_tin,
             payer_phone=filer_data.get("phone", ""),
             recipient_account=recipient_data.get("account_number", ""),
             tax_year=tax_year,
@@ -206,10 +242,10 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
         return generate_1099s_copyb(
             filer_name=filer_data.get("name", ""),
             filer_address_lines=filer_address_lines,
-            filer_tin=filer_data.get("tin", ""),
+            filer_tin=filer_tin,
             transferor_name=recipient_data.get("name", ""),
             transferor_address_lines=recipient_address_lines,
-            transferor_tin=recipient_data.get("tin", ""),
+            transferor_tin=recipient_tin,
             filer_phone=filer_data.get("phone", ""),
             account_number=recipient_data.get("account_number", ""),
             tax_year=tax_year,
@@ -228,10 +264,10 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
         return generate_1098_copyb(
             recipient_name=filer_data.get("name", ""),  # Lender
             recipient_address_lines=filer_address_lines,
-            recipient_tin=filer_data.get("tin", ""),
+            recipient_tin=filer_tin,
             payer_name=recipient_data.get("name", ""),  # Borrower
             payer_address_lines=recipient_address_lines,
-            payer_tin=recipient_data.get("tin", ""),
+            payer_tin=recipient_tin,
             recipient_phone=filer_data.get("phone", ""),
             account_number=recipient_data.get("account_number", ""),
             tax_year=tax_year,
