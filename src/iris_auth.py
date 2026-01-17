@@ -188,6 +188,7 @@ class IRISAuthenticator:
 
         try:
             logger.info(f"Requesting token from {self.config.auth_endpoint}")
+            logger.info(f"Using client_id: {self.config.client_id[:8]}...")
             response = requests.post(
                 self.config.auth_endpoint,
                 data=payload,
@@ -196,8 +197,16 @@ class IRISAuthenticator:
             )
 
             if response.status_code != 200:
-                # Log status but NOT response body (could contain sensitive info)
+                # Log status and error details (response may contain error description)
                 logger.error(f"Token request failed: HTTP {response.status_code}")
+                # Try to extract error details from response
+                try:
+                    error_data = response.json()
+                    error_desc = error_data.get("error_description", error_data.get("error", "Unknown"))
+                    logger.error(f"Auth error details: {error_desc}")
+                except Exception:
+                    # If response isn't JSON, log first 200 chars
+                    logger.error(f"Auth response: {response.text[:200] if response.text else 'empty'}")
                 raise IRISAuthError(
                     f"Token request failed with status {response.status_code}"
                 )

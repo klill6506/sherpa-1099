@@ -262,7 +262,11 @@ class IRISClient:
         Raises:
             IRISClientError: If request fails
         """
-        headers = self._get_headers(content_type=content_type)
+        try:
+            headers = self._get_headers(content_type=content_type)
+        except IRISAuthError as e:
+            logger.error(f"Authentication failed: {e}")
+            raise IRISClientError(f"Authentication failed: {e}")
 
         try:
             logger.info(f"Making {method} request to {url}")
