@@ -78,7 +78,7 @@ class IRISAuthenticator:
 
     def _load_private_key(self) -> str:
         """
-        Load RSA private key from disk.
+        Load RSA private key from config (env var or file).
 
         Returns:
             str: PEM-encoded private key
@@ -90,8 +90,7 @@ class IRISAuthenticator:
             return self._private_key
 
         try:
-            with open(self.config.private_key_path, "r") as f:
-                self._private_key = f.read()
+            self._private_key = self.config.get_private_key()
             logger.debug("Private key loaded successfully")
             return self._private_key
         except Exception as e:

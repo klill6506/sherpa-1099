@@ -18,14 +18,15 @@ class IRISConfig:
     # IRS Client ID (provided via env var or .env file)
     client_id: str
 
-    # Path to RSA private key file (PEM format)
-    private_key_path: Path
-
     # IRIS API base URLs
     # ATS (Assurance Testing System) endpoints - TEST environment
     # Production endpoints would be different
     auth_endpoint: str
     api_base_url: str
+
+    # Private key - either path to file OR the PEM content directly
+    private_key_path: Optional[Path] = None
+    private_key_pem: Optional[str] = None
 
     # JWT settings
     jwt_algorithm: str = "RS256"
@@ -41,11 +42,24 @@ class IRISConfig:
         """Validate configuration on creation."""
         if not self.client_id:
             raise ValueError("IRIS_CLIENT_ID environment variable is required")
-        if not self.private_key_path.exists():
+        # Must have either private_key_path or private_key_pem
+        if not self.private_key_pem and not self.private_key_path:
+            raise ValueError(
+                "Either IRIS_PRIVATE_KEY (PEM content) or IRIS_PRIVATE_KEY_PATH must be set"
+            )
+        if self.private_key_path and not self.private_key_path.exists():
             raise FileNotFoundError(
                 f"Private key not found at {self.private_key_path}. "
                 "Ensure IRIS_PRIVATE_KEY_PATH points to a valid PEM file."
             )
+
+    def get_private_key(self) -> str:
+        """Get the private key PEM content."""
+        if self.private_key_pem:
+            return self.private_key_pem
+        if self.private_key_path:
+            return self.private_key_path.read_text()
+        raise ValueError("No private key configured")
 
 
 def load_config() -> IRISConfig:
@@ -55,8 +69,11 @@ def load_config() -> IRISConfig:
     Required environment variables:
         IRIS_CLIENT_ID: IRS-issued client ID (UUID format)
 
+    Private key (one of these required):
+        IRIS_PRIVATE_KEY: RSA private key PEM content (recommended for cloud deployment)
+        IRIS_PRIVATE_KEY_PATH: Path to RSA private key file (for local development)
+
     Optional environment variables:
-        IRIS_PRIVATE_KEY_PATH: Path to RSA private key (default: ./IRIS_KEYS/iris_private.key)
         IRIS_KEY_ID: Key ID matching JWKS registration (default: iris-a2a-2025)
         IRIS_ENVIRONMENT: "ATS" for test, "PROD" for production (default: ATS)
         IRIS_AUTH_ENDPOINT: OAuth token endpoint (default: ATS endpoint)
@@ -75,12 +92,17 @@ def load_config() -> IRISConfig:
     # Load client ID (required)
     client_id = os.environ.get("IRIS_CLIENT_ID", "")
 
-    # Load private key path (default to IRIS_KEYS directory)
-    private_key_path_str = os.environ.get(
-        "IRIS_PRIVATE_KEY_PATH",
-        str(base_dir / "IRIS_KEYS" / "iris_private.key")
-    )
-    private_key_path = Path(private_key_path_str)
+    # Load private key - prefer PEM content from env var, fall back to file path
+    private_key_pem = os.environ.get("IRIS_PRIVATE_KEY", "")
+    private_key_path = None
+
+    if not private_key_pem:
+        # No PEM content in env var, check for file path
+        private_key_path_str = os.environ.get(
+            "IRIS_PRIVATE_KEY_PATH",
+            str(base_dir / "IRIS_KEYS" / "iris_private.key")
+        )
+        private_key_path = Path(private_key_path_str)
 
     # Load key ID
     key_id = os.environ.get("IRIS_KEY_ID", "iris-a2a-2025")
@@ -117,9 +139,10 @@ def load_config() -> IRISConfig:
 
     return IRISConfig(
         client_id=client_id,
-        private_key_path=private_key_path,
         auth_endpoint=default_auth_endpoint,
         api_base_url=default_api_base,
+        private_key_path=private_key_path,
+        private_key_pem=private_key_pem if private_key_pem else None,
         key_id=key_id,
         environment=environment,
     )
