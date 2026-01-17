@@ -90,11 +90,26 @@ class IRISAuthenticator:
             return self._private_key
 
         try:
-            self._private_key = self.config.get_private_key()
-            logger.debug("Private key loaded successfully")
+            raw_key = self.config.get_private_key()
+
+            # Handle escaped newlines from environment variables
+            # Render and other platforms may escape \n as literal \\n
+            if "\\n" in raw_key and "\n" not in raw_key.replace("\\n", ""):
+                logger.info("Converting escaped newlines in private key")
+                raw_key = raw_key.replace("\\n", "\n")
+
+            # Validate key format
+            if not raw_key.strip().startswith("-----BEGIN"):
+                logger.error(f"Private key doesn't start with PEM header. First 30 chars: {raw_key[:30]}")
+                raise IRISAuthError("Private key is not in PEM format")
+
+            self._private_key = raw_key
+            logger.info(f"Private key loaded: {len(raw_key)} chars, starts with {raw_key[:27]}")
             return self._private_key
+        except IRISAuthError:
+            raise
         except Exception as e:
-            # Don't log the actual error details - could leak path info
+            logger.error(f"Failed to load private key: {type(e).__name__}")
             raise IRISAuthError(f"Failed to load private key: {type(e).__name__}")
 
     def _create_client_assertion(self) -> str:
@@ -141,16 +156,22 @@ class IRISAuthenticator:
 
         try:
             private_key = self._load_private_key()
+            logger.info(f"Creating JWT with algorithm={self.config.jwt_algorithm}, kid={self.config.key_id}")
             assertion = jwt.encode(
                 claims,
                 private_key,
                 algorithm=self.config.jwt_algorithm,
                 headers=headers,
             )
-            logger.debug("Client assertion created successfully")
+            logger.info("Client assertion created successfully")
             return assertion
+        except jwt.exceptions.InvalidKeyError as e:
+            # Log more details about key format issues
+            logger.error(f"InvalidKeyError: {e}")
+            logger.error("This usually means the private key format is wrong or newlines are missing")
+            raise IRISAuthError(f"Failed to create client assertion: InvalidKeyError - check key format")
         except Exception as e:
-            # Don't log JWT or key details
+            logger.error(f"JWT encode failed: {type(e).__name__}: {e}")
             raise IRISAuthError(f"Failed to create client assertion: {type(e).__name__}")
 
     def _request_token(self, assertion: str) -> AccessToken:
