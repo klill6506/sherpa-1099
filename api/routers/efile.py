@@ -130,6 +130,24 @@ class XMLPreviewResponse(BaseModel):
     total_amount: float
 
 
+class FormValidationError(BaseModel):
+    """A single validation error for a form."""
+    row: int = Field(..., description="Row number in the data set (1-indexed)")
+    field: str = Field(..., description="Field name with the issue")
+    message: str = Field(..., description="User-friendly error message")
+    severity: str = Field(default="error", description="error or warning")
+    recipient_name: Optional[str] = Field(None, description="Recipient name for context")
+
+
+class FormValidationResponse(BaseModel):
+    """Response from form validation."""
+    is_valid: bool
+    form_count: int
+    error_count: int
+    warning_count: int
+    errors: List[FormValidationError] = Field(default_factory=list)
+
+
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
@@ -314,8 +332,414 @@ def build_misc_form(form: dict, recipient: RecipientInfo, record_id: str, tax_ye
 
 
 # =============================================================================
+# FORM VALIDATION HELPERS
+# =============================================================================
+
+# Valid US state codes (includes DC and territories)
+VALID_STATE_CODES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
+    "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
+    "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
+    "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
+    "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI",
+    "WY", "AS", "GU", "MP", "PR", "VI", "FM", "MH", "PW",
+}
+
+
+def normalize_tin(tin: str) -> str:
+    """Strip punctuation from TIN, return digits only."""
+    if not tin:
+        return ""
+    return "".join(c for c in tin if c.isdigit())
+
+
+def validate_tin_format(tin: str, tin_type: str = "SSN") -> tuple[bool, str]:
+    """
+    Validate TIN format.
+
+    Returns (is_valid, error_message).
+    """
+    normalized = normalize_tin(tin)
+
+    if not normalized:
+        return False, "TIN is missing"
+
+    if len(normalized) != 9:
+        return False, f"TIN must be 9 digits (got {len(normalized)})"
+
+    # Check for invalid patterns
+    if normalized == "000000000":
+        return False, "TIN cannot be all zeros"
+
+    if tin_type == "SSN":
+        # SSN format: XXX-XX-XXXX
+        # Area number (first 3) cannot be 000, 666, or 900-999
+        area = int(normalized[:3])
+        if area == 0 or area == 666 or area >= 900:
+            return False, f"Invalid SSN area number: {area:03d}"
+        # Group number (middle 2) cannot be 00
+        if normalized[3:5] == "00":
+            return False, "Invalid SSN group number: 00"
+        # Serial number (last 4) cannot be 0000
+        if normalized[5:] == "0000":
+            return False, "Invalid SSN serial number: 0000"
+
+    return True, ""
+
+
+def validate_zip_code(zip_code: str) -> tuple[bool, str]:
+    """Validate ZIP code format."""
+    if not zip_code:
+        return False, "ZIP code is missing"
+
+    # Remove any spaces or dashes
+    cleaned = zip_code.replace("-", "").replace(" ", "")
+
+    if not cleaned.isdigit():
+        return False, "ZIP code must be numeric"
+
+    if len(cleaned) not in (5, 9):
+        return False, f"ZIP code must be 5 or 9 digits (got {len(cleaned)})"
+
+    return True, ""
+
+
+def validate_amount(amount, field_name: str, allow_zero: bool = True, max_amount: float = 99999999.99) -> tuple[bool, str]:
+    """Validate a monetary amount."""
+    if amount is None:
+        return True, ""  # None amounts are OK (treated as 0)
+
+    try:
+        value = float(amount)
+    except (ValueError, TypeError):
+        return False, f"{field_name} must be a number"
+
+    if value < 0:
+        return False, f"{field_name} cannot be negative"
+
+    if not allow_zero and value == 0:
+        return False, f"{field_name} cannot be zero"
+
+    if value > max_amount:
+        return False, f"{field_name} exceeds maximum ({max_amount:,.2f})"
+
+    return True, ""
+
+
+def validate_form_data(
+    row_num: int,
+    form: dict,
+    recipient: dict,
+    form_type: str,
+) -> List[FormValidationError]:
+    """
+    Validate a single form and its recipient data.
+
+    Returns list of validation errors.
+    """
+    errors = []
+    recipient_name = recipient.get("name", "Unknown")
+
+    def add_error(field: str, message: str, severity: str = "error"):
+        errors.append(FormValidationError(
+            row=row_num,
+            field=field,
+            message=f"Row {row_num}: {message}",
+            severity=severity,
+            recipient_name=recipient_name,
+        ))
+
+    def add_warning(field: str, message: str):
+        add_error(field, message, severity="warning")
+
+    # -----------------------------
+    # Recipient Validation
+    # -----------------------------
+
+    # TIN validation
+    tin = recipient.get("tin_encrypted") or recipient.get("tin", "")
+    tin_type = recipient.get("tin_type", "SSN")
+
+    # If TIN is encrypted, try to decrypt for validation
+    if recipient.get("tin_encrypted"):
+        try:
+            tin = decrypt_tin(recipient["tin_encrypted"])
+        except Exception:
+            tin = ""  # Will fail validation
+
+    tin_valid, tin_error = validate_tin_format(tin, tin_type)
+    if not tin_valid:
+        add_error("tin", tin_error)
+
+    # Name validation
+    if not recipient.get("name") or not recipient.get("name", "").strip():
+        add_error("name", "Recipient name is missing")
+    elif len(recipient.get("name", "")) > 80:
+        add_error("name", "Recipient name too long (max 80 characters)")
+
+    # Address validation
+    if not recipient.get("address1") or not recipient.get("address1", "").strip():
+        add_error("address1", "Street address is missing")
+    elif len(recipient.get("address1", "")) > 40:
+        add_error("address1", "Street address too long (max 40 characters)")
+
+    if recipient.get("address2") and len(recipient.get("address2", "")) > 40:
+        add_warning("address2", "Address line 2 too long (max 40 characters)")
+
+    if not recipient.get("city") or not recipient.get("city", "").strip():
+        add_error("city", "City is missing")
+    elif len(recipient.get("city", "")) > 25:
+        add_error("city", "City name too long (max 25 characters)")
+
+    # State validation
+    state = recipient.get("state", "").upper().strip()
+    if not state:
+        add_error("state", "State is missing")
+    elif state not in VALID_STATE_CODES:
+        add_error("state", f"Invalid state code: {state}")
+
+    # ZIP validation
+    zip_valid, zip_error = validate_zip_code(recipient.get("zip", ""))
+    if not zip_valid:
+        add_error("zip", zip_error)
+
+    # -----------------------------
+    # Amount Validation
+    # -----------------------------
+
+    if form_type == "1099-NEC":
+        # NEC Box 1: Nonemployee compensation (required, cannot be zero for filing)
+        nec_box1 = form.get("nec_box1")
+        valid, msg = validate_amount(nec_box1, "Nonemployee compensation (Box 1)")
+        if not valid:
+            add_error("nec_box1", msg)
+        elif nec_box1 is None or float(nec_box1 or 0) == 0:
+            add_warning("nec_box1", "Nonemployee compensation (Box 1) is zero - form may not be required")
+
+        # NEC Box 4: Federal tax withheld
+        valid, msg = validate_amount(form.get("nec_box4"), "Federal tax withheld (Box 4)")
+        if not valid:
+            add_error("nec_box4", msg)
+
+    elif form_type == "1099-MISC":
+        # MISC has many boxes - validate the common ones
+        amount_fields = [
+            ("misc_box1", "Rents (Box 1)"),
+            ("misc_box2", "Royalties (Box 2)"),
+            ("misc_box3", "Other income (Box 3)"),
+            ("misc_box4", "Federal tax withheld (Box 4)"),
+            ("misc_box5", "Fishing boat proceeds (Box 5)"),
+            ("misc_box6", "Medical payments (Box 6)"),
+            ("misc_box8", "Substitute payments (Box 8)"),
+            ("misc_box9", "Crop insurance (Box 9)"),
+            ("misc_box10", "Attorney proceeds (Box 10)"),
+            ("misc_box11", "Fish purchased (Box 11)"),
+            ("misc_box12", "Section 409A deferrals (Box 12)"),
+            ("misc_box14", "Nonqualified deferred comp (Box 14)"),
+        ]
+
+        has_any_amount = False
+        for field, label in amount_fields:
+            valid, msg = validate_amount(form.get(field), label)
+            if not valid:
+                add_error(field, msg)
+            elif form.get(field) and float(form.get(field) or 0) > 0:
+                has_any_amount = True
+
+        if not has_any_amount:
+            add_warning("amounts", "No amounts entered - form may not be required")
+
+    # -----------------------------
+    # State Withholding Validation
+    # -----------------------------
+
+    # If state withholding is present, state info must be present
+    if form.get("state1_withheld") and float(form.get("state1_withheld") or 0) > 0:
+        if not form.get("state1_code"):
+            add_error("state1_code", "State 1 withholding requires a state code")
+        elif form.get("state1_code") not in VALID_STATE_CODES:
+            add_error("state1_code", f"Invalid state code: {form.get('state1_code')}")
+
+        valid, msg = validate_amount(form.get("state1_withheld"), "State 1 withholding")
+        if not valid:
+            add_error("state1_withheld", msg)
+
+    if form.get("state2_withheld") and float(form.get("state2_withheld") or 0) > 0:
+        if not form.get("state2_code"):
+            add_error("state2_code", "State 2 withholding requires a state code")
+        elif form.get("state2_code") not in VALID_STATE_CODES:
+            add_error("state2_code", f"Invalid state code: {form.get('state2_code')}")
+
+        valid, msg = validate_amount(form.get("state2_withheld"), "State 2 withholding")
+        if not valid:
+            add_error("state2_withheld", msg)
+
+    # If state income is present, state code should be present
+    if form.get("state1_income") and float(form.get("state1_income") or 0) > 0:
+        if not form.get("state1_code"):
+            add_warning("state1_code", "State 1 income without state code")
+
+    if form.get("state2_income") and float(form.get("state2_income") or 0) > 0:
+        if not form.get("state2_code"):
+            add_warning("state2_code", "State 2 income without state code")
+
+    # -----------------------------
+    # Federal Withholding Validation
+    # -----------------------------
+
+    # Federal withholding shouldn't exceed income
+    federal_withheld = float(form.get("nec_box4") or form.get("misc_box4") or 0)
+    if form_type == "1099-NEC":
+        total_income = float(form.get("nec_box1") or 0)
+    else:
+        total_income = sum(
+            float(form.get(f"misc_box{i}") or 0)
+            for i in [1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 14]
+        )
+
+    if federal_withheld > 0 and total_income > 0 and federal_withheld > total_income:
+        add_warning("federal_withheld", f"Federal withholding (${federal_withheld:,.2f}) exceeds total income (${total_income:,.2f})")
+
+    return errors
+
+
+def validate_filer_data(filer: dict) -> List[FormValidationError]:
+    """
+    Validate filer/issuer data.
+
+    Returns list of validation errors.
+    """
+    errors = []
+
+    def add_error(field: str, message: str, severity: str = "error"):
+        errors.append(FormValidationError(
+            row=0,  # 0 indicates filer-level error
+            field=f"filer.{field}",
+            message=f"Filer: {message}",
+            severity=severity,
+            recipient_name=None,
+        ))
+
+    # TIN validation
+    tin = filer.get("tin_encrypted") or filer.get("tin", "")
+    if filer.get("tin_encrypted"):
+        try:
+            tin = decrypt_tin(filer["tin_encrypted"])
+        except Exception:
+            tin = ""
+
+    tin_valid, tin_error = validate_tin_format(tin, filer.get("tin_type", "EIN"))
+    if not tin_valid:
+        add_error("tin", tin_error)
+
+    # Name validation
+    if not filer.get("name"):
+        add_error("name", "Filer name is missing")
+
+    # Address validation
+    if not filer.get("address1"):
+        add_error("address1", "Filer street address is missing")
+    if not filer.get("city"):
+        add_error("city", "Filer city is missing")
+
+    state = filer.get("state", "").upper().strip()
+    if not state:
+        add_error("state", "Filer state is missing")
+    elif state not in VALID_STATE_CODES:
+        add_error("state", f"Invalid filer state code: {state}")
+
+    zip_valid, zip_error = validate_zip_code(filer.get("zip", ""))
+    if not zip_valid:
+        add_error("zip", f"Filer {zip_error.lower()}")
+
+    return errors
+
+
+# =============================================================================
 # API ENDPOINTS
 # =============================================================================
+
+@router.post("/validate-forms", response_model=FormValidationResponse)
+async def validate_forms(request: EFileRequest):
+    """
+    Validate form data before XML generation.
+
+    This is step 1 of the pre-transmit validation flow:
+    1. validate-forms - Check row-level business rules (TIN format, required fields, amounts)
+    2. validate-xml - Check generated XML against IRS schema (XSD validation)
+
+    Returns user-friendly error messages identifying specific rows and fields.
+    """
+    try:
+        # Get filer
+        filer = get_filer(request.filer_id)
+        if not filer:
+            raise HTTPException(status_code=404, detail="Filer not found")
+
+        # Get operating year
+        op_year = get_operating_year(request.operating_year_id)
+        if not op_year:
+            raise HTTPException(status_code=404, detail="Operating year not found")
+
+        # Get forms
+        all_forms = get_forms_1099(request.filer_id, request.operating_year_id)
+
+        form_type_filter = "1099-NEC" if request.form_type == "1099NEC" else "1099-MISC"
+        forms = [f for f in all_forms if f.get("form_type") == form_type_filter]
+
+        if request.form_ids:
+            forms = [f for f in forms if f.get("id") in request.form_ids]
+        elif request.include_drafts:
+            pass  # Include all forms
+        else:
+            forms = [f for f in forms if f.get("status") in ("validated", "draft")]
+
+        if not forms:
+            raise HTTPException(
+                status_code=400,
+                detail="No forms found to validate"
+            )
+
+        all_errors: List[FormValidationError] = []
+
+        # Validate filer first
+        filer_errors = validate_filer_data(filer)
+        all_errors.extend(filer_errors)
+
+        # Validate each form
+        for i, form in enumerate(forms, 1):
+            recipient = get_recipient(form.get("recipient_id"))
+            if not recipient:
+                all_errors.append(FormValidationError(
+                    row=i,
+                    field="recipient_id",
+                    message=f"Row {i}: Recipient not found",
+                    severity="error",
+                    recipient_name=None,
+                ))
+                continue
+
+            form_errors = validate_form_data(i, form, recipient, form_type_filter)
+            all_errors.extend(form_errors)
+
+        # Count errors and warnings
+        error_count = len([e for e in all_errors if e.severity == "error"])
+        warning_count = len([e for e in all_errors if e.severity == "warning"])
+
+        return FormValidationResponse(
+            is_valid=error_count == 0,
+            form_count=len(forms),
+            error_count=error_count,
+            warning_count=warning_count,
+            errors=all_errors,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error validating forms")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/preview-xml")
 async def preview_xml(request: EFileRequest) -> Response:
