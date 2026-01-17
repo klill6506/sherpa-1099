@@ -94,22 +94,50 @@ class IRISAuthenticator:
 
             # Handle escaped newlines from environment variables
             # Render and other platforms may escape \n as literal \\n
-            if "\\n" in raw_key and "\n" not in raw_key.replace("\\n", ""):
+            if "\\n" in raw_key:
                 logger.info("Converting escaped newlines in private key")
                 raw_key = raw_key.replace("\\n", "\n")
 
-            # Validate key format
-            if not raw_key.strip().startswith("-----BEGIN"):
-                logger.error(f"Private key doesn't start with PEM header. First 30 chars: {raw_key[:30]}")
+            # Also handle \r\n (Windows line endings)
+            raw_key = raw_key.replace("\r\n", "\n")
+
+            # Strip any leading/trailing whitespace
+            raw_key = raw_key.strip()
+
+            # Validate key format - check for PEM header
+            if not raw_key.startswith("-----BEGIN"):
+                logger.error(f"Private key doesn't start with PEM header. First 50 chars: {raw_key[:50]}")
                 raise IRISAuthError("Private key is not in PEM format")
 
+            # Log key type for debugging
+            first_line = raw_key.split("\n")[0]
+            logger.info(f"Private key header: {first_line}")
+            logger.info(f"Private key total length: {len(raw_key)} chars")
+            logger.info(f"Private key line count: {raw_key.count(chr(10)) + 1}")
+
+            # Validate that the key can be loaded by cryptography library
+            try:
+                from cryptography.hazmat.primitives import serialization
+                from cryptography.hazmat.backends import default_backend
+
+                # Try to load as private key
+                key_bytes = raw_key.encode('utf-8')
+                private_key_obj = serialization.load_pem_private_key(
+                    key_bytes,
+                    password=None,
+                    backend=default_backend()
+                )
+                logger.info(f"Private key validated: {type(private_key_obj).__name__}")
+            except Exception as e:
+                logger.error(f"cryptography failed to load key: {type(e).__name__}: {e}")
+                # Continue anyway - jwt might handle it differently
+
             self._private_key = raw_key
-            logger.info(f"Private key loaded: {len(raw_key)} chars, starts with {raw_key[:27]}")
             return self._private_key
         except IRISAuthError:
             raise
         except Exception as e:
-            logger.error(f"Failed to load private key: {type(e).__name__}")
+            logger.error(f"Failed to load private key: {type(e).__name__}: {e}")
             raise IRISAuthError(f"Failed to load private key: {type(e).__name__}")
 
     def _create_client_assertion(self) -> str:
