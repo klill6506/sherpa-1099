@@ -6,6 +6,7 @@ Never logs or exposes sensitive values like tokens or private keys.
 """
 
 import os
+import base64
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional
@@ -95,12 +96,27 @@ def load_config() -> IRISConfig:
     # Load client ID (required)
     client_id = os.environ.get("IRIS_CLIENT_ID", "")
 
-    # Load private key - prefer PEM content from env var, fall back to file path
-    private_key_pem = os.environ.get("IRIS_PRIVATE_KEY", "")
+    # Load private key - priority order:
+    # 1. IRIS_PRIVATE_KEY_B64 (base64-encoded PEM - best for cloud deployment)
+    # 2. IRIS_PRIVATE_KEY (raw PEM content)
+    # 3. IRIS_PRIVATE_KEY_PATH (file path)
+    private_key_pem = None
     private_key_path = None
 
+    # Option 1: Base64-encoded key (recommended for Render/cloud)
+    private_key_b64 = os.environ.get("IRIS_PRIVATE_KEY_B64", "")
+    if private_key_b64:
+        try:
+            private_key_pem = base64.b64decode(private_key_b64).decode("utf-8")
+        except Exception as e:
+            raise ValueError(f"Failed to decode IRIS_PRIVATE_KEY_B64: {e}")
+
+    # Option 2: Raw PEM content
     if not private_key_pem:
-        # No PEM content in env var, check for file path
+        private_key_pem = os.environ.get("IRIS_PRIVATE_KEY", "") or None
+
+    # Option 3: File path (for local development)
+    if not private_key_pem:
         private_key_path_str = os.environ.get(
             "IRIS_PRIVATE_KEY_PATH",
             str(base_dir / "IRIS_KEYS" / "iris_private.key")

@@ -67,7 +67,16 @@ async def lifespan(app: FastAPI):
         logger.info(f"IRIS Intake Endpoint: {config.intake_endpoint}")
         logger.info(f"IRIS Status Endpoint: {config.status_endpoint}")
         logger.info(f"IRIS Client ID: {config.client_id[:8]}...{config.client_id[-4:] if len(config.client_id) > 12 else ''}")
-        logger.info(f"IRIS Private Key: {'configured (PEM)' if config.private_key_pem else 'configured (file)' if config.private_key_path else 'NOT CONFIGURED'}")
+        # Determine key source for logging
+        key_source = "NOT CONFIGURED"
+        if config.private_key_pem:
+            if os.environ.get("IRIS_PRIVATE_KEY_B64"):
+                key_source = "configured (base64)"
+            else:
+                key_source = "configured (PEM)"
+        elif config.private_key_path:
+            key_source = "configured (file)"
+        logger.info(f"IRIS Private Key: {key_source}")
     except Exception as e:
         logger.warning(f"Could not load IRIS config on startup: {e}")
 
