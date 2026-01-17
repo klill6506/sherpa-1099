@@ -1923,3 +1923,87 @@ async def ats_test_submit(request: ATSTestRequest):
     except Exception as e:
         logger.exception("Error submitting ATS test to IRS")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# SUBMISSION STATUS CHECK
+# =============================================================================
+
+class StatusCheckRequest(BaseModel):
+    """Request to check submission status."""
+    receipt_id: Optional[str] = None
+    transmission_id: Optional[str] = None
+
+
+class StatusCheckResponse(BaseModel):
+    """Response from status check."""
+    success: bool
+    receipt_id: str
+    transmission_id: str
+    status: str
+    message: str
+    errors: List[dict] = Field(default_factory=list)
+    form_results: List[dict] = Field(default_factory=list)
+
+
+@router.post("/check-status", response_model=StatusCheckResponse)
+async def check_submission_status(request: StatusCheckRequest):
+    """
+    Check the status of a previously submitted transmission.
+
+    Provide either receipt_id (from IRS response) or transmission_id (your UTID).
+    The IRS may take time to process - check back if status is 'pending'.
+    """
+    if not request.receipt_id and not request.transmission_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Either receipt_id or transmission_id is required"
+        )
+
+    try:
+        config = load_config()
+        client = IRISClient(config)
+
+        # Try to get acknowledgment first (more detailed)
+        try:
+            result = client.get_acknowledgment(
+                receipt_id=request.receipt_id,
+                transmission_id=request.transmission_id
+            )
+        except IRISClientError:
+            # Fall back to basic status check
+            result = client.get_status(
+                receipt_id=request.receipt_id,
+                transmission_id=request.transmission_id
+            )
+
+        return StatusCheckResponse(
+            success=result.is_success,
+            receipt_id=result.receipt_id,
+            transmission_id=result.unique_transmission_id,
+            status=result.status.value,
+            message=result.message,
+            errors=[
+                {
+                    "record_id": e.record_id,
+                    "code": e.error_code,
+                    "message": e.error_message,
+                    "field": e.field_name,
+                }
+                for e in result.errors
+            ],
+            form_results=getattr(result, 'form_results', []),
+        )
+
+    except IRISClientError as e:
+        logger.error(f"Status check failed: {e}")
+        return StatusCheckResponse(
+            success=False,
+            receipt_id=request.receipt_id or "",
+            transmission_id=request.transmission_id or "",
+            status="error",
+            message=str(e),
+        )
+    except Exception as e:
+        logger.exception("Error checking submission status")
+        raise HTTPException(status_code=500, detail=str(e))

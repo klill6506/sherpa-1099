@@ -25,17 +25,15 @@ Or double-click: `run_api.bat`
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-14
-**Working on:** Successfully deployed to internet via Render.com
-**Completed:** All 5 phases of internet deployment:
-- Phase 0: Security headers (CSP, HSTS, etc.)
-- Phase 1: Microsoft OAuth authentication via Supabase
-- Phase 2: Multi-tenant isolation with RLS policies
-- Phase 3: Rate limiting with SlowAPI
-- Phase 4: TIN encryption (Fernet) - 80 records migrated
-- Phase 5: Docker containerization & Render deployment
-**Next steps:** IRS IRIS integration when credentials are approved
-**Blockers:** Waiting on IRS IRIS access
+**Last session:** 2026-01-17
+**Working on:** IRS IRIS e-filing integration - COMPLETE
+**Completed:**
+- IRIS XML Generator (`src/iris_xml_generator.py`) - generates IRS-compliant XML per TY2025 v1.2 schema
+- Updated IRIS Client (`src/iris_client.py`) - XML submission, status checking, acknowledgment retrieval
+- XML Validator (`src/iris_xml_validator.py`) - validates against IRS schema and business rules
+- E-Filing API Router (`api/routers/efile.py`) - endpoints for preview, validate, submit, status, acknowledgment
+**Next steps:** Test with IRS ATS (Assurance Testing System) when credentials are active
+**Blockers:** Need to configure transmitter environment variables (TRANSMITTER_TIN, TRANSMITTER_TCC, etc.)
 
 ## Key Files
 | File | Purpose |
@@ -43,13 +41,17 @@ Or double-click: `run_api.bat`
 | `api/main.py` | FastAPI backend entry point |
 | `api/schemas.py` | Pydantic models for API |
 | `api/routers/` | API route handlers |
+| `api/routers/efile.py` | IRS e-filing endpoints |
 | `src/supabase_client.py` | Database operations |
 | `src/iris_auth.py` | IRIS OAuth authentication |
-| `src/iris_client.py` | IRIS API client |
+| `src/iris_client.py` | IRIS API client (XML submission) |
+| `src/iris_xml_generator.py` | IRS-compliant XML generation |
+| `src/iris_xml_validator.py` | XML schema validation |
 | `src/encryption.py` | TIN encryption (Fernet) |
 | `Dockerfile` | Production container config |
 | `docker-compose.yml` | Local Docker testing |
 | `IRIS_KEYS/` | IRS API credentials (DO NOT COMMIT) |
+| `Schemas/` | IRS IRIS XSD schemas (TY2025 v1.2) |
 
 ## Running the App
 ```powershell
@@ -66,6 +68,33 @@ python -m uvicorn api.main:app --port 8002 --host 0.0.0.0
 - **Auth:** OAuth 2.0 with client certificate
 - **Test endpoint:** https://la.www4.irs.gov/
 - **Prod endpoint:** https://la.irs.gov/
+- **Schema Version:** TY2025 v1.2 (iris-a2a-schema-and-business-rules-ty2025-v1.2)
+
+### E-Filing API Endpoints
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/efile/preview-xml` | POST | Generate XML preview (download) |
+| `/api/efile/validate-xml` | POST | Validate XML without submitting |
+| `/api/efile/submit` | POST | Submit to IRS IRIS |
+| `/api/efile/status` | POST | Check submission status |
+| `/api/efile/acknowledgment` | POST | Get detailed acknowledgment |
+| `/api/efile/transmitter-config` | GET | View transmitter config (masked) |
+
+### Required Environment Variables for E-Filing
+```
+TRANSMITTER_TIN=000000000          # Your transmitter TIN (9 digits)
+TRANSMITTER_TIN_TYPE=EIN           # EIN or SSN
+TRANSMITTER_TCC=DG5BW              # Transmitter Control Code
+TRANSMITTER_BUSINESS_NAME=...      # Your business name
+TRANSMITTER_ADDRESS1=...           # Street address
+TRANSMITTER_CITY=...
+TRANSMITTER_STATE=..               # 2-letter state code
+TRANSMITTER_ZIP=...
+TRANSMITTER_CONTACT_NAME=...
+TRANSMITTER_CONTACT_EMAIL=...
+TRANSMITTER_CONTACT_PHONE=...      # 10 digits
+IRS_SOFTWARE_ID=...                # IRS-assigned software ID
+```
 
 ## Deployment
 **Production:** Render.com (auto-deploys from GitHub main branch)
