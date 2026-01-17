@@ -847,6 +847,9 @@ class IRISClient:
     ) -> AcknowledgmentResult:
         """Parse acknowledgment response XML."""
         try:
+            # Log raw response for debugging
+            logger.info(f"IRS acknowledgment response: {response.content[:1000]}")
+
             root = ET.fromstring(response.content)
             ns = {"irs": "urn:us:gov:treasury:irs:ir"}
 
