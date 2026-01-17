@@ -246,6 +246,78 @@
         </div>
     </template>
 
+    <!-- Standalone Status Checker -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <h2 class="text-lg font-medium text-sherpa-text mb-4">Check Submission Status</h2>
+        <p class="text-sm text-sherpa-muted mb-4">Enter a Transmission ID to check its status without submitting again.</p>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+            <input type="text"
+                   x-model="manualTransmissionId"
+                   placeholder="e.g., 50b48319-5db1-421f-82d0-dbb4cf594548:IRIS:DG5BW::T"
+                   class="flex-1 px-4 py-3 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm font-mono placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+            <button @click="checkManualStatus()"
+                    :disabled="!manualTransmissionId || checkingManualStatus"
+                    class="px-6 py-3 rounded-xl bg-sherpa-panel border border-sherpa-border text-sm font-medium text-sherpa-text hover:bg-sherpa-subtle/20 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                <span x-show="!checkingManualStatus">Check Status</span>
+                <span x-show="checkingManualStatus">Checking...</span>
+            </button>
+        </div>
+
+        <!-- Your previous transmission IDs -->
+        <div class="mt-3 text-xs text-sherpa-subtle">
+            <p class="mb-1">Your recent transmissions (click to check):</p>
+            <div class="space-y-1">
+                <button @click="manualTransmissionId = '50b48319-5db1-421f-82d0-dbb4cf594548:IRIS:DG5BW::T'; checkManualStatus()"
+                        class="block text-sherpa-blue hover:underline font-mono truncate max-w-full text-left">
+                    50b48319-5db1-421f-82d0-dbb4cf594548:IRIS:DG5BW::T
+                </button>
+                <button @click="manualTransmissionId = '5197d8f6-a49e-4ae4-b280-0c493cea0401:IRIS:DG5BW::T'; checkManualStatus()"
+                        class="block text-sherpa-blue hover:underline font-mono truncate max-w-full text-left">
+                    5197d8f6-a49e-4ae4-b280-0c493cea0401:IRIS:DG5BW::T
+                </button>
+            </div>
+        </div>
+
+        <!-- Manual Status Result -->
+        <template x-if="manualStatusResult">
+            <div class="mt-4 p-4 rounded-xl"
+                 :class="manualStatusResult.status === 'accepted' || manualStatusResult.status === 'pending' || manualStatusResult.status === 'processing' ? 'bg-sherpa-teal/10 border border-sherpa-teal/30' : 'bg-red-500/10 border border-red-500/30'">
+                <div class="text-sm space-y-1">
+                    <p><strong>Status:</strong>
+                        <span class="font-medium"
+                              :class="manualStatusResult.status === 'accepted' ? 'text-sherpa-teal' : manualStatusResult.status === 'pending' || manualStatusResult.status === 'processing' ? 'text-sherpa-amber' : 'text-red-400'"
+                              x-text="manualStatusResult.status"></span>
+                    </p>
+                    <p><strong>Message:</strong> <span x-text="manualStatusResult.message"></span></p>
+                    <template x-if="manualStatusResult.receipt_id">
+                        <p><strong>Receipt ID:</strong> <span class="font-mono text-xs" x-text="manualStatusResult.receipt_id"></span></p>
+                    </template>
+                    <template x-if="manualStatusResult.form_results && manualStatusResult.form_results.length > 0">
+                        <div class="mt-2 pt-2 border-t border-sherpa-border/50">
+                            <strong>Form Results:</strong>
+                            <div class="mt-1 space-y-1">
+                                <template x-for="fr in manualStatusResult.form_results" :key="fr.record_id">
+                                    <p class="text-xs ml-2">• <span x-text="fr.record_id"></span>: <span x-text="fr.status"></span></p>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="manualStatusResult.errors && manualStatusResult.errors.length > 0">
+                        <div class="mt-2 pt-2 border-t border-red-500/30">
+                            <strong class="text-red-400">Errors:</strong>
+                            <div class="mt-1 space-y-1">
+                                <template x-for="err in manualStatusResult.errors" :key="err.code">
+                                    <p class="text-xs text-red-400 ml-2">• <span x-text="err.message || err.code"></span></p>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <!-- XML Preview Modal -->
     <template x-if="showXmlPreview">
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showXmlPreview = false">
@@ -287,6 +359,10 @@ function atsTestForm() {
         result: null,
         showXmlPreview: false,
         xmlContent: '',
+        // Manual status check
+        manualTransmissionId: '',
+        checkingManualStatus: false,
+        manualStatusResult: null,
         checkingStatus: false,
         statusResult: null,
 
@@ -371,6 +447,30 @@ function atsTestForm() {
                 };
             } finally {
                 this.checkingStatus = false;
+            }
+        },
+
+        async checkManualStatus() {
+            if (!this.manualTransmissionId) return;
+
+            this.checkingManualStatus = true;
+            this.manualStatusResult = null;
+            try {
+                const response = await fetch('/api/efile/check-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        transmission_id: this.manualTransmissionId.trim()
+                    })
+                });
+                this.manualStatusResult = await response.json();
+            } catch (error) {
+                this.manualStatusResult = {
+                    status: 'error',
+                    message: 'Status check failed: ' + error.message
+                };
+            } finally {
+                this.checkingManualStatus = false;
             }
         }
     };
