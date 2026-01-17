@@ -17,6 +17,7 @@ Security notes:
 """
 
 import logging
+import os
 import uuid
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
@@ -644,19 +645,47 @@ class IRISClient:
         self,
         receipt_id: Optional[str],
         transmission_id: Optional[str],
+        tcc: Optional[str] = None,
+        request_type: str = "S",  # "S" for Status, "A" for Acknowledgement
     ) -> bytes:
-        """Build status request XML per IRS schema."""
+        """
+        Build status/acknowledgement request XML per IRS TY2025 v1.2 schema.
+
+        Args:
+            receipt_id: IRS-assigned receipt ID (format: YYYY-NNNNNNNNNNN-XXXXXXXXX)
+            transmission_id: Our UTID (format: UUID:IRIS:TCC::T or ::A)
+            tcc: Transmitter Control Code (5 chars). If not provided, extracted from transmission_id
+            request_type: "S" for Status, "A" for Acknowledgement
+        """
         ns = "urn:us:gov:treasury:irs:ir"
         ET.register_namespace("", ns)
 
-        root = ET.Element(f"{{{ns}}}StatusOrAckRequest")
+        # Root element per schema
+        root = ET.Element(f"{{{ns}}}TransStatusOrAckRequest")
 
+        # Get TCC - either provided or extract from transmission_id
+        if not tcc and transmission_id:
+            # UTID format: UUID:IRIS:TCC::T or ::A
+            parts = transmission_id.split(":")
+            if len(parts) >= 3:
+                tcc = parts[2]  # TCC is the 3rd part
+
+        if not tcc:
+            tcc = os.environ.get("TRANSMITTER_TCC", "DG5BW")
+
+        # Required: TransmitterControlCd
+        self._add_elem(root, "TransmitterControlCd", tcc, ns)
+
+        # Required: SearchTypeCd - "S" for Status, "A" for Acknowledgement
+        self._add_elem(root, "SearchTypeCd", request_type, ns)
+
+        # Required: SearchParameterTypeCd - "RID" or "UTID"
         if receipt_id:
-            self._add_elem(root, "ReceiptId", receipt_id, ns)
-            self._add_elem(root, "RequestTypeCd", "STATUS", ns)
+            self._add_elem(root, "SearchParameterTypeCd", "RID", ns)
+            self._add_elem(root, "SearchId", receipt_id, ns)
         else:
-            self._add_elem(root, "UniqueTransmissionId", transmission_id, ns)
-            self._add_elem(root, "RequestTypeCd", "STATUS", ns)
+            self._add_elem(root, "SearchParameterTypeCd", "UTID", ns)
+            self._add_elem(root, "SearchId", transmission_id, ns)
 
         return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
@@ -774,20 +803,13 @@ class IRISClient:
         receipt_id: Optional[str],
         transmission_id: Optional[str],
     ) -> bytes:
-        """Build acknowledgment request XML."""
-        ns = "urn:us:gov:treasury:irs:ir"
-        ET.register_namespace("", ns)
-
-        root = ET.Element(f"{{{ns}}}StatusOrAckRequest")
-
-        if receipt_id:
-            self._add_elem(root, "ReceiptId", receipt_id, ns)
-            self._add_elem(root, "RequestTypeCd", "ACK", ns)
-        else:
-            self._add_elem(root, "UniqueTransmissionId", transmission_id, ns)
-            self._add_elem(root, "RequestTypeCd", "ACK", ns)
-
-        return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+        """Build acknowledgment request XML using the same schema as status."""
+        # Acknowledgement uses same schema, just with SearchTypeCd = "A"
+        return self._build_status_request(
+            receipt_id=receipt_id,
+            transmission_id=transmission_id,
+            request_type="A",  # "A" for Acknowledgement
+        )
 
     def _parse_ack_response(
         self,
