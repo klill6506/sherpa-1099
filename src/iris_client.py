@@ -126,6 +126,23 @@ class AcknowledgmentResult:
     timestamp: Optional[datetime] = None
     form_results: List[Dict[str, Any]] = field(default_factory=list)
     errors: List[FormError] = field(default_factory=list)
+    message: str = ""
+
+    @property
+    def is_success(self) -> bool:
+        """Check if acknowledgment indicates success."""
+        return self.status in (
+            SubmissionStatus.PENDING,
+            SubmissionStatus.PROCESSING,
+            SubmissionStatus.ACCEPTED,
+            SubmissionStatus.ACCEPTED_WITH_ERRORS,
+            SubmissionStatus.PARTIALLY_ACCEPTED,
+        )
+
+    @property
+    def unique_transmission_id(self) -> str:
+        """Alias for transmission_id for compatibility with SubmissionResult."""
+        return self.transmission_id
 
 
 class IRISClient:
