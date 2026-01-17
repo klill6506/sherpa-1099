@@ -354,13 +354,40 @@ class IRISClient:
         logger.info(f"Submitting XML transmission: {transmission_id[:36]}...")
 
         try:
-            # Use intake endpoint from config (not base URL + path)
-            response = self._request_url(
-                method="POST",
+            # Get auth token
+            try:
+                token = self._auth.get_access_token()
+            except IRISAuthError as e:
+                logger.error(f"Authentication failed: {e}")
+                raise IRISClientError(f"Authentication failed: {e}")
+
+            # Build headers for multipart/form-data (Content-Type set by requests)
+            headers = {
+                "Authorization": f"{token.token_type} {token.token}",
+                "Accept": "application/xml",
+                "User-Agent": f"Sherpa1099/{self.config.environment}",
+            }
+
+            # IRS IRIS A2A requires multipart/form-data with file attachment
+            # Per IRS Pub 5718, the XML is submitted as a file in multipart form
+            files = {
+                "file": (
+                    "submission.xml",
+                    xml_content,
+                    "application/xml",
+                )
+            }
+
+            logger.info(f"Submitting to: {self.config.intake_endpoint}")
+
+            response = self._session.post(
                 url=self.config.intake_endpoint,
-                data=xml_content,
-                content_type="application/xml",
+                headers=headers,
+                files=files,
+                timeout=120,
             )
+
+            logger.info(f"Response status: {response.status_code}")
 
             # Handle response
             if response.status_code in (200, 201, 202):
@@ -373,6 +400,10 @@ class IRISClient:
                 raise IRISClientError("Authentication failed - token may be expired")
             elif response.status_code == 403:
                 raise IRISClientError("Access denied - check TCC authorization")
+            elif response.status_code == 415:
+                # Unsupported Media Type - try raw XML as fallback
+                logger.info("Multipart rejected, trying raw XML...")
+                return self._submit_xml_raw(xml_content, transmission_id, token)
             elif response.status_code == 503:
                 raise IRISClientError("IRIS service temporarily unavailable")
             else:
@@ -385,6 +416,49 @@ class IRISClient:
         except Exception as e:
             logger.error(f"Submission error: {type(e).__name__}")
             raise IRISClientError(f"Submission failed: {type(e).__name__}")
+
+    def _submit_xml_raw(
+        self,
+        xml_content: bytes,
+        transmission_id: str,
+        token: AccessToken,
+    ) -> SubmissionResult:
+        """
+        Fallback: Submit XML as raw body with text/xml content type.
+
+        Some IRIS endpoints accept raw XML instead of multipart.
+        """
+        headers = {
+            "Authorization": f"{token.token_type} {token.token}",
+            "Content-Type": "text/xml; charset=utf-8",
+            "Accept": "application/xml",
+            "User-Agent": f"Sherpa1099/{self.config.environment}",
+        }
+
+        response = self._session.post(
+            url=self.config.intake_endpoint,
+            headers=headers,
+            data=xml_content,
+            timeout=120,
+        )
+
+        logger.info(f"Raw XML response status: {response.status_code}")
+
+        if response.status_code in (200, 201, 202):
+            return self._parse_submission_response(response, transmission_id)
+        elif response.status_code == 400:
+            error_msg = self._extract_error_message(response)
+            raise IRISClientError(f"XML validation failed: {error_msg}")
+        elif response.status_code == 401:
+            raise IRISClientError("Authentication failed - token may be expired")
+        elif response.status_code == 403:
+            raise IRISClientError("Access denied - check TCC authorization")
+        elif response.status_code == 503:
+            raise IRISClientError("IRIS service temporarily unavailable")
+        else:
+            raise IRISClientError(
+                f"Submission failed with HTTP status {response.status_code}"
+            )
 
     def _parse_submission_response(
         self,
