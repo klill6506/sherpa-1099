@@ -99,12 +99,12 @@
                 </svg>
                 Email All
             </button>
-            <button disabled class="inline-flex items-center px-4 py-2 bg-sherpa-panel border border-sherpa-border rounded-xl text-sm font-medium text-sherpa-subtle opacity-50 cursor-not-allowed" title="Coming soon">
+            <a href="/filers/{{ filer.id }}/efile" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-sherpa-blue to-sherpa-teal text-white rounded-xl text-sm font-semibold hover:from-sherpa-blue/90 hover:to-sherpa-teal/90 transition-colors shadow-lg">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                 </svg>
                 E-File to IRS
-            </button>
+            </a>
             {% endif %}
             <a href="/filers/{{ filer.id }}/tin-match" class="inline-flex items-center px-4 py-2 bg-sherpa-amber/15 border border-sherpa-amber/30 rounded-xl text-sm font-medium text-sherpa-amber hover:bg-sherpa-amber/25 transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

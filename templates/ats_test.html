@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Certification Test - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="atsTestForm()">
+    <!-- Header -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-sherpa-text">IRS ATS Certification Test</h1>
+                <p class="text-sherpa-muted mt-1">Submit test transmission for IRIS A2A certification</p>
+            </div>
+            <a href="/" class="text-sherpa-blue hover:text-sherpa-blue/80 text-sm">&larr; Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Test Info -->
+    <div class="rounded-2xl bg-sherpa-amber/10 border border-sherpa-amber/30 shadow-sherpa p-6">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <svg class="w-6 h-6 text-sherpa-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-medium text-sherpa-amber mb-2">About ATS Testing</h3>
+                <p class="text-sherpa-muted text-sm mb-3">
+                    IRS requires 1 transmission with 5 submissions (issuers) and 2 payees each = 10 total records
+                    for IRIS A2A certification. This page generates test data with TINs starting with 000.
+                </p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div class="bg-sherpa-panel/50 rounded-lg p-3">
+                        <div class="text-sherpa-subtle">Issuers</div>
+                        <div class="text-xl font-bold text-sherpa-amber">5</div>
+                    </div>
+                    <div class="bg-sherpa-panel/50 rounded-lg p-3">
+                        <div class="text-sherpa-subtle">Payees/Issuer</div>
+                        <div class="text-xl font-bold text-sherpa-amber">2</div>
+                    </div>
+                    <div class="bg-sherpa-panel/50 rounded-lg p-3">
+                        <div class="text-sherpa-subtle">Total Records</div>
+                        <div class="text-xl font-bold text-sherpa-amber">10</div>
+                    </div>
+                    <div class="bg-sherpa-panel/50 rounded-lg p-3">
+                        <div class="text-sherpa-subtle">Test Mode</div>
+                        <div class="text-xl font-bold text-sherpa-amber">ATS</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Configuration -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <h2 class="text-lg font-medium text-sherpa-text mb-4">Test Configuration</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Form Type Selection -->
+            <div>
+                <label class="block text-sm font-medium text-sherpa-muted mb-2">Form Type</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button @click="formType = '1099NEC'"
+                            :class="formType === '1099NEC' ? 'ring-2 ring-sherpa-blue bg-sherpa-blue/10 border-sherpa-blue' : 'border-sherpa-border hover:border-sherpa-blue/50'"
+                            class="p-4 rounded-xl border text-left transition-colors">
+                        <div class="text-sm font-medium" :class="formType === '1099NEC' ? 'text-sherpa-blue' : 'text-sherpa-subtle'">1099-NEC</div>
+                        <div class="text-xs text-sherpa-muted mt-1">Nonemployee Compensation</div>
+                    </button>
+                    <button @click="formType = '1099MISC'"
+                            :class="formType === '1099MISC' ? 'ring-2 ring-sherpa-teal bg-sherpa-teal/10 border-sherpa-teal' : 'border-sherpa-border hover:border-sherpa-teal/50'"
+                            class="p-4 rounded-xl border text-left transition-colors">
+                        <div class="text-sm font-medium" :class="formType === '1099MISC' ? 'text-sherpa-teal' : 'text-sherpa-subtle'">1099-MISC</div>
+                        <div class="text-xs text-sherpa-muted mt-1">Miscellaneous Income</div>
+                    </button>
+                    <button @click="formType = '1099S'"
+                            :class="formType === '1099S' ? 'ring-2 ring-sherpa-amber bg-sherpa-amber/10 border-sherpa-amber' : 'border-sherpa-border hover:border-sherpa-amber/50'"
+                            class="p-4 rounded-xl border text-left transition-colors">
+                        <div class="text-sm font-medium" :class="formType === '1099S' ? 'text-sherpa-amber' : 'text-sherpa-subtle'">1099-S</div>
+                        <div class="text-xs text-sherpa-muted mt-1">Real Estate Transactions</div>
+                    </button>
+                    <button @click="formType = '1098'"
+                            :class="formType === '1098' ? 'ring-2 ring-orange-400 bg-orange-400/10 border-orange-400' : 'border-sherpa-border hover:border-orange-400/50'"
+                            class="p-4 rounded-xl border text-left transition-colors">
+                        <div class="text-sm font-medium" :class="formType === '1098' ? 'text-orange-400' : 'text-sherpa-subtle'">1098</div>
+                        <div class="text-xs text-sherpa-muted mt-1">Mortgage Interest</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tax Year -->
+            <div>
+                <label class="block text-sm font-medium text-sherpa-muted mb-2">Tax Year</label>
+                <select x-model.number="taxYear" class="w-full px-4 py-3 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                </select>
+                <p class="text-xs text-sherpa-muted mt-2">Select the tax year for the test submission</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transmitter Config Status -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <h2 class="text-lg font-medium text-sherpa-text mb-4">Transmitter Configuration</h2>
+
+        <template x-if="transmitterConfig">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <template x-if="transmitterConfig.is_configured">
+                        <svg class="w-5 h-5 text-sherpa-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </template>
+                    <template x-if="!transmitterConfig.is_configured">
+                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </template>
+                    <span :class="transmitterConfig.is_configured ? 'text-sherpa-teal' : 'text-red-400'" class="font-medium">
+                        <span x-text="transmitterConfig.is_configured ? 'Configured' : 'Not Configured'"></span>
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <div class="text-sherpa-subtle">TCC</div>
+                        <div class="font-mono text-sherpa-text" x-text="transmitterConfig.tcc || '-'"></div>
+                    </div>
+                    <div>
+                        <div class="text-sherpa-subtle">TIN</div>
+                        <div class="font-mono text-sherpa-text" x-text="transmitterConfig.tin_masked || '-'"></div>
+                    </div>
+                    <div>
+                        <div class="text-sherpa-subtle">Business</div>
+                        <div class="text-sherpa-text truncate" x-text="transmitterConfig.business_name || '-'"></div>
+                    </div>
+                    <div>
+                        <div class="text-sherpa-subtle">Contact</div>
+                        <div class="text-sherpa-text truncate" x-text="transmitterConfig.contact_email || '-'"></div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="!transmitterConfig">
+            <div class="text-sherpa-muted">Loading transmitter configuration...</div>
+        </template>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <div class="flex flex-wrap items-center gap-4">
+            <button @click="previewXml()"
+                    :disabled="previewing"
+                    class="px-6 py-3 rounded-xl border border-sherpa-border text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-panel transition-colors disabled:opacity-50">
+                <span x-show="!previewing">Preview XML</span>
+                <span x-show="previewing">Generating...</span>
+            </button>
+
+            <button @click="submitTest()"
+                    :disabled="submitting || !transmitterConfig?.is_configured"
+                    class="px-8 py-3 rounded-xl bg-gradient-to-r from-sherpa-blue to-sherpa-teal text-white text-sm font-semibold hover:from-sherpa-blue/90 hover:to-sherpa-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg">
+                <span x-show="!submitting">Submit ATS Test to IRS</span>
+                <span x-show="submitting">Submitting...</span>
+            </button>
+        </div>
+
+        <template x-if="!transmitterConfig?.is_configured">
+            <p class="mt-3 text-sm text-red-400">
+                Transmitter configuration is required before submitting. Set environment variables for TRANSMITTER_TIN, TRANSMITTER_TCC, etc.
+            </p>
+        </template>
+    </div>
+
+    <!-- Submission Result -->
+    <template x-if="result">
+        <div :class="result.success ? 'bg-sherpa-teal/15 border-sherpa-teal/30' : 'bg-red-500/15 border-red-500/30'"
+             class="rounded-2xl border shadow-sherpa p-6">
+            <div class="flex items-start gap-4">
+                <template x-if="result.success">
+                    <svg class="w-6 h-6 text-sherpa-teal flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </template>
+                <template x-if="!result.success">
+                    <svg class="w-6 h-6 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </template>
+                <div class="flex-1">
+                    <h3 class="font-medium mb-2" :class="result.success ? 'text-sherpa-teal' : 'text-red-400'"
+                        x-text="result.success ? 'ATS Test Submitted Successfully!' : 'Submission Failed'"></h3>
+                    <div class="text-sm text-sherpa-muted space-y-1">
+                        <p><strong>Status:</strong> <span x-text="result.status"></span></p>
+                        <p><strong>Message:</strong> <span x-text="result.message"></span></p>
+                        <template x-if="result.transmission_id">
+                            <p><strong>Transmission ID:</strong> <span class="font-mono text-xs" x-text="result.transmission_id"></span></p>
+                        </template>
+                        <p><strong>Submissions:</strong> <span x-text="result.submission_count"></span> issuers</p>
+                        <p><strong>Recipients:</strong> <span x-text="result.recipient_count"></span> total records</p>
+                    </div>
+
+                    <template x-if="result.errors && result.errors.length > 0">
+                        <div class="mt-4">
+                            <h4 class="text-sm font-medium text-red-400 mb-2">Errors:</h4>
+                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                                <template x-for="error in result.errors" :key="error.record_id + error.code">
+                                    <div class="bg-red-500/10 text-red-400 p-2 rounded text-xs">
+                                        <span x-text="error.message || error.code"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- XML Preview Modal -->
+    <template x-if="showXmlPreview">
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showXmlPreview = false">
+            <div class="bg-sherpa-card rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden m-4">
+                <div class="p-4 border-b border-sherpa-border flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-sherpa-text">ATS Test XML Preview</h3>
+                    <button @click="showXmlPreview = false" class="text-sherpa-muted hover:text-sherpa-text">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-4 overflow-auto max-h-[60vh]">
+                    <pre class="text-xs font-mono text-sherpa-muted whitespace-pre-wrap bg-sherpa-panel p-4 rounded-lg" x-text="xmlContent"></pre>
+                </div>
+                <div class="p-4 border-t border-sherpa-border flex justify-end gap-3">
+                    <a :href="'/api/efile/ats-test/preview-xml?form_type=' + formType + '&tax_year=' + taxYear"
+                       download="ats_test.xml"
+                       class="px-4 py-2 rounded-xl bg-sherpa-blue text-white text-sm font-medium hover:bg-sherpa-blue/90">
+                        Download XML
+                    </a>
+                    <button @click="showXmlPreview = false" class="px-4 py-2 rounded-xl border border-sherpa-border text-sm font-medium text-sherpa-muted hover:text-sherpa-text">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+function atsTestForm() {
+    return {
+        formType: '1099NEC',
+        taxYear: 2025,
+        transmitterConfig: null,
+        previewing: false,
+        submitting: false,
+        result: null,
+        showXmlPreview: false,
+        xmlContent: '',
+
+        async init() {
+            // Load transmitter config on page load
+            try {
+                const response = await fetch('/api/efile/transmitter-config');
+                this.transmitterConfig = await response.json();
+            } catch (error) {
+                console.error('Error loading transmitter config:', error);
+            }
+        },
+
+        async previewXml() {
+            this.previewing = true;
+            try {
+                const response = await fetch('/api/efile/ats-test/preview-xml', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        form_type: this.formType,
+                        tax_year: this.taxYear
+                    })
+                });
+                this.xmlContent = await response.text();
+                this.showXmlPreview = true;
+            } catch (error) {
+                alert('Error generating XML preview: ' + error.message);
+            } finally {
+                this.previewing = false;
+            }
+        },
+
+        async submitTest() {
+            if (!confirm('Are you sure you want to submit the ATS certification test to IRS?\n\nThis will send 1 transmission with 5 issuers and 10 total records.')) {
+                return;
+            }
+
+            this.submitting = true;
+            this.result = null;
+            try {
+                const response = await fetch('/api/efile/ats-test/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        form_type: this.formType,
+                        tax_year: this.taxYear
+                    })
+                });
+                this.result = await response.json();
+            } catch (error) {
+                this.result = {
+                    success: false,
+                    status: 'error',
+                    message: 'Request failed: ' + error.message,
+                    submission_count: 0,
+                    recipient_count: 0
+                };
+            } finally {
+                this.submitting = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

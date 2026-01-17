@@ -373,6 +373,63 @@ async def filers_tin_match(request: Request, filer_id: str):
     })
 
 
+@router.get("/filers/{filer_id}/efile", response_class=HTMLResponse)
+async def filers_efile(request: Request, filer_id: str):
+    """E-File to IRS page for a filer."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
+    client = get_supabase_client()
+    operating_year = get_operating_year()
+
+    # Get filer
+    filer_result = client.table('filers').select('*').eq('id', filer_id).execute()
+    if not filer_result.data:
+        return templates.TemplateResponse("error.html", {
+            "request": request,
+            "error": "Filer not found"
+        }, status_code=404)
+
+    filer = filer_result.data[0]
+
+    # Get forms for this filer
+    forms_query = client.table('forms_1099').select('*').eq('filer_id', filer_id)
+    if operating_year:
+        forms_query = forms_query.eq('operating_year_id', operating_year['id'])
+    forms = forms_query.execute().data
+
+    # Calculate totals by form type
+    nec_total = sum(float(f.get('nec_box1') or 0) for f in forms if f.get('form_type') == '1099-NEC')
+    misc_total = sum(float(f.get('misc_box1') or 0) for f in forms if f.get('form_type') == '1099-MISC')
+    s_total = sum(float(f.get('s_box2_gross_proceeds') or 0) for f in forms if f.get('form_type') == '1099-S')
+    f1098_total = sum(float(f.get('f1098_box1_mortgage_interest') or 0) for f in forms if f.get('form_type') == '1098')
+
+    # Count forms by type
+    nec_count = sum(1 for f in forms if f.get('form_type') == '1099-NEC')
+    misc_count = sum(1 for f in forms if f.get('form_type') == '1099-MISC')
+    s_count = sum(1 for f in forms if f.get('form_type') == '1099-S')
+    f1098_count = sum(1 for f in forms if f.get('form_type') == '1098')
+
+    return templates.TemplateResponse("filers/efile.html", {
+        "request": request,
+        "active_page": "filers",
+        "op_year": operating_year,
+        "operating_year": operating_year,
+        "filer": filer,
+        "forms": forms,
+        "nec_total": nec_total,
+        "misc_total": misc_total,
+        "s_total": s_total,
+        "f1098_total": f1098_total,
+        "nec_count": nec_count,
+        "misc_count": misc_count,
+        "s_count": s_count,
+        "f1098_count": f1098_count,
+        "user": user
+    })
+
+
 # =============================================================================
 # RECIPIENTS
 # =============================================================================
@@ -429,17 +486,52 @@ async def forms_list(request: Request):
 # DOWNLOADS
 # =============================================================================
 
+# =============================================================================
+# ATS CERTIFICATION TEST
+# =============================================================================
+
+@router.get("/ats-test", response_class=HTMLResponse)
+async def ats_test_page(request: Request):
+    """ATS certification test page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
+    operating_year = get_operating_year()
+
+    return templates.TemplateResponse("ats_test.html", {
+        "request": request,
+        "active_page": "ats_test",
+        "operating_year": operating_year,
+        "user": user
+    })
+
+
 @router.get("/download-template")
 async def download_template():
     """Download the 1099 import template Excel file."""
-    template_path = Path(__file__).parent.parent.parent / "1099-Template .xlsx"
+    base_dir = Path(__file__).parent.parent.parent
 
-    if not template_path.exists():
-        # Try alternate name without trailing space
-        template_path = Path(__file__).parent.parent.parent / "1099-Template.xlsx"
+    # Try multiple possible template file names
+    template_candidates = [
+        base_dir / "1099-Template .xlsx",
+        base_dir / "1099-Template.xlsx",
+        base_dir / "Sherpa 1099 Template.xlsx",
+        base_dir / "Sherpa_1099_Template_Clean.xlsx",
+    ]
+
+    template_path = None
+    for candidate in template_candidates:
+        if candidate.exists():
+            template_path = candidate
+            break
+
+    if not template_path:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Template file not found")
 
     return FileResponse(
-        path=template_path,
-        filename="1099-Template.xlsx",
+        path=str(template_path),
+        filename="Sherpa_1099_Template.xlsx",
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )

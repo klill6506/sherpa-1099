@@ -198,6 +198,49 @@ class Form1099MISCData:
 
 
 @dataclass
+class Form1099SData:
+    """Data for a single 1099-S form (Proceeds from Real Estate Transactions)."""
+    record_id: str
+    tax_year: int
+    recipient: RecipientInfo  # Transferor info
+    # Box values
+    closing_date: Optional[date] = None  # Box 1 - Date of closing
+    gross_proceeds: Decimal = Decimal("0.00")  # Box 2 - Gross proceeds
+    address_or_legal_desc: str = ""  # Box 3 - Address or legal description
+    transferor_received_consideration: bool = False  # Box 4 - Transferor received or will receive property/services
+    transferor_is_foreign_person: bool = False  # Box 5 - Transferor is a foreign person
+    buyers_real_estate_tax: Decimal = Decimal("0.00")  # Box 6 - Buyer's part of real estate tax
+    # Flags
+    is_void: bool = False
+    is_corrected: bool = False
+    original_record_id: Optional[str] = None
+
+
+@dataclass
+class Form1098Data:
+    """Data for a single 1098 form (Mortgage Interest Statement)."""
+    record_id: str
+    tax_year: int
+    recipient: RecipientInfo  # Payer/Borrower info
+    # Box values
+    mortgage_interest_received: Decimal = Decimal("0.00")  # Box 1 - Mortgage interest received
+    outstanding_mortgage_principal: Decimal = Decimal("0.00")  # Box 2 - Outstanding mortgage principal
+    mortgage_origination_date: Optional[date] = None  # Box 3 - Mortgage origination date
+    refund_of_overpaid_interest: Decimal = Decimal("0.00")  # Box 4 - Refund of overpaid interest
+    mortgage_insurance_premiums: Decimal = Decimal("0.00")  # Box 5 - Mortgage insurance premiums
+    points_paid_on_purchase: Decimal = Decimal("0.00")  # Box 6 - Points paid on purchase of principal residence
+    property_address_same_as_borrower: bool = False  # Box 7 - Property address same as borrower
+    property_address: str = ""  # Box 8 - Address or description of property
+    properties_securing_mortgage_count: int = 0  # Box 9 - Number of properties securing mortgage
+    other_info: str = ""  # Box 10 - Other information
+    mortgage_acquisition_date: Optional[date] = None  # Box 11 - Mortgage acquisition date
+    # Flags
+    is_void: bool = False
+    is_corrected: bool = False
+    original_record_id: Optional[str] = None
+
+
+@dataclass
 class SubmissionBatch:
     """A batch of forms for a single issuer and form type."""
     issuer: IssuerInfo
@@ -624,6 +667,118 @@ class IRISXMLGenerator:
 
         return detail
 
+    def _build_1099s_detail(self, form: Form1099SData) -> ET.Element:
+        """Build Form1099SDetail element for real estate transactions."""
+        detail = ET.Element(f"{{{IRIS_NS}}}Form1099SDetail")
+
+        self._add_element(detail, "TaxYr", str(form.tax_year))
+        self._add_element(detail, "RecordId", form.record_id[:20])
+
+        self._add_element(detail, "VoidInd", "0")
+        self._add_element(detail, "CorrectedInd", self._bool_to_indicator(form.is_corrected))
+
+        if form.is_corrected and form.original_record_id:
+            prev_grp = self._add_element(detail, "PrevSubmittedRecRecipientGrp")
+            self._add_element(prev_grp, "UniqueRecordId", form.original_record_id)
+
+        # Recipient (Transferor) detail
+        detail.append(self._build_recipient_detail(form.recipient))
+
+        # Account number (optional)
+        if form.recipient.account_number:
+            self._add_element(detail, "RecipientAccountNum", form.recipient.account_number[:30])
+
+        # Box 1 - Date of closing
+        if form.closing_date:
+            self._add_element(detail, "ClosingDt", form.closing_date.isoformat())
+
+        # Box 2 - Gross proceeds
+        if form.gross_proceeds > 0:
+            self._add_element(detail, "GrossProceedsAmt", self._format_amount(form.gross_proceeds))
+
+        # Box 3 - Address or legal description of property
+        if form.address_or_legal_desc:
+            self._add_element(detail, "AddressOrLegalDescTxt", form.address_or_legal_desc[:100])
+
+        # Box 4 - Transferor received or will receive property or services
+        self._add_element(detail, "TransferorRcvdConsiderationInd", self._bool_to_indicator(form.transferor_received_consideration))
+
+        # Box 5 - Transferor is a foreign person
+        self._add_element(detail, "TransferorForeignPersonInd", self._bool_to_indicator(form.transferor_is_foreign_person))
+
+        # Box 6 - Buyer's part of real estate tax
+        if form.buyers_real_estate_tax > 0:
+            self._add_element(detail, "BuyerRealEstateTaxAmt", self._format_amount(form.buyers_real_estate_tax))
+
+        return detail
+
+    def _build_1098_detail(self, form: Form1098Data) -> ET.Element:
+        """Build Form1098Detail element for mortgage interest statements."""
+        detail = ET.Element(f"{{{IRIS_NS}}}Form1098Detail")
+
+        self._add_element(detail, "TaxYr", str(form.tax_year))
+        self._add_element(detail, "RecordId", form.record_id[:20])
+
+        self._add_element(detail, "VoidInd", "0")
+        self._add_element(detail, "CorrectedInd", self._bool_to_indicator(form.is_corrected))
+
+        if form.is_corrected and form.original_record_id:
+            prev_grp = self._add_element(detail, "PrevSubmittedRecRecipientGrp")
+            self._add_element(prev_grp, "UniqueRecordId", form.original_record_id)
+
+        # Recipient (Payer/Borrower) detail
+        detail.append(self._build_recipient_detail(form.recipient))
+
+        # Account number (optional)
+        if form.recipient.account_number:
+            self._add_element(detail, "RecipientAccountNum", form.recipient.account_number[:30])
+
+        # Box 1 - Mortgage interest received from payer(s)/borrower(s)
+        if form.mortgage_interest_received > 0:
+            self._add_element(detail, "MortgageInterestReceivedAmt", self._format_amount(form.mortgage_interest_received))
+
+        # Box 2 - Outstanding mortgage principal
+        if form.outstanding_mortgage_principal > 0:
+            self._add_element(detail, "OutstandingMortgPrincipalAmt", self._format_amount(form.outstanding_mortgage_principal))
+
+        # Box 3 - Mortgage origination date
+        if form.mortgage_origination_date:
+            self._add_element(detail, "MortgageOriginationDt", form.mortgage_origination_date.isoformat())
+
+        # Box 4 - Refund of overpaid interest
+        if form.refund_of_overpaid_interest > 0:
+            self._add_element(detail, "OverpaidInterestRefundAmt", self._format_amount(form.refund_of_overpaid_interest))
+
+        # Box 5 - Mortgage insurance premiums
+        if form.mortgage_insurance_premiums > 0:
+            self._add_element(detail, "MortgageInsurancePremiumsAmt", self._format_amount(form.mortgage_insurance_premiums))
+
+        # Box 6 - Points paid on purchase of principal residence
+        if form.points_paid_on_purchase > 0:
+            self._add_element(detail, "PrinResPurchasePointsPaidAmt", self._format_amount(form.points_paid_on_purchase))
+
+        # Box 7 - Property address same as borrower address indicator
+        self._add_element(detail, "PropAddrSameBorrowerAddrInd", self._bool_to_indicator(form.property_address_same_as_borrower))
+
+        # Box 8 - Address or description of property securing mortgage
+        if form.property_address and not form.property_address_same_as_borrower:
+            prop_grp = self._add_element(detail, "PropertyAddressGrp")
+            self._add_element(prop_grp, "PropertyDesc", form.property_address[:100])
+
+        # Box 9 - Number of properties securing the mortgage
+        if form.properties_securing_mortgage_count > 0:
+            self._add_element(detail, "PropertiesSecuringMortgageCnt", str(form.properties_securing_mortgage_count))
+
+        # Box 10 - Other information
+        if form.other_info:
+            self._add_element(detail, "OtherTxt", form.other_info[:100])
+
+        # Box 11 - Mortgage acquisition date
+        if form.mortgage_acquisition_date:
+            self._add_element(detail, "MortgageAcquisitionDt", form.mortgage_acquisition_date.isoformat())
+
+        return detail
+
     def _calculate_nec_totals(self, forms: List[Form1099NECData]) -> Tuple[ET.Element, List[ET.Element]]:
         """Calculate totals for 1099-NEC forms."""
         total_compensation = Decimal("0.00")
@@ -750,6 +905,52 @@ class IRISXMLGenerator:
 
         return totals_grp, state_grps
 
+    def _calculate_1099s_totals(self, forms: List[Form1099SData]) -> ET.Element:
+        """Calculate totals for 1099-S forms."""
+        total_gross_proceeds = Decimal("0.00")
+        total_buyers_re_tax = Decimal("0.00")
+
+        for form in forms:
+            total_gross_proceeds += form.gross_proceeds
+            total_buyers_re_tax += form.buyers_real_estate_tax
+
+        totals_grp = ET.Element(f"{{{IRIS_NS}}}Form1099STotalAmtGrp")
+        if total_gross_proceeds > 0:
+            self._add_element(totals_grp, "GrossProceedsAmt", self._format_amount(total_gross_proceeds))
+        if total_buyers_re_tax > 0:
+            self._add_element(totals_grp, "BuyerRealEstateTaxAmt", self._format_amount(total_buyers_re_tax))
+
+        return totals_grp
+
+    def _calculate_1098_totals(self, forms: List[Form1098Data]) -> ET.Element:
+        """Calculate totals for 1098 forms."""
+        total_interest = Decimal("0.00")
+        total_principal = Decimal("0.00")
+        total_refund = Decimal("0.00")
+        total_insurance = Decimal("0.00")
+        total_points = Decimal("0.00")
+
+        for form in forms:
+            total_interest += form.mortgage_interest_received
+            total_principal += form.outstanding_mortgage_principal
+            total_refund += form.refund_of_overpaid_interest
+            total_insurance += form.mortgage_insurance_premiums
+            total_points += form.points_paid_on_purchase
+
+        totals_grp = ET.Element(f"{{{IRIS_NS}}}Form1098TotalAmtGrp")
+        if total_interest > 0:
+            self._add_element(totals_grp, "MortgageInterestReceivedAmt", self._format_amount(total_interest))
+        if total_principal > 0:
+            self._add_element(totals_grp, "OutstandingMortgPrincipalAmt", self._format_amount(total_principal))
+        if total_refund > 0:
+            self._add_element(totals_grp, "OverpaidInterestRefundAmt", self._format_amount(total_refund))
+        if total_insurance > 0:
+            self._add_element(totals_grp, "MortgageInsurancePremiumsAmt", self._format_amount(total_insurance))
+        if total_points > 0:
+            self._add_element(totals_grp, "PrinResPurchasePointsPaidAmt", self._format_amount(total_points))
+
+        return totals_grp
+
     def _build_submission_1_group(self, batch: SubmissionBatch, submission_id: str) -> ET.Element:
         """Build IRSubmission1Grp for a batch of forms."""
         grp = ET.Element(f"{{{IRIS_NS}}}IRSubmission1Grp")
@@ -811,6 +1012,12 @@ class IRISXMLGenerator:
             form_totals.append(totals_grp)
             for sg in state_grps:
                 form_totals.append(sg)
+        elif batch.form_type == "1099S":
+            totals_grp = self._calculate_1099s_totals(batch.forms)
+            form_totals.append(totals_grp)
+        elif batch.form_type == "1098":
+            totals_grp = self._calculate_1098_totals(batch.forms)
+            form_totals.append(totals_grp)
 
         # Detail section with individual forms
         if batch.forms:
@@ -820,6 +1027,10 @@ class IRISXMLGenerator:
                     detail.append(self._build_1099nec_detail(form))
                 elif batch.form_type == "1099MISC":
                     detail.append(self._build_1099misc_detail(form))
+                elif batch.form_type == "1099S":
+                    detail.append(self._build_1099s_detail(form))
+                elif batch.form_type == "1098":
+                    detail.append(self._build_1098_detail(form))
 
         return grp
 
@@ -1029,11 +1240,84 @@ def convert_db_records_to_submission(
                 cfsf_states=[st.state_code for st in state_taxes],
             )
             forms.append(form)
+        elif form_type == "1099S":
+            # Parse closing date
+            closing_date = None
+            closing_date_str = form_data.get("s_box1")
+            if closing_date_str:
+                try:
+                    if isinstance(closing_date_str, str):
+                        closing_date = date.fromisoformat(closing_date_str[:10])
+                    elif isinstance(closing_date_str, date):
+                        closing_date = closing_date_str
+                except (ValueError, TypeError):
+                    pass
+
+            form = Form1099SData(
+                record_id=str(i),
+                tax_year=tax_year,
+                recipient=recipient_info,
+                closing_date=closing_date,
+                gross_proceeds=Decimal(str(form_data.get("s_box2") or 0)),
+                address_or_legal_desc=str(form_data.get("s_box3") or ""),
+                transferor_received_consideration=bool(form_data.get("s_box4")),
+                transferor_is_foreign_person=bool(form_data.get("s_box5")),
+                buyers_real_estate_tax=Decimal(str(form_data.get("s_box6") or 0)),
+                is_corrected=bool(form_data.get("is_correction")),
+            )
+            forms.append(form)
+        elif form_type == "1098":
+            # Parse dates
+            origination_date = None
+            orig_date_str = form_data.get("mort_box3")
+            if orig_date_str:
+                try:
+                    if isinstance(orig_date_str, str):
+                        origination_date = date.fromisoformat(orig_date_str[:10])
+                    elif isinstance(orig_date_str, date):
+                        origination_date = orig_date_str
+                except (ValueError, TypeError):
+                    pass
+
+            acquisition_date = None
+            acq_date_str = form_data.get("mort_box11")
+            if acq_date_str:
+                try:
+                    if isinstance(acq_date_str, str):
+                        acquisition_date = date.fromisoformat(acq_date_str[:10])
+                    elif isinstance(acq_date_str, date):
+                        acquisition_date = acq_date_str
+                except (ValueError, TypeError):
+                    pass
+
+            form = Form1098Data(
+                record_id=str(i),
+                tax_year=tax_year,
+                recipient=recipient_info,
+                mortgage_interest_received=Decimal(str(form_data.get("mort_box1") or 0)),
+                outstanding_mortgage_principal=Decimal(str(form_data.get("mort_box2") or 0)),
+                mortgage_origination_date=origination_date,
+                refund_of_overpaid_interest=Decimal(str(form_data.get("mort_box4") or 0)),
+                mortgage_insurance_premiums=Decimal(str(form_data.get("mort_box5") or 0)),
+                points_paid_on_purchase=Decimal(str(form_data.get("mort_box6") or 0)),
+                property_address_same_as_borrower=bool(form_data.get("mort_box7")),
+                property_address=str(form_data.get("mort_box8") or ""),
+                properties_securing_mortgage_count=int(form_data.get("mort_box9") or 0),
+                other_info=str(form_data.get("mort_box10") or ""),
+                mortgage_acquisition_date=acquisition_date,
+                is_corrected=bool(form_data.get("is_correction")),
+            )
+            forms.append(form)
+
+    # Determine CFSF election based on form type
+    has_cfsf = False
+    if form_type in ("1099NEC", "1099MISC") and len(forms) > 0:
+        has_cfsf = hasattr(forms[0], 'state_local_taxes') and len(forms[0].state_local_taxes) > 0
 
     return SubmissionBatch(
         issuer=issuer,
         form_type=form_type,
         tax_year=tax_year,
         forms=forms,
-        cfsf_election=len(forms) > 0 and len(forms[0].state_local_taxes) > 0,
+        cfsf_election=has_cfsf,
     )

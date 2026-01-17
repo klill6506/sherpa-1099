@@ -40,6 +40,8 @@ from iris_xml_generator import (
     StateLocalTax,
     Form1099NECData,
     Form1099MISCData,
+    Form1099SData,
+    Form1098Data,
     SubmissionBatch,
 )
 from iris_xml_validator import IRISXMLValidator, validate_iris_xml
@@ -86,7 +88,7 @@ class EFileRequest(BaseModel):
     """Request to e-file forms for a filer."""
     filer_id: str
     operating_year_id: str
-    form_type: str = Field(default="1099NEC", pattern="^(1099NEC|1099MISC)$")
+    form_type: str = Field(default="1099NEC", pattern="^(1099NEC|1099MISC|1099S|1098)$")
     form_ids: Optional[List[str]] = Field(None, description="Specific form IDs to file. If not provided, all validated forms are filed.")
     is_test: bool = Field(default=True, description="Submit to ATS (test) or production")
     include_drafts: bool = Field(default=False, description="Include draft forms (for preview/testing only)")
@@ -331,6 +333,87 @@ def build_misc_form(form: dict, recipient: RecipientInfo, record_id: str, tax_ye
     )
 
 
+def build_1099s_form(form: dict, recipient: RecipientInfo, record_id: str, tax_year: int) -> Form1099SData:
+    """Build 1099-S form data from database record."""
+    # Parse closing date
+    closing_date = None
+    closing_date_str = form.get("s_box1")
+    if closing_date_str:
+        try:
+            if isinstance(closing_date_str, str):
+                closing_date = date.fromisoformat(closing_date_str[:10])
+            elif isinstance(closing_date_str, date):
+                closing_date = closing_date_str
+        except (ValueError, TypeError):
+            pass
+
+    return Form1099SData(
+        record_id=record_id,
+        tax_year=tax_year,
+        recipient=recipient,
+        closing_date=closing_date,
+        gross_proceeds=Decimal(str(form.get("s_box2") or 0)),
+        address_or_legal_desc=str(form.get("s_box3") or ""),
+        transferor_received_consideration=bool(form.get("s_box4")),
+        transferor_is_foreign_person=bool(form.get("s_box5")),
+        buyers_real_estate_tax=Decimal(str(form.get("s_box6") or 0)),
+        is_corrected=bool(form.get("is_correction")),
+    )
+
+
+def build_1098_form(form: dict, recipient: RecipientInfo, record_id: str, tax_year: int) -> Form1098Data:
+    """Build 1098 form data from database record."""
+    # Parse dates
+    origination_date = None
+    orig_date_str = form.get("mort_box3")
+    if orig_date_str:
+        try:
+            if isinstance(orig_date_str, str):
+                origination_date = date.fromisoformat(orig_date_str[:10])
+            elif isinstance(orig_date_str, date):
+                origination_date = orig_date_str
+        except (ValueError, TypeError):
+            pass
+
+    acquisition_date = None
+    acq_date_str = form.get("mort_box11")
+    if acq_date_str:
+        try:
+            if isinstance(acq_date_str, str):
+                acquisition_date = date.fromisoformat(acq_date_str[:10])
+            elif isinstance(acq_date_str, date):
+                acquisition_date = acq_date_str
+        except (ValueError, TypeError):
+            pass
+
+    return Form1098Data(
+        record_id=record_id,
+        tax_year=tax_year,
+        recipient=recipient,
+        mortgage_interest_received=Decimal(str(form.get("mort_box1") or 0)),
+        outstanding_mortgage_principal=Decimal(str(form.get("mort_box2") or 0)),
+        mortgage_origination_date=origination_date,
+        refund_of_overpaid_interest=Decimal(str(form.get("mort_box4") or 0)),
+        mortgage_insurance_premiums=Decimal(str(form.get("mort_box5") or 0)),
+        points_paid_on_purchase=Decimal(str(form.get("mort_box6") or 0)),
+        property_address_same_as_borrower=bool(form.get("mort_box7")),
+        property_address=str(form.get("mort_box8") or ""),
+        properties_securing_mortgage_count=int(form.get("mort_box9") or 0),
+        other_info=str(form.get("mort_box10") or ""),
+        mortgage_acquisition_date=acquisition_date,
+        is_corrected=bool(form.get("is_correction")),
+    )
+
+
+# Form type mapping from API to database
+FORM_TYPE_DB_MAP = {
+    "1099NEC": "1099-NEC",
+    "1099MISC": "1099-MISC",
+    "1099S": "1099-S",
+    "1098": "1098",
+}
+
+
 # =============================================================================
 # FORM VALIDATION HELPERS
 # =============================================================================
@@ -549,8 +632,57 @@ def validate_form_data(
         if not has_any_amount:
             add_warning("amounts", "No amounts entered - form may not be required")
 
+    elif form_type == "1099-S":
+        # 1099-S: Real estate transaction
+        # Box 2: Gross proceeds (required)
+        s_box2 = form.get("s_box2")
+        valid, msg = validate_amount(s_box2, "Gross proceeds (Box 2)")
+        if not valid:
+            add_error("s_box2", msg)
+        elif s_box2 is None or float(s_box2 or 0) == 0:
+            add_warning("s_box2", "Gross proceeds (Box 2) is zero - form may not be required")
+
+        # Box 6: Buyer's real estate tax
+        valid, msg = validate_amount(form.get("s_box6"), "Buyer's real estate tax (Box 6)")
+        if not valid:
+            add_error("s_box6", msg)
+
+        # Box 3: Address or legal description
+        if not form.get("s_box3") or not str(form.get("s_box3", "")).strip():
+            add_warning("s_box3", "Property address/description (Box 3) is empty")
+
+    elif form_type == "1098":
+        # 1098: Mortgage interest statement
+        # Box 1: Mortgage interest received (required)
+        mort_box1 = form.get("mort_box1")
+        valid, msg = validate_amount(mort_box1, "Mortgage interest received (Box 1)")
+        if not valid:
+            add_error("mort_box1", msg)
+        elif mort_box1 is None or float(mort_box1 or 0) == 0:
+            add_warning("mort_box1", "Mortgage interest (Box 1) is zero - form may not be required")
+
+        # Box 2: Outstanding mortgage principal
+        valid, msg = validate_amount(form.get("mort_box2"), "Outstanding principal (Box 2)")
+        if not valid:
+            add_error("mort_box2", msg)
+
+        # Box 4: Refund of overpaid interest
+        valid, msg = validate_amount(form.get("mort_box4"), "Refund of overpaid interest (Box 4)")
+        if not valid:
+            add_error("mort_box4", msg)
+
+        # Box 5: Mortgage insurance premiums
+        valid, msg = validate_amount(form.get("mort_box5"), "Mortgage insurance premiums (Box 5)")
+        if not valid:
+            add_error("mort_box5", msg)
+
+        # Box 6: Points paid
+        valid, msg = validate_amount(form.get("mort_box6"), "Points paid (Box 6)")
+        if not valid:
+            add_error("mort_box6", msg)
+
     # -----------------------------
-    # State Withholding Validation
+    # State Withholding Validation (for NEC and MISC only)
     # -----------------------------
 
     # If state withholding is present, state info must be present
@@ -584,21 +716,22 @@ def validate_form_data(
             add_warning("state2_code", "State 2 income without state code")
 
     # -----------------------------
-    # Federal Withholding Validation
+    # Federal Withholding Validation (NEC and MISC only)
     # -----------------------------
 
-    # Federal withholding shouldn't exceed income
-    federal_withheld = float(form.get("nec_box4") or form.get("misc_box4") or 0)
-    if form_type == "1099-NEC":
-        total_income = float(form.get("nec_box1") or 0)
-    else:
-        total_income = sum(
-            float(form.get(f"misc_box{i}") or 0)
-            for i in [1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 14]
-        )
+    # Federal withholding shouldn't exceed income (for forms that have withholding)
+    if form_type in ("1099-NEC", "1099-MISC"):
+        federal_withheld = float(form.get("nec_box4") or form.get("misc_box4") or 0)
+        if form_type == "1099-NEC":
+            total_income = float(form.get("nec_box1") or 0)
+        else:
+            total_income = sum(
+                float(form.get(f"misc_box{i}") or 0)
+                for i in [1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 14]
+            )
 
-    if federal_withheld > 0 and total_income > 0 and federal_withheld > total_income:
-        add_warning("federal_withheld", f"Federal withholding (${federal_withheld:,.2f}) exceeds total income (${total_income:,.2f})")
+        if federal_withheld > 0 and total_income > 0 and federal_withheld > total_income:
+            add_warning("federal_withheld", f"Federal withholding (${federal_withheld:,.2f}) exceeds total income (${total_income:,.2f})")
 
     return errors
 
@@ -684,7 +817,7 @@ async def validate_forms(request: EFileRequest):
         # Get forms
         all_forms = get_forms_1099(request.filer_id, request.operating_year_id)
 
-        form_type_filter = "1099-NEC" if request.form_type == "1099NEC" else "1099-MISC"
+        form_type_filter = FORM_TYPE_DB_MAP.get(request.form_type, request.form_type)
         forms = [f for f in all_forms if f.get("form_type") == form_type_filter]
 
         if request.form_ids:
@@ -697,7 +830,7 @@ async def validate_forms(request: EFileRequest):
         if not forms:
             raise HTTPException(
                 status_code=400,
-                detail="No forms found to validate"
+                detail=f"No {form_type_filter} forms found to validate"
             )
 
         all_errors: List[FormValidationError] = []
@@ -765,7 +898,7 @@ async def preview_xml(request: EFileRequest) -> Response:
         all_forms = get_forms_1099(request.filer_id, request.operating_year_id)
 
         # Filter by form type and IDs
-        form_type_filter = "1099-NEC" if request.form_type == "1099NEC" else "1099-MISC"
+        form_type_filter = FORM_TYPE_DB_MAP.get(request.form_type, request.form_type)
         forms = [f for f in all_forms if f.get("form_type") == form_type_filter]
 
         if request.form_ids:
@@ -781,7 +914,7 @@ async def preview_xml(request: EFileRequest) -> Response:
             status_hint = " (try include_drafts=true for testing)" if not request.include_drafts else ""
             raise HTTPException(
                 status_code=400,
-                detail=f"No validated forms found to e-file{status_hint}"
+                detail=f"No validated {form_type_filter} forms found to e-file{status_hint}"
             )
 
         # Build submission batch
@@ -798,10 +931,21 @@ async def preview_xml(request: EFileRequest) -> Response:
 
             if request.form_type == "1099NEC":
                 form_data = build_nec_form(form, recipient, str(i), tax_year)
-            else:
+            elif request.form_type == "1099MISC":
                 form_data = build_misc_form(form, recipient, str(i), tax_year)
+            elif request.form_type == "1099S":
+                form_data = build_1099s_form(form, recipient, str(i), tax_year)
+            elif request.form_type == "1098":
+                form_data = build_1098_form(form, recipient, str(i), tax_year)
+            else:
+                continue  # Skip unknown form types
 
             form_data_list.append(form_data)
+
+        # Determine CFSF election - only for forms that support state withholding
+        has_cfsf = False
+        if request.form_type in ("1099NEC", "1099MISC") and form_data_list:
+            has_cfsf = any(hasattr(f, 'state_local_taxes') and len(f.state_local_taxes) > 0 for f in form_data_list)
 
         batch = SubmissionBatch(
             issuer=issuer,
@@ -812,7 +956,7 @@ async def preview_xml(request: EFileRequest) -> Response:
             signer_name=request.signer_name,
             signature_title=request.signer_title,
             signature_date=date.today(),
-            cfsf_election=any(len(f.state_local_taxes) > 0 for f in form_data_list),
+            cfsf_election=has_cfsf,
         )
 
         # Generate XML
@@ -874,7 +1018,7 @@ async def submit_efile(
         # Get forms
         all_forms = get_forms_1099(request.filer_id, request.operating_year_id)
 
-        form_type_filter = "1099-NEC" if request.form_type == "1099NEC" else "1099-MISC"
+        form_type_filter = FORM_TYPE_DB_MAP.get(request.form_type, request.form_type)
         forms = [f for f in all_forms if f.get("form_type") == form_type_filter]
 
         if request.form_ids:
@@ -885,7 +1029,7 @@ async def submit_efile(
         if not forms:
             raise HTTPException(
                 status_code=400,
-                detail="No validated forms found to e-file"
+                detail=f"No validated {form_type_filter} forms found to e-file"
             )
 
         # Build submission
@@ -904,10 +1048,21 @@ async def submit_efile(
 
             if request.form_type == "1099NEC":
                 form_data = build_nec_form(form, recipient, record_id, tax_year)
-            else:
+            elif request.form_type == "1099MISC":
                 form_data = build_misc_form(form, recipient, record_id, tax_year)
+            elif request.form_type == "1099S":
+                form_data = build_1099s_form(form, recipient, record_id, tax_year)
+            elif request.form_type == "1098":
+                form_data = build_1098_form(form, recipient, record_id, tax_year)
+            else:
+                continue  # Skip unknown form types
 
             form_data_list.append(form_data)
+
+        # Determine CFSF election - only for forms that support state withholding
+        has_cfsf = False
+        if request.form_type in ("1099NEC", "1099MISC") and form_data_list:
+            has_cfsf = any(hasattr(f, 'state_local_taxes') and len(f.state_local_taxes) > 0 for f in form_data_list)
 
         batch = SubmissionBatch(
             issuer=issuer,
@@ -918,7 +1073,7 @@ async def submit_efile(
             signer_name=request.signer_name,
             signature_title=request.signer_title,
             signature_date=date.today(),
-            cfsf_election=any(len(f.state_local_taxes) > 0 for f in form_data_list),
+            cfsf_election=has_cfsf,
         )
 
         # Generate XML
@@ -1138,7 +1293,7 @@ async def validate_xml_submission(request: EFileRequest):
         # Get forms
         all_forms = get_forms_1099(request.filer_id, request.operating_year_id)
 
-        form_type_filter = "1099-NEC" if request.form_type == "1099NEC" else "1099-MISC"
+        form_type_filter = FORM_TYPE_DB_MAP.get(request.form_type, request.form_type)
         forms = [f for f in all_forms if f.get("form_type") == form_type_filter]
 
         if request.form_ids:
@@ -1149,7 +1304,7 @@ async def validate_xml_submission(request: EFileRequest):
         if not forms:
             raise HTTPException(
                 status_code=400,
-                detail="No validated forms found to validate"
+                detail=f"No validated {form_type_filter} forms found to validate"
             )
 
         # Build submission
@@ -1165,10 +1320,21 @@ async def validate_xml_submission(request: EFileRequest):
 
             if request.form_type == "1099NEC":
                 form_data = build_nec_form(form, recipient, str(i), tax_year)
-            else:
+            elif request.form_type == "1099MISC":
                 form_data = build_misc_form(form, recipient, str(i), tax_year)
+            elif request.form_type == "1099S":
+                form_data = build_1099s_form(form, recipient, str(i), tax_year)
+            elif request.form_type == "1098":
+                form_data = build_1098_form(form, recipient, str(i), tax_year)
+            else:
+                continue  # Skip unknown form types
 
             form_data_list.append(form_data)
+
+        # Determine CFSF election - only for forms that support state withholding
+        has_cfsf = False
+        if request.form_type in ("1099NEC", "1099MISC") and form_data_list:
+            has_cfsf = any(hasattr(f, 'state_local_taxes') and len(f.state_local_taxes) > 0 for f in form_data_list)
 
         batch = SubmissionBatch(
             issuer=issuer,
@@ -1179,7 +1345,7 @@ async def validate_xml_submission(request: EFileRequest):
             signer_name=request.signer_name,
             signature_title=request.signer_title,
             signature_date=date.today(),
-            cfsf_election=any(len(f.state_local_taxes) > 0 for f in form_data_list),
+            cfsf_election=has_cfsf,
         )
 
         # Generate XML
@@ -1238,3 +1404,512 @@ async def get_current_transmitter_config():
         "contact_email": config.contact_email,
         "is_configured": bool(config.tin and config.tcc and config.business_name),
     }
+
+
+# =============================================================================
+# ATS CERTIFICATION TEST
+# =============================================================================
+
+class ATSTestRequest(BaseModel):
+    """Request for ATS certification test submission."""
+    form_type: str = Field(default="1099NEC", pattern="^(1099NEC|1099MISC|1099S|1098)$")
+    tax_year: int = Field(default=2025, ge=2020, le=2030)
+
+
+class ATSTestResponse(BaseModel):
+    """Response from ATS test submission."""
+    success: bool
+    transmission_id: str
+    status: str
+    message: str
+    submission_count: int = 0
+    recipient_count: int = 0
+    xml_preview: Optional[str] = None
+    errors: List[dict] = Field(default_factory=list)
+
+
+# ATS Test Data: 5 fake issuers with 2 recipients each
+# All TINs start with 000 as required for IRS ATS testing
+ATS_TEST_ISSUERS = [
+    {
+        "name": "ATS Test Company Alpha",
+        "tin": "000111111",
+        "tin_type": "EIN",
+        "address1": "100 Test Street",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701",
+        "contact_name": "Alpha Contact",
+        "email": "alpha@test.com",
+        "phone": "5125550101",
+    },
+    {
+        "name": "ATS Test Company Beta",
+        "tin": "000222222",
+        "tin_type": "EIN",
+        "address1": "200 Sample Avenue",
+        "city": "Dallas",
+        "state": "TX",
+        "zip": "75201",
+        "contact_name": "Beta Contact",
+        "email": "beta@test.com",
+        "phone": "2145550102",
+    },
+    {
+        "name": "ATS Test Company Gamma",
+        "tin": "000333333",
+        "tin_type": "EIN",
+        "address1": "300 Example Boulevard",
+        "city": "Houston",
+        "state": "TX",
+        "zip": "77001",
+        "contact_name": "Gamma Contact",
+        "email": "gamma@test.com",
+        "phone": "7135550103",
+    },
+    {
+        "name": "ATS Test Company Delta",
+        "tin": "000444444",
+        "tin_type": "EIN",
+        "address1": "400 Demo Drive",
+        "city": "San Antonio",
+        "state": "TX",
+        "zip": "78201",
+        "contact_name": "Delta Contact",
+        "email": "delta@test.com",
+        "phone": "2105550104",
+    },
+    {
+        "name": "ATS Test Company Epsilon",
+        "tin": "000555555",
+        "tin_type": "EIN",
+        "address1": "500 Test Lane",
+        "city": "Fort Worth",
+        "state": "TX",
+        "zip": "76101",
+        "contact_name": "Epsilon Contact",
+        "email": "epsilon@test.com",
+        "phone": "8175550105",
+    },
+]
+
+# 10 test recipients (2 per issuer)
+ATS_TEST_RECIPIENTS = [
+    # Issuer 1 recipients
+    {
+        "name": "John A TestRecipient",
+        "tin": "000010001",
+        "tin_type": "SSN",
+        "address1": "101 Recipient Road",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78702",
+    },
+    {
+        "name": "Jane B TestRecipient",
+        "tin": "000010002",
+        "tin_type": "SSN",
+        "address1": "102 Recipient Road",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78703",
+    },
+    # Issuer 2 recipients
+    {
+        "name": "Robert C TestRecipient",
+        "tin": "000020001",
+        "tin_type": "SSN",
+        "address1": "201 Payee Place",
+        "city": "Dallas",
+        "state": "TX",
+        "zip": "75202",
+    },
+    {
+        "name": "Mary D TestRecipient",
+        "tin": "000020002",
+        "tin_type": "SSN",
+        "address1": "202 Payee Place",
+        "city": "Dallas",
+        "state": "TX",
+        "zip": "75203",
+    },
+    # Issuer 3 recipients
+    {
+        "name": "William E TestRecipient",
+        "tin": "000030001",
+        "tin_type": "SSN",
+        "address1": "301 Vendor View",
+        "city": "Houston",
+        "state": "TX",
+        "zip": "77002",
+    },
+    {
+        "name": "Elizabeth F TestRecipient",
+        "tin": "000030002",
+        "tin_type": "SSN",
+        "address1": "302 Vendor View",
+        "city": "Houston",
+        "state": "TX",
+        "zip": "77003",
+    },
+    # Issuer 4 recipients
+    {
+        "name": "David G TestRecipient",
+        "tin": "000040001",
+        "tin_type": "SSN",
+        "address1": "401 Contractor Court",
+        "city": "San Antonio",
+        "state": "TX",
+        "zip": "78202",
+    },
+    {
+        "name": "Susan H TestRecipient",
+        "tin": "000040002",
+        "tin_type": "SSN",
+        "address1": "402 Contractor Court",
+        "city": "San Antonio",
+        "state": "TX",
+        "zip": "78203",
+    },
+    # Issuer 5 recipients
+    {
+        "name": "Michael I TestRecipient",
+        "tin": "000050001",
+        "tin_type": "SSN",
+        "address1": "501 Worker Way",
+        "city": "Fort Worth",
+        "state": "TX",
+        "zip": "76102",
+    },
+    {
+        "name": "Patricia J TestRecipient",
+        "tin": "000050002",
+        "tin_type": "SSN",
+        "address1": "502 Worker Way",
+        "city": "Fort Worth",
+        "state": "TX",
+        "zip": "76103",
+    },
+]
+
+
+def build_ats_issuer(issuer_data: dict) -> IssuerInfo:
+    """Build IssuerInfo from ATS test data."""
+    return IssuerInfo(
+        tin=issuer_data["tin"],
+        tin_type=issuer_data["tin_type"],
+        business_name=issuer_data["name"],
+        address1=issuer_data["address1"],
+        city=issuer_data["city"],
+        state=issuer_data["state"],
+        zip_code=issuer_data["zip"],
+        contact_name=issuer_data.get("contact_name"),
+        contact_email=issuer_data.get("email"),
+        phone=issuer_data.get("phone"),
+    )
+
+
+def build_ats_recipient(recipient_data: dict) -> RecipientInfo:
+    """Build RecipientInfo from ATS test data."""
+    name_parts = recipient_data["name"].split(" ")
+    return RecipientInfo(
+        tin=recipient_data["tin"],
+        tin_type=recipient_data["tin_type"],
+        first_name=name_parts[0] if len(name_parts) > 0 else "",
+        middle_name=name_parts[1] if len(name_parts) > 2 else None,
+        last_name=name_parts[-1] if len(name_parts) > 1 else name_parts[0],
+        address1=recipient_data["address1"],
+        city=recipient_data["city"],
+        state=recipient_data["state"],
+        zip_code=recipient_data["zip"],
+    )
+
+
+def build_ats_form_data(
+    form_type: str,
+    recipient: RecipientInfo,
+    record_id: str,
+    tax_year: int,
+    amount_base: int,
+):
+    """Build test form data based on form type."""
+    # Vary amounts slightly for each recipient
+    amount = Decimal(str(1000 + amount_base * 100))
+
+    if form_type == "1099NEC":
+        return Form1099NECData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            nonemployee_compensation=amount,
+            direct_sales_indicator=False,
+            federal_tax_withheld=Decimal("0.00"),
+            state_local_taxes=[],
+            is_corrected=False,
+            cfsf_states=[],
+        )
+    elif form_type == "1099MISC":
+        return Form1099MISCData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            rents=amount,
+            royalties=Decimal("0.00"),
+            other_income=Decimal("0.00"),
+            federal_tax_withheld=Decimal("0.00"),
+            state_local_taxes=[],
+            is_corrected=False,
+            cfsf_states=[],
+        )
+    elif form_type == "1099S":
+        return Form1099SData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            closing_date=date(tax_year, 6, 15),
+            gross_proceeds=amount * 100,  # Real estate uses larger amounts
+            address_or_legal_desc=f"Test Property {record_id}, TX",
+            transferor_received_consideration=False,
+            transferor_is_foreign_person=False,
+            buyers_real_estate_tax=Decimal("0.00"),
+            is_corrected=False,
+        )
+    elif form_type == "1098":
+        return Form1098Data(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            mortgage_interest_received=amount * 10,
+            outstanding_mortgage_principal=amount * 100,
+            mortgage_origination_date=date(tax_year - 5, 1, 15),
+            refund_of_overpaid_interest=Decimal("0.00"),
+            mortgage_insurance_premiums=Decimal("0.00"),
+            points_paid_on_purchase=Decimal("0.00"),
+            property_address_same_as_borrower=True,
+            property_address="",
+            properties_securing_mortgage_count=1,
+            other_info="",
+            mortgage_acquisition_date=None,
+            is_corrected=False,
+        )
+    else:
+        raise ValueError(f"Unknown form type: {form_type}")
+
+
+@router.post("/ats-test/preview-xml")
+async def ats_test_preview_xml(request: ATSTestRequest) -> Response:
+    """
+    Generate ATS test XML for preview without submitting.
+
+    Creates 5 submissions (issuers) with 2 payees each = 10 total records.
+    All TINs start with 000 as required for IRS ATS testing.
+    """
+    try:
+        batches = []
+        recipient_idx = 0
+
+        # Build 5 submission batches (one per issuer)
+        for issuer_idx, issuer_data in enumerate(ATS_TEST_ISSUERS):
+            issuer = build_ats_issuer(issuer_data)
+            forms = []
+
+            # 2 recipients per issuer
+            for j in range(2):
+                if recipient_idx >= len(ATS_TEST_RECIPIENTS):
+                    break
+                recipient_data = ATS_TEST_RECIPIENTS[recipient_idx]
+                recipient = build_ats_recipient(recipient_data)
+                record_id = f"{issuer_idx + 1}-{j + 1}"
+
+                form_data = build_ats_form_data(
+                    request.form_type,
+                    recipient,
+                    record_id,
+                    request.tax_year,
+                    recipient_idx + 1,
+                )
+                forms.append(form_data)
+                recipient_idx += 1
+
+            batch = SubmissionBatch(
+                issuer=issuer,
+                form_type=request.form_type,
+                tax_year=request.tax_year,
+                forms=forms,
+                cfsf_election=False,
+            )
+            batches.append(batch)
+
+        # Generate XML
+        transmitter = get_transmitter_config()
+        software_id = get_software_id()
+
+        generator = IRISXMLGenerator(
+            transmitter=transmitter,
+            software_id=software_id,
+            is_test=True,  # Always test mode for ATS
+        )
+
+        xml_content = generator.generate_transmission(
+            batches=batches,
+            tax_year=request.tax_year,
+        )
+
+        return Response(
+            content=xml_content,
+            media_type="application/xml",
+            headers={
+                "Content-Disposition": f"attachment; filename=ats_test_{request.form_type}_{request.tax_year}.xml"
+            }
+        )
+
+    except Exception as e:
+        logger.exception("Error generating ATS test XML preview")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ats-test/submit", response_model=ATSTestResponse)
+async def ats_test_submit(request: ATSTestRequest):
+    """
+    Submit ATS certification test to IRS.
+
+    Creates and submits 1 transmission with 5 submissions (issuers),
+    each with 2 payees = 10 total records.
+
+    All TINs start with 000 as required for IRS ATS testing.
+    Test File Indicator is set to "T".
+
+    This is a one-time process for IRS ATS certification.
+    Production filings will be done one client at a time.
+    """
+    try:
+        batches = []
+        recipient_idx = 0
+        total_recipients = 0
+
+        # Build 5 submission batches (one per issuer)
+        for issuer_idx, issuer_data in enumerate(ATS_TEST_ISSUERS):
+            issuer = build_ats_issuer(issuer_data)
+            forms = []
+
+            # 2 recipients per issuer
+            for j in range(2):
+                if recipient_idx >= len(ATS_TEST_RECIPIENTS):
+                    break
+                recipient_data = ATS_TEST_RECIPIENTS[recipient_idx]
+                recipient = build_ats_recipient(recipient_data)
+                record_id = f"{issuer_idx + 1}-{j + 1}"
+
+                form_data = build_ats_form_data(
+                    request.form_type,
+                    recipient,
+                    record_id,
+                    request.tax_year,
+                    recipient_idx + 1,
+                )
+                forms.append(form_data)
+                recipient_idx += 1
+                total_recipients += 1
+
+            batch = SubmissionBatch(
+                issuer=issuer,
+                form_type=request.form_type,
+                tax_year=request.tax_year,
+                forms=forms,
+                cfsf_election=False,
+            )
+            batches.append(batch)
+
+        # Generate XML
+        transmitter = get_transmitter_config()
+        software_id = get_software_id()
+
+        generator = IRISXMLGenerator(
+            transmitter=transmitter,
+            software_id=software_id,
+            is_test=True,  # Always test mode for ATS
+        )
+
+        xml_bytes = generator.generate_transmission_bytes(
+            batches=batches,
+            tax_year=request.tax_year,
+        )
+
+        # Validate XML before submission
+        is_valid, validation_errors = validate_iris_xml(xml_bytes)
+        if not is_valid:
+            error_messages = [e["message"] for e in validation_errors if e.get("type") == "error"]
+            logger.error(f"ATS test XML validation failed: {error_messages[:5]}")
+            return ATSTestResponse(
+                success=False,
+                transmission_id="",
+                status="validation_error",
+                message=f"XML validation failed: {error_messages[0] if error_messages else 'Unknown error'}",
+                submission_count=len(batches),
+                recipient_count=total_recipients,
+                errors=validation_errors[:10],
+            )
+
+        # Submit to IRS ATS
+        try:
+            config = load_config()
+            client = IRISClient(config)
+            result = client.submit_xml(xml_bytes)
+        except IRISClientError as e:
+            logger.error(f"ATS test IRIS submission failed: {e}")
+            return ATSTestResponse(
+                success=False,
+                transmission_id="",
+                status="error",
+                message=str(e),
+                submission_count=len(batches),
+                recipient_count=total_recipients,
+            )
+        except Exception as e:
+            logger.error(f"ATS test IRIS submission error: {e}")
+            return ATSTestResponse(
+                success=False,
+                transmission_id="",
+                status="error",
+                message=f"Submission error: {type(e).__name__}: {str(e)}",
+                submission_count=len(batches),
+                recipient_count=total_recipients,
+            )
+
+        # Log activity
+        log_activity(
+            action="ats_test_submitted",
+            entity_type="ats_certification",
+            entity_id=result.receipt_id or "",
+            filer_id=None,
+            operating_year_id=None,
+            details={
+                "form_type": request.form_type,
+                "tax_year": request.tax_year,
+                "submission_count": len(batches),
+                "recipient_count": total_recipients,
+                "transmission_id": result.unique_transmission_id,
+            },
+        )
+
+        return ATSTestResponse(
+            success=result.is_success,
+            transmission_id=result.unique_transmission_id,
+            status=result.status.value,
+            message=result.message,
+            submission_count=len(batches),
+            recipient_count=total_recipients,
+            errors=[
+                {
+                    "record_id": e.record_id,
+                    "code": e.error_code,
+                    "message": e.error_message,
+                    "field": e.field_name,
+                }
+                for e in result.errors
+            ],
+        )
+
+    except Exception as e:
+        logger.exception("Error submitting ATS test to IRS")
+        raise HTTPException(status_code=500, detail=str(e))

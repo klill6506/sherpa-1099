@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}E-File to IRS - {{ filer.name }} - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="efileForm()">
+    <!-- Header -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-sherpa-text">E-File to IRS</h1>
+                <p class="text-sherpa-muted mt-1">{{ filer.name }}</p>
+            </div>
+            <a href="/filers/{{ filer.id }}" class="text-sherpa-blue hover:text-sherpa-blue/80 text-sm">&larr; Back to Filer</a>
+        </div>
+    </div>
+
+    <!-- Form Selection -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <h2 class="text-lg font-medium text-sherpa-text mb-4">Select Form Type</h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {% if nec_count > 0 %}
+            <button @click="selectFormType('1099NEC')"
+                    :class="formType === '1099NEC' ? 'ring-2 ring-sherpa-blue bg-sherpa-blue/10' : ''"
+                    class="p-4 rounded-xl border border-sherpa-border hover:border-sherpa-blue transition-colors text-left">
+                <div class="text-sm font-medium text-sherpa-subtle">1099-NEC</div>
+                <div class="text-2xl font-bold text-sherpa-blue">{{ nec_count }}</div>
+                <div class="text-xs text-sherpa-muted">${{ "%.2f"|format(nec_total) }}</div>
+            </button>
+            {% endif %}
+            {% if misc_count > 0 %}
+            <button @click="selectFormType('1099MISC')"
+                    :class="formType === '1099MISC' ? 'ring-2 ring-sherpa-teal bg-sherpa-teal/10' : ''"
+                    class="p-4 rounded-xl border border-sherpa-border hover:border-sherpa-teal transition-colors text-left">
+                <div class="text-sm font-medium text-sherpa-subtle">1099-MISC</div>
+                <div class="text-2xl font-bold text-sherpa-teal">{{ misc_count }}</div>
+                <div class="text-xs text-sherpa-muted">${{ "%.2f"|format(misc_total) }}</div>
+            </button>
+            {% endif %}
+            {% if s_count > 0 %}
+            <button @click="selectFormType('1099S')"
+                    :class="formType === '1099S' ? 'ring-2 ring-sherpa-amber bg-sherpa-amber/10' : ''"
+                    class="p-4 rounded-xl border border-sherpa-border hover:border-sherpa-amber transition-colors text-left">
+                <div class="text-sm font-medium text-sherpa-subtle">1099-S</div>
+                <div class="text-2xl font-bold text-sherpa-amber">{{ s_count }}</div>
+                <div class="text-xs text-sherpa-muted">${{ "%.2f"|format(s_total) }}</div>
+            </button>
+            {% endif %}
+            {% if f1098_count > 0 %}
+            <button @click="selectFormType('1098')"
+                    :class="formType === '1098' ? 'ring-2 ring-orange-400 bg-orange-400/10' : ''"
+                    class="p-4 rounded-xl border border-sherpa-border hover:border-orange-400 transition-colors text-left">
+                <div class="text-sm font-medium text-sherpa-subtle">1098</div>
+                <div class="text-2xl font-bold text-orange-400">{{ f1098_count }}</div>
+                <div class="text-xs text-sherpa-muted">${{ "%.2f"|format(f1098_total) }}</div>
+            </button>
+            {% endif %}
+        </div>
+
+        <template x-if="formType">
+            <div class="space-y-4">
+                <!-- Test Mode Toggle -->
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-sherpa-panel border border-sherpa-border">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" x-model="isTest" class="sr-only peer">
+                        <div class="relative w-11 h-6 bg-sherpa-subtle/30 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sherpa-blue/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sherpa-amber"></div>
+                        <span class="ml-3 text-sm font-medium text-sherpa-muted" x-text="isTest ? 'ATS Test Mode (recommended)' : 'Production Mode'"></span>
+                    </label>
+                    <template x-if="isTest">
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-sherpa-amber/15 text-sherpa-amber">TEST</span>
+                    </template>
+                    <template x-if="!isTest">
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-red-500/15 text-red-400">LIVE</span>
+                    </template>
+                </div>
+
+                <!-- Validation Status -->
+                <div class="p-4 rounded-xl border border-sherpa-border">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-medium text-sherpa-text">Pre-Flight Validation</h3>
+                        <button @click="validateForms()" :disabled="validating"
+                                class="px-3 py-1 text-xs font-medium rounded-lg bg-sherpa-blue text-white hover:bg-sherpa-blue/90 disabled:opacity-50">
+                            <span x-show="!validating">Validate</span>
+                            <span x-show="validating">Validating...</span>
+                        </button>
+                    </div>
+
+                    <template x-if="validationResult">
+                        <div>
+                            <div :class="validationResult.is_valid ? 'bg-sherpa-teal/15 border-sherpa-teal/30' : 'bg-red-500/15 border-red-500/30'"
+                                 class="p-3 rounded-lg border mb-3">
+                                <div class="flex items-center gap-2">
+                                    <template x-if="validationResult.is_valid">
+                                        <svg class="w-5 h-5 text-sherpa-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </template>
+                                    <template x-if="!validationResult.is_valid">
+                                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </template>
+                                    <span :class="validationResult.is_valid ? 'text-sherpa-teal' : 'text-red-400'" class="font-medium"
+                                          x-text="validationResult.is_valid ? 'All forms passed validation' : validationResult.error_count + ' error(s) found'"></span>
+                                </div>
+                                <div class="mt-1 text-xs text-sherpa-muted">
+                                    <span x-text="validationResult.form_count"></span> forms,
+                                    <span x-text="validationResult.warning_count"></span> warning(s)
+                                </div>
+                            </div>
+
+                            <template x-if="validationResult.errors && validationResult.errors.length > 0">
+                                <div class="space-y-2 max-h-48 overflow-y-auto">
+                                    <template x-for="error in validationResult.errors.slice(0, 10)" :key="error.row + error.field">
+                                        <div :class="error.severity === 'error' ? 'bg-red-500/10 text-red-400' : 'bg-sherpa-amber/10 text-sherpa-amber'"
+                                             class="p-2 rounded text-xs">
+                                            <span x-text="error.message"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="validationResult.errors.length > 10">
+                                        <div class="text-xs text-sherpa-muted">...and <span x-text="validationResult.errors.length - 10"></span> more</div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-3">
+                    <button @click="previewXml()"
+                            class="px-4 py-2 rounded-xl border border-sherpa-border text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-panel transition-colors">
+                        Preview XML
+                    </button>
+                    <button @click="submitToIrs()"
+                            :disabled="!validationResult || !validationResult.is_valid || submitting"
+                            class="px-6 py-2 rounded-xl bg-gradient-to-r from-sherpa-blue to-sherpa-teal text-white text-sm font-semibold hover:from-sherpa-blue/90 hover:to-sherpa-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg">
+                        <span x-show="!submitting">Submit to IRS</span>
+                        <span x-show="submitting">Submitting...</span>
+                    </button>
+                </div>
+
+                <!-- Submission Result -->
+                <template x-if="submissionResult">
+                    <div :class="submissionResult.success ? 'bg-sherpa-teal/15 border-sherpa-teal/30' : 'bg-red-500/15 border-red-500/30'"
+                         class="p-4 rounded-xl border">
+                        <h3 class="font-medium mb-2" :class="submissionResult.success ? 'text-sherpa-teal' : 'text-red-400'"
+                            x-text="submissionResult.success ? 'Submission Successful!' : 'Submission Failed'"></h3>
+                        <div class="text-sm text-sherpa-muted space-y-1">
+                            <p><strong>Status:</strong> <span x-text="submissionResult.status"></span></p>
+                            <p><strong>Message:</strong> <span x-text="submissionResult.message"></span></p>
+                            <template x-if="submissionResult.receipt_id">
+                                <p><strong>Receipt ID:</strong> <span class="font-mono" x-text="submissionResult.receipt_id"></span></p>
+                            </template>
+                            <template x-if="submissionResult.transmission_id">
+                                <p><strong>Transmission ID:</strong> <span class="font-mono text-xs" x-text="submissionResult.transmission_id"></span></p>
+                            </template>
+                            <p><strong>Records:</strong> <span x-text="submissionResult.record_count"></span></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <template x-if="!formType">
+            <div class="text-center py-8 text-sherpa-muted">
+                <p>Select a form type above to begin the e-filing process.</p>
+            </div>
+        </template>
+    </div>
+
+    <!-- XML Preview Modal -->
+    <template x-if="showXmlPreview">
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showXmlPreview = false">
+            <div class="bg-sherpa-card rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden m-4">
+                <div class="p-4 border-b border-sherpa-border flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-sherpa-text">XML Preview</h3>
+                    <button @click="showXmlPreview = false" class="text-sherpa-muted hover:text-sherpa-text">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-4 overflow-auto max-h-[60vh]">
+                    <pre class="text-xs font-mono text-sherpa-muted whitespace-pre-wrap bg-sherpa-panel p-4 rounded-lg" x-text="xmlContent"></pre>
+                </div>
+                <div class="p-4 border-t border-sherpa-border flex justify-end gap-3">
+                    <a :href="'/api/efile/preview-xml?filer_id={{ filer.id }}&operating_year_id={{ op_year.id }}&form_type=' + formType + '&is_test=' + isTest + '&include_drafts=true'"
+                       download="iris_submission.xml"
+                       class="px-4 py-2 rounded-xl bg-sherpa-blue text-white text-sm font-medium hover:bg-sherpa-blue/90">
+                        Download XML
+                    </a>
+                    <button @click="showXmlPreview = false" class="px-4 py-2 rounded-xl border border-sherpa-border text-sm font-medium text-sherpa-muted hover:text-sherpa-text">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+function efileForm() {
+    return {
+        formType: null,
+        isTest: true,
+        validating: false,
+        validationResult: null,
+        submitting: false,
+        submissionResult: null,
+        showXmlPreview: false,
+        xmlContent: '',
+
+        selectFormType(type) {
+            this.formType = type;
+            this.validationResult = null;
+            this.submissionResult = null;
+        },
+
+        async validateForms() {
+            this.validating = true;
+            this.validationResult = null;
+            try {
+                const response = await fetch('/api/efile/validate-forms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filer_id: '{{ filer.id }}',
+                        operating_year_id: '{{ op_year.id }}',
+                        form_type: this.formType,
+                        is_test: this.isTest,
+                        include_drafts: true
+                    })
+                });
+                this.validationResult = await response.json();
+            } catch (error) {
+                this.validationResult = {
+                    is_valid: false,
+                    error_count: 1,
+                    warning_count: 0,
+                    errors: [{ row: 0, field: 'system', message: 'Validation failed: ' + error.message, severity: 'error' }]
+                };
+            } finally {
+                this.validating = false;
+            }
+        },
+
+        async previewXml() {
+            try {
+                const response = await fetch('/api/efile/preview-xml', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filer_id: '{{ filer.id }}',
+                        operating_year_id: '{{ op_year.id }}',
+                        form_type: this.formType,
+                        is_test: this.isTest,
+                        include_drafts: true
+                    })
+                });
+                this.xmlContent = await response.text();
+                this.showXmlPreview = true;
+            } catch (error) {
+                alert('Error generating XML preview: ' + error.message);
+            }
+        },
+
+        async submitToIrs() {
+            if (!confirm('Are you sure you want to submit to IRS' + (this.isTest ? ' (ATS Test)' : ' (PRODUCTION)') + '?')) {
+                return;
+            }
+
+            this.submitting = true;
+            this.submissionResult = null;
+            try {
+                const response = await fetch('/api/efile/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filer_id: '{{ filer.id }}',
+                        operating_year_id: '{{ op_year.id }}',
+                        form_type: this.formType,
+                        is_test: this.isTest,
+                        include_drafts: true
+                    })
+                });
+                this.submissionResult = await response.json();
+            } catch (error) {
+                this.submissionResult = {
+                    success: false,
+                    status: 'error',
+                    message: 'Submission failed: ' + error.message,
+                    record_count: 0
+                };
+            } finally {
+                this.submitting = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}
