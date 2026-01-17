@@ -60,6 +60,7 @@ class SubmissionStatus(Enum):
     ACCEPTED_WITH_ERRORS = "accepted_with_errors"
     REJECTED = "rejected"
     ERROR = "error"
+    NOT_FOUND = "not_found"
     UNKNOWN = "unknown"
 
 
@@ -882,6 +883,7 @@ class IRISClient:
                 "processing": SubmissionStatus.PROCESSING,
                 "partially_accepted": SubmissionStatus.PARTIALLY_ACCEPTED,
                 "accepted_with_errors": SubmissionStatus.ACCEPTED_WITH_ERRORS,
+                "not_found": SubmissionStatus.NOT_FOUND,
             }
             status = status_map.get(status_text, SubmissionStatus.UNKNOWN)
             logger.info(f"Parsed status: {status_text} -> {status}")

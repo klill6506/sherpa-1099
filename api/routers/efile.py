@@ -119,6 +119,7 @@ class StatusResponse(BaseModel):
     receipt_id: str
     transmission_id: str
     status: str
+    message: str = ""
     record_count: int = 0
     accepted_count: int = 0
     rejected_count: int = 0
@@ -1199,10 +1200,24 @@ async def check_status(request: StatusCheckRequest):
             transmission_id=request.transmission_id,
         )
 
+        # Generate helpful message based on status
+        status_messages = {
+            "pending": "Submission received by IRS. Processing has not yet begun.",
+            "processing": "IRS is actively processing this submission.",
+            "accepted": "All forms in this submission were accepted by the IRS.",
+            "accepted_with_errors": "Submission was accepted but some forms had errors.",
+            "partially_accepted": "Some forms were accepted, others were rejected.",
+            "rejected": "This submission was rejected by the IRS.",
+            "not_found": "The IRS has not yet processed this submission. This is normal - it may take some time for new submissions to appear in the system. Please try again later.",
+            "unknown": "Unable to determine submission status.",
+        }
+        message = status_messages.get(result.status.value, "")
+
         return StatusResponse(
             receipt_id=result.receipt_id,
             transmission_id=result.unique_transmission_id,
             status=result.status.value,
+            message=message,
             record_count=result.record_count,
             accepted_count=result.accepted_count,
             rejected_count=result.rejected_count,

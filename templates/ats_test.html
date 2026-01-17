@@ -282,14 +282,14 @@
         <!-- Manual Status Result -->
         <template x-if="manualStatusResult">
             <div class="mt-4 p-4 rounded-xl"
-                 :class="manualStatusResult.status === 'accepted' || manualStatusResult.status === 'pending' || manualStatusResult.status === 'processing' ? 'bg-sherpa-teal/10 border border-sherpa-teal/30' : 'bg-red-500/10 border border-red-500/30'">
+                 :class="manualStatusResult.status === 'accepted' || manualStatusResult.status === 'pending' || manualStatusResult.status === 'processing' ? 'bg-sherpa-teal/10 border border-sherpa-teal/30' : manualStatusResult.status === 'not_found' ? 'bg-sherpa-amber/10 border border-sherpa-amber/30' : 'bg-red-500/10 border border-red-500/30'">
                 <div class="text-sm space-y-1">
                     <p><strong>Status:</strong>
                         <span class="font-medium"
-                              :class="manualStatusResult.status === 'accepted' ? 'text-sherpa-teal' : manualStatusResult.status === 'pending' || manualStatusResult.status === 'processing' ? 'text-sherpa-amber' : 'text-red-400'"
-                              x-text="manualStatusResult.status"></span>
+                              :class="manualStatusResult.status === 'accepted' ? 'text-sherpa-teal' : manualStatusResult.status === 'pending' || manualStatusResult.status === 'processing' ? 'text-sherpa-amber' : manualStatusResult.status === 'not_found' ? 'text-sherpa-amber' : 'text-red-400'"
+                              x-text="manualStatusResult.status === 'not_found' ? 'Not Found' : manualStatusResult.status"></span>
                     </p>
-                    <p><strong>Message:</strong> <span x-text="manualStatusResult.message"></span></p>
+                    <p><strong>Message:</strong> <span x-text="manualStatusResult.message || (manualStatusResult.status === 'not_found' ? 'The IRS has not yet processed this submission. This is normal - it may take some time for new submissions to appear. Please try again later.' : '')"></span></p>
                     <template x-if="manualStatusResult.receipt_id">
                         <p><strong>Receipt ID:</strong> <span class="font-mono text-xs" x-text="manualStatusResult.receipt_id"></span></p>
                     </template>
