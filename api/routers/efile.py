@@ -1389,20 +1389,30 @@ async def get_current_transmitter_config():
     Used to verify transmitter setup before filing.
     """
     config = get_transmitter_config()
+    software_id = get_software_id()
 
     # Mask sensitive data
     tin_masked = f"***-**-{config.tin[-4:]}" if len(config.tin) >= 4 else "***"
+
+    # Check if all required fields are configured
+    is_configured = bool(
+        config.tin and
+        config.tcc and
+        config.business_name and
+        software_id
+    )
 
     return {
         "tin_masked": tin_masked,
         "tin_type": config.tin_type,
         "tcc": config.tcc,
+        "software_id": software_id if software_id else "(not configured)",
         "business_name": config.business_name,
         "city": config.city,
         "state": config.state,
         "contact_name": config.contact_name,
         "contact_email": config.contact_email,
-        "is_configured": bool(config.tin and config.tcc and config.business_name),
+        "is_configured": is_configured,
     }
 
 

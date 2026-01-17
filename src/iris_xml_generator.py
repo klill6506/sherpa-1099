@@ -1034,6 +1034,22 @@ class IRISXMLGenerator:
 
         return grp
 
+    def _generate_utid(self) -> str:
+        """
+        Generate a Unique Transmission ID (UTID) per IRS Pub 5718/5719 requirements.
+
+        Format: {UUID}:IRIS:{TCC}::{TestIndicator}
+        - UUID: Random UUID (without dashes for compactness, or with - IRS accepts both)
+        - IRIS: Literal string
+        - TCC: Transmitter Control Code (must match TransmitterControlCd in manifest)
+        - TestIndicator: T for test, P for production
+
+        The TCC portion of UTID MUST match TransmitterControlCd or transmission will reject.
+        """
+        test_indicator = "T" if self.is_test else "P"
+        tcc = self.transmitter.tcc[:5].upper() if self.transmitter.tcc else "XXXXX"
+        return f"{uuid.uuid4()}:IRIS:{tcc}::{test_indicator}"
+
     def generate_transmission(
         self,
         batches: List[SubmissionBatch],
@@ -1052,7 +1068,7 @@ class IRISXMLGenerator:
             str: Complete XML document as string
         """
         if not transmission_id:
-            transmission_id = f"{uuid.uuid4()}:IRIS:00000::T" if self.is_test else f"{uuid.uuid4()}:IRIS:00000::P"
+            transmission_id = self._generate_utid()
 
         # Calculate totals
         total_issuers = len(batches)
