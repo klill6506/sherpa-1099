@@ -1886,11 +1886,11 @@ async def ats_test_submit(request: ATSTestRequest):
                 recipient_count=total_recipients,
             )
 
-        # Log activity
+        # Log activity (entity_id must be UUID or None, so store receipt_id in details)
         log_activity(
             action="ats_test_submitted",
             entity_type="ats_certification",
-            entity_id=result.receipt_id or "",
+            entity_id=None,
             filer_id=None,
             operating_year_id=None,
             details={
@@ -1899,6 +1899,8 @@ async def ats_test_submit(request: ATSTestRequest):
                 "submission_count": len(batches),
                 "recipient_count": total_recipients,
                 "transmission_id": result.unique_transmission_id,
+                "receipt_id": result.receipt_id,
+                "status": result.status.value,
             },
         )
 
