@@ -6,6 +6,8 @@ Run with: uvicorn api.main:app --reload --port 8002
 """
 
 import os
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -42,10 +44,46 @@ def get_rate_limit_key(request: Request) -> str:
 # Initialize rate limiter
 limiter = Limiter(key_func=get_rate_limit_key)
 
+# Logger for startup info
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown logic."""
+    # === STARTUP ===
+    logger.info("=" * 60)
+    logger.info("Sherpa 1099 starting up...")
+
+    # Log IRIS configuration (for debugging auth issues)
+    try:
+        # Import here to avoid circular imports
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+        from config import load_config
+        config = load_config()
+        logger.info(f"IRIS Environment: {config.environment}")
+        logger.info(f"IRIS Auth Endpoint: {config.auth_endpoint}")
+        logger.info(f"IRIS Intake Endpoint: {config.intake_endpoint}")
+        logger.info(f"IRIS Status Endpoint: {config.status_endpoint}")
+        logger.info(f"IRIS Client ID: {config.client_id[:8]}...{config.client_id[-4:] if len(config.client_id) > 12 else ''}")
+        logger.info(f"IRIS Private Key: {'configured (PEM)' if config.private_key_pem else 'configured (file)' if config.private_key_path else 'NOT CONFIGURED'}")
+    except Exception as e:
+        logger.warning(f"Could not load IRIS config on startup: {e}")
+
+    logger.info("=" * 60)
+
+    yield
+
+    # === SHUTDOWN ===
+    logger.info("Sherpa 1099 shutting down...")
+
+
 app = FastAPI(
     title="Sherpa 1099 API",
     description="Backend API for 1099 e-filing with IRS IRIS",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # Attach limiter to app state (required by SlowAPI)
