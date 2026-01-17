@@ -2009,3 +2009,43 @@ async def check_submission_status(request: StatusCheckRequest):
     except Exception as e:
         logger.exception("Error checking submission status")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/check-status-debug")
+async def check_status_debug(request: StatusCheckRequest):
+    """
+    Debug endpoint - returns raw IRS response XML.
+    For troubleshooting status check parsing issues.
+    """
+    if not request.transmission_id:
+        raise HTTPException(status_code=400, detail="transmission_id required")
+
+    try:
+        config = load_config()
+        client = IRISClient(config)
+
+        # Build the status request XML
+        request_xml = client._build_status_request(
+            receipt_id=request.receipt_id,
+            transmission_id=request.transmission_id,
+        )
+
+        # Make the request directly
+        response = client._request_url(
+            method="POST",
+            url=client.config.status_endpoint,
+            data=request_xml,
+            content_type="application/xml",
+        )
+
+        return {
+            "request_xml": request_xml.decode("utf-8"),
+            "response_status": response.status_code,
+            "response_xml": response.text,
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+        }
