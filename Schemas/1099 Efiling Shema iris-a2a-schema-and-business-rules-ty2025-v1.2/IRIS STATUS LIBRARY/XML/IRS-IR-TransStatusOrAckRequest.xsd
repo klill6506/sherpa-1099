@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2024 rel. 2 sp1 (x64) (https://www.altova.com) by IRS Software Management (OPO OIT) -->
+<xsd:schema xmlns="urn:us:gov:treasury:irs:ir" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:us:gov:treasury:irs:ir" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+	<xsd:annotation>
+		<xsd:documentation>
+			<FormDocumentation>
+				<DescriptionTxt>IR (Information Return) Status and Acknowledgement Request Schema</DescriptionTxt>
+				<PurposeTxt>Information Return Status and Acknowledgement Request Schema</PurposeTxt>
+				<VersonDt>2025-04-30</VersonDt>
+			</FormDocumentation>
+			<Component>
+				<DictionaryEntryNm>IR (Information Return) Status and Acknowledgement Request Schema</DictionaryEntryNm>
+				<MajorVersionNum>1</MajorVersionNum>
+				<MinorVersionNum>0</MinorVersionNum>
+				<VersionEffectiveBeginDt>2025-04-30</VersionEffectiveBeginDt>
+				<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+				<DescriptionTxt>The content model for information returns Status and Acknowledgement Request</DescriptionTxt>
+			</Component>
+		</xsd:documentation>
+	</xsd:annotation>
+	<!-- ================================ -->
+	<!-- ===== Root Element Declarations ===== -->
+	<!-- ================================ -->
+	<xsd:element name="TransStatusOrAckRequest" type="TransStatusOrAckRequestType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR Status or Acknowledgement Request Details</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-06-27</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>The root element for Status or Acknowledgement Request</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<!-- ======================== -->
+	<!-- ===== Type Defintions ===== -->
+	<!-- ======================== -->
+	<xsd:complexType name="TransStatusOrAckRequestType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR Status or Acknowledgement Request Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-06-27</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with IR Status or Acknowledgement Request</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="TransmitterControlCd" type="TCCType"/>
+			<xsd:element name="SearchTypeCd" type="SearchTypeCdType"/>
+			<xsd:element name="SearchParameterTypeCd" type="SearchParameterTypeCdType"/>
+			<xsd:element name="SearchId" type="SearchIdType" minOccurs="1" maxOccurs="100"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="TCCType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Transmitter Control Code (TCC) Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2014-11-03</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>Transmitter Control Code (TCC) Type</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9]{5}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="SearchTypeCdType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Search Type Code Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-01-10</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>Identifies if the request is for status or acknowledgement information</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="S">
+				<xsd:annotation>
+					<xsd:documentation>Status</xsd:documentation>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="A">
+				<xsd:annotation>
+					<xsd:documentation>Acknowledgement</xsd:documentation>
+				</xsd:annotation>
+			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="SearchParameterTypeCdType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Search Parameter Type Code Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-02-08</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>Identifies if the request queried using Receipt ID or Unique Transmission ID</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="RID">
+				<xsd:annotation>
+					<xsd:documentation>Receipt ID</xsd:documentation>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="UTID">
+				<xsd:annotation>
+					<xsd:documentation>Unique Transmission ID</xsd:documentation>
+				</xsd:annotation>
+			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="SearchIdType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Search ID Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-02-08</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>A search ID that the request is for. IDs can be either Receipt ID (RID) or Unique Transmission ID (UTID) depending on what was put in the Search Parameter Type Indicator.
+					
+					Receipt ID format example is "2020-63385508791-4a6c57eda"
+					Unique Transmission ID format example is "550e8400-e29b-41d4-a716-446655440000:IRIS:BB002::A"</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}:IRIS:[a-zA-Z0-9]{5}::(A|U)|[1-9][0-9]{3}\-[0-9]{11}\-[0-9a-zA-Z]{9}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:schema>

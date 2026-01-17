@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="urn:us:gov:treasury:irs:ir" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:us:gov:treasury:irs:ir" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+	<xsd:annotation>
+		<xsd:documentation>
+			<DescriptionTxt>IR (Information Return) Schema - Form 1099 B</DescriptionTxt>
+			<VersionDt>2025-02-13</VersionDt>
+		</xsd:documentation>
+	</xsd:annotation>
+	<!-- ===== Imports / Include ===== -->
+	<xsd:include schemaLocation="../COMMON/IRS-IRefileTypes.xsd"/>
+	<!-- ================================ -->
+	<!-- =====Form Types Declarations===== -->
+	<!-- ================================ -->
+	<xsd:complexType name="Form1099BDetailType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 1099 B Detail Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2023-01-10</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the form 1099 B.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="TaxYr" type="YearType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Tax Year</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecordId" type="RecordIdType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Record Identifier</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IssuerOfficeCd" type="Code4Type" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Issuer Office Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CFSFElectionStateCd" type="StateType" minOccurs="0" maxOccurs="62">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Combined Federal/State Filing Election State Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="VoidInd" type="DigitBooleanType" fixed="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Void Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CorrectedInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Corrected Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PrevSubmittedRecRecipientGrp" type="PrevSubmittedRecRecipientGrpType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Previously Submitted Record Recipient Group</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecipientDetail" type="RecipientDetailType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recipient Detail</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecipientAccountNum" type="Text30Type" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recipient Account Number</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SecondTINNoticeInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Indicator that payer was notified by the IRS twice within 3 calendar years that the payee provided an incorrect TIN.</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CUSIPNum" type="CUSIPNumberType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>CUSIP (Committee on Uniform Security Identification Procedures) Number</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FATCAFilingRequirementInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Indicates the FATCA (Foreign Account Tax Compliance Act) filing requirement.</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Form8949ApplicableCheckboxCd" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Applicable Checkbox code on Form 8949</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="A"/>
+						<xsd:enumeration value="B"/>
+						<xsd:enumeration value="D"/>
+						<xsd:enumeration value="E"/>
+						<xsd:enumeration value="X"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="PropertyDesc" type="LineExplanationType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Property description</Description>
+						<LineNumber>Line 1a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AcquiredDt" type="DateNoTimeZoneType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Date acquired</Description>
+						<LineNumber>Line 1b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SoldOrDisposedDt" type="DateNoTimeZoneType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Date sold or disposed</Description>
+						<LineNumber>Line 1c</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ProceedsAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of proceeds</Description>
+						<LineNumber>Line 1d</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CostOrOtherBasisAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of property cost or other basis</Description>
+						<LineNumber>Line 1e</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AccruedMarketDiscountAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Accrued market discount interest the taxpayer receives</Description>
+						<LineNumber>Line 1f</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NondeductibleWashSaleLossAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of nondeductible loss in a wash sale transaction.</Description>
+						<LineNumber>Line 1g</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ShortTermGainLossInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Short term gain loss indicator</Description>
+						<LineNumber>Line 2</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LongTermGainLossInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Long term gain loss indicator</Description>
+						<LineNumber>Line 2</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="OrdinaryInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Ordinary indicator</Description>
+						<LineNumber>Line 2</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CollectiblesInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Collectibles indicator</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="QOFInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>QOF (Qualified Opportunity Fund) indicator</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FederalIncomeTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of federal income tax withheld</Description>
+						<LineNumber>Line 4</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NoncoveredSecurityInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Noncovered securities indicator</Description>
+						<LineNumber>Line 5</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="GrossProceedsInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Gross proceeds indicator</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NetProceedsInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Net proceeds indicator</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LossNotAllowedInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Loss not allowed indicator</Description>
+						<LineNumber>Line 7</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TYClosedContractProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of profit or (loss) realized on contracts closed during current Tax Year.</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PriorYrOpenCntrctProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of prior year open contract profit or loss.</Description>
+						<LineNumber>Line 9</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CYOpenCntrctProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of current year open contract profit or loss.</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CntrctAggregateProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of profit or loss on aggregate contracts.</Description>
+						<LineNumber>Line 11</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BasisReportedInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Indicator for whether basis has been reported.</Description>
+						<LineNumber>Line 12</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BarterAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount received through a bartered exchange.</Description>
+						<LineNumber>Line 13</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="StateLocalTaxGrp" type="StateLocalTaxGrpType" minOccurs="0" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State and Local Tax</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Form1099BTotalAmtGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 1099 B Total Amount Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2021-05-17</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the form 1099 B total amounts.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="FederalIncomeTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Federal Income Tax Withheld Amount</Description>
+						<LineNumber>Line 4</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ProceedsAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of proceeds</Description>
+						<LineNumber>Line 1d</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CostOrOtherBasisAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of property cost or other basis</Description>
+						<LineNumber>Line 1e</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AccruedMarketDiscountAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Accrued market discount interest the taxpayer receives</Description>
+						<LineNumber>Line 1f</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NondeductibleWashSaleLossAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of nondeductible loss in a wash sale transaction.</Description>
+						<LineNumber>Line 1g</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TYClosedContractProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of profit or (loss) realized on contracts closed during current Tax Year.</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PriorYrOpenCntrctProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of prior year open contract profit or loss.</Description>
+						<LineNumber>Line 9</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CYOpenCntrctProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of current year open contract profit or loss.</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CntrctAggregateProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of profit or loss on aggregate contracts.</Description>
+						<LineNumber>Line 11</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BarterAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount received through a bartered exchange.</Description>
+						<LineNumber>Line 13</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Form1099BTotalByStateGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 1099 B Total by State Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2021-08-26</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the form 1099 B totals by state</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="StateAbbreviationCd" type="StateType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State Abbreviation Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalReportedRcpntFormCnt" type="TotalNumberNonNegativeType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total Reported Recipient Form Count</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FederalIncomeTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Federal Income Tax Withheld Amount</Description>
+						<LineNumber>Line 4</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="StateTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State Tax Withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LocalTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Local Tax withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ProceedsAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of proceeds</Description>
+						<LineNumber>Line 1d</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CostOrOtherBasisAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of property cost or other basis</Description>
+						<LineNumber>Line 1e</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AccruedMarketDiscountAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Accrued market discount interest the taxpayer receives</Description>
+						<LineNumber>Line 1f</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NondeductibleWashSaleLossAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of nondeductible loss in a wash sale transaction.</Description>
+						<LineNumber>Line 1g</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TYClosedContractProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of profit or (loss) realized on contracts closed during current Tax Year.</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PriorYrOpenCntrctProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of prior year open contract profit or loss.</Description>
+						<LineNumber>Line 9</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CYOpenCntrctProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of current year open contract profit or loss.</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CntrctAggregateProfitLossAmt" type="USDecimalAmountType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount of profit or loss on aggregate contracts.</Description>
+						<LineNumber>Line 11</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BarterAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>The amount received through a bartered exchange.</Description>
+						<LineNumber>Line 13</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

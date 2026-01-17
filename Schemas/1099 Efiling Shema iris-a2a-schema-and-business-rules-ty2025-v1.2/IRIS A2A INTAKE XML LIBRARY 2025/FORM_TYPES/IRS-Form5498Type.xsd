@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="urn:us:gov:treasury:irs:ir" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:us:gov:treasury:irs:ir" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+	<xsd:annotation>
+		<xsd:documentation>
+			<DescriptionTxt>IR (Information Return) Schema - Form 5498</DescriptionTxt>
+			<VersionDt>2025-02-13</VersionDt>
+		</xsd:documentation>
+	</xsd:annotation>
+	<!-- ===== Imports / Include ===== -->
+	<xsd:include schemaLocation="../COMMON/IRS-IRefileTypes.xsd"/>
+	<!-- ================================ -->
+	<!-- =====Form Types Declarations===== -->
+	<!-- ================================ -->
+	<xsd:complexType name="Form5498DetailType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 5498 Detail Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-01-14</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>1.1</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the Form 5498.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="TaxYr" type="YearType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Tax Year</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecordId" type="RecordIdType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Record Identifier</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IssuerOfficeCd" type="Code4Type" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Issuer Office Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CFSFElectionStateCd" type="StateType" minOccurs="0" maxOccurs="62">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Combined Federal/State Filing Election State Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="VoidInd" type="DigitBooleanType" fixed="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Void Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CorrectedInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Corrected Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PrevSubmittedRecRecipientGrp" type="PrevSubmittedRecRecipientGrpType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Previously Submitted Record Recipient Group</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecipientDetail" type="RecipientDetailType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recipient Detail</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecipientAccountNum" type="Text30Type" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recipient Account Number</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IRAContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>IRA Contributions</Description>
+						<LineNumber>Line 1</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RolloverContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Rollover Contributions</Description>
+						<LineNumber>Line 2</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ConversionToRothIRATaxbleAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Roth IRA conversion</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecharacterizedContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recharacterized Contribution Amount</Description>
+						<LineNumber>Line 4</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EOYFMVAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Fair Market Value of Account amount</Description>
+						<LineNumber>Line 5</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LifeInsIncludedInIRAContriAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Life Insurance cost included in Box 1</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IRAInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>IRA Indicator</Description>
+						<LineNumber>Line 7</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SEPInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SEP Indicator</Description>
+						<LineNumber>Line 7</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SIMPLEInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SIMPLE Indicator</Description>
+						<LineNumber>Line 7</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RothIRAInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Roth IRA Indicator</Description>
+						<LineNumber>Line 7</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SEPContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SEP Contributions amount</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SIMPLEContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SIMPLE Contributions amount</Description>
+						<LineNumber>Line 9</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RothIRAContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Roth IRA Contributions amount</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RMDInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Check if Required Minimum Distribtuion for tax year listed</Description>
+						<LineNumber>Line 11</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RMDDt" type="DateNoTimeZoneType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Required Minimum Distribution date</Description>
+						<LineNumber>Line 12a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RMDAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Required Minimum Distribution amount</Description>
+						<LineNumber>Line 12b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PostponedOrLateContributionGrp" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Postponed or Late Contributions Group</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="ContributionAmt" type="USDecimalAmountNNType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Postponed or late contributions amount</Description>
+									<LineNumber>Line 13a</LineNumber>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="ContributionYr" type="YearType" minOccurs="0">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Postponed or late contributions date
+</Description>
+									<LineNumber>Line 13b</LineNumber>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="PostponedOrLateContributionCd">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Postponed or late contributions code. FD - Federally Designated Disaster Area, PL - Public Law,  EO - Executive Order, PO - Rollovers of qualified plan loan offset amounts, SC - for participants who have self-certified that the rollover contribution.</Description>
+									<LineNumber>Line 13c</LineNumber>
+								</xsd:documentation>
+							</xsd:annotation>
+							<xsd:simpleType>
+								<xsd:restriction base="StringType">
+									<xsd:enumeration value="FD"/>
+									<xsd:enumeration value="PL"/>
+									<xsd:enumeration value="EO"/>
+									<xsd:enumeration value="PO"/>
+									<xsd:enumeration value="SC"/>
+								</xsd:restriction>
+							</xsd:simpleType>
+						</xsd:element>
+						<xsd:element name="PostponedOrLateContriReasonTxt" type="ShortDescriptionType" minOccurs="0">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Postponed or late contributions reason</Description>
+									<LineNumber>Line 13c</LineNumber>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="DistributionRepaymentAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Repayments amount</Description>
+						<LineNumber>Line 14a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DistributionRepaymentCd" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Repayments code. QR - qualified reservist distribution, DD - qualified disaster distribution, BA - qualified birth or adoption distribution, EP - emergency personal expense, DA - domestic abuse victim, TI - terminally ill individual.</Description>
+						<LineNumber>Line 14b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="QR"/>
+						<xsd:enumeration value="DD"/>
+						<xsd:enumeration value="BA"/>
+						<xsd:enumeration value="EP"/>
+						<xsd:enumeration value="DA"/>
+						<xsd:enumeration value="TI"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FairMarketValueAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Fair Market Value of Certain specified assets</Description>
+						<LineNumber>Line 15a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FMVInvestmentTypeCd" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Fair Market Value of Certain specified assets code. A - Stock or other ownership interest in a corporation that is not readily tradable on an established securities market. B - Short- or long-term debt obligation that is not traded on an established securities market. C - Ownership interest in a limited liability company or similar entity (unless the interest is traded on an established securities market). D - Real estate. E - Ownership interest in a partnership, trust, or similar entity (unless the interest is traded on an established securities market). F - Option contract or similar product that is not offered for trade on an established option exchange. G - Other asset that does not have a readily available FMV.H - More than two types of assets (listed in A through G) are held in this IRA.</Description>
+						<LineNumber>Line 15b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="A"/>
+						<xsd:enumeration value="AB"/>
+						<xsd:enumeration value="AC"/>
+						<xsd:enumeration value="AD"/>
+						<xsd:enumeration value="AE"/>
+						<xsd:enumeration value="AF"/>
+						<xsd:enumeration value="AG"/>
+						<xsd:enumeration value="B"/>
+						<xsd:enumeration value="BA"/>
+						<xsd:enumeration value="BC"/>
+						<xsd:enumeration value="BD"/>
+						<xsd:enumeration value="BE"/>
+						<xsd:enumeration value="BF"/>
+						<xsd:enumeration value="BG"/>
+						<xsd:enumeration value="C"/>
+						<xsd:enumeration value="CA"/>
+						<xsd:enumeration value="CB"/>
+						<xsd:enumeration value="CD"/>
+						<xsd:enumeration value="CE"/>
+						<xsd:enumeration value="CF"/>
+						<xsd:enumeration value="CG"/>
+						<xsd:enumeration value="D"/>
+						<xsd:enumeration value="DA"/>
+						<xsd:enumeration value="DB"/>
+						<xsd:enumeration value="DC"/>
+						<xsd:enumeration value="DE"/>
+						<xsd:enumeration value="DF"/>
+						<xsd:enumeration value="DG"/>
+						<xsd:enumeration value="E"/>
+						<xsd:enumeration value="EA"/>
+						<xsd:enumeration value="EB"/>
+						<xsd:enumeration value="EC"/>
+						<xsd:enumeration value="ED"/>
+						<xsd:enumeration value="EF"/>
+						<xsd:enumeration value="EG"/>
+						<xsd:enumeration value="F"/>
+						<xsd:enumeration value="FA"/>
+						<xsd:enumeration value="FB"/>
+						<xsd:enumeration value="FC"/>
+						<xsd:enumeration value="FD"/>
+						<xsd:enumeration value="FE"/>
+						<xsd:enumeration value="FG"/>
+						<xsd:enumeration value="G"/>
+						<xsd:enumeration value="GA"/>
+						<xsd:enumeration value="GB"/>
+						<xsd:enumeration value="GC"/>
+						<xsd:enumeration value="GD"/>
+						<xsd:enumeration value="GE"/>
+						<xsd:enumeration value="GF"/>
+						<xsd:enumeration value="H"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="StateLocalTaxGrp" type="StateLocalTaxGrpType" minOccurs="0" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Postponed or late contributions reason</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Form5498TotalAmtGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 5498 Total Amount Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2023-01-05</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the Form 5498 total amounts.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="IRAContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>IRA Contributions</Description>
+						<LineNumber>Line 1</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RolloverContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Rollover Contributions</Description>
+						<LineNumber>Line 2</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ConversionToRothIRATaxbleAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Roth IRA conversion</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecharacterizedContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recharacterized Contribution Amount</Description>
+						<LineNumber>Line 4</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EOYFMVAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Fair Market Value of Account amount</Description>
+						<LineNumber>Line 5</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LifeInsIncludedInIRAContriAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Life Insurance cost included in Box 1</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SEPContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SEP Contributions amount</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SIMPLEContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SIMPLE Contributions amount</Description>
+						<LineNumber>Line 9</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RothIRAContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Roth IRA Contributions amount</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RMDAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Required Minimum Distribution amount</Description>
+						<LineNumber>Line 12b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Postponed or late contributions amount</Description>
+						<LineNumber>Line 13a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DistributionRepaymentAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Repayments amount</Description>
+						<LineNumber>Line 14a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FairMarketValueAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Fair Market Value of Certain specified assets</Description>
+						<LineNumber>Line 15a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Form5498TotalByStateGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 5498 Total By State Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2023-01-05</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the Form 5498 total by state group amounts.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="StateAbbreviationCd" type="StateType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State Abbreviation Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalReportedRcpntFormCnt" type="TotalNumberNonNegativeType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total Reported Recipient Form Count</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FederalIncomeTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Federal Income Tax Wtihheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="StateTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State Tax Withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LocalTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Local Tax Withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IRAContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>IRA Contributions</Description>
+						<LineNumber>Line 1</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RolloverContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Rollover Contributions</Description>
+						<LineNumber>Line 2</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ConversionToRothIRATaxbleAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Roth IRA conversion</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecharacterizedContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recharacterized Contribution Amount</Description>
+						<LineNumber>Line 4</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EOYFMVAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Fair Market Value of Account amount</Description>
+						<LineNumber>Line 5</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LifeInsIncludedInIRAContriAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Life Insurance cost included in Box 1</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SEPContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SEP Contributions amount</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SIMPLEContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>SIMPLE Contributions amount</Description>
+						<LineNumber>Line 9</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RothIRAContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Roth IRA Contributions amount</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RMDAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Required Minimum Distribution amount</Description>
+						<LineNumber>Line 12b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Postponed or late contributions amount</Description>
+						<LineNumber>Line 13a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DistributionRepaymentAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Repayments amount</Description>
+						<LineNumber>Line 14a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FairMarketValueAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Fair Market Value of Certain specified assets</Description>
+						<LineNumber>Line 15a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

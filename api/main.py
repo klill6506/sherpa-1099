@@ -15,7 +15,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from .routers import operating_years, filers, recipients, forms, dashboard, imports, web, pdf, auth
+from .routers import operating_years, filers, recipients, forms, dashboard, imports, web, pdf, auth, efile
 from .auth import get_optional_user
 
 
@@ -127,6 +127,7 @@ app.include_router(forms.router, prefix="/api/forms", tags=["1099 Forms"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(imports.router, prefix="/api/imports", tags=["Imports"])
 app.include_router(pdf.router, prefix="/api/pdf", tags=["PDF Generation"])
+app.include_router(efile.router, prefix="/api/efile", tags=["IRS E-Filing"])
 
 # Include Auth router (login, logout, callback)
 app.include_router(auth.router, tags=["Authentication"])

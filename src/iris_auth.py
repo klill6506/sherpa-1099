@@ -19,7 +19,7 @@ from dataclasses import dataclass
 import jwt
 import requests
 
-from .config import IRISConfig
+from config import IRISConfig
 
 # Configure logger - NEVER log tokens or keys
 logger = logging.getLogger(__name__)

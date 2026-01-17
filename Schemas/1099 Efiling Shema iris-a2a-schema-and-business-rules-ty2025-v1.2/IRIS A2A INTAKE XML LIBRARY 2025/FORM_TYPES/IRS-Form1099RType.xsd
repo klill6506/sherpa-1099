@@ -1,0 +1,570 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="urn:us:gov:treasury:irs:ir" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:us:gov:treasury:irs:ir" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+	<xsd:annotation>
+		<xsd:documentation>
+			<DescriptionTxt>IR (Information Return) Schema - Form 1099 R</DescriptionTxt>
+			<VersionDt>2025-02-18</VersionDt>
+		</xsd:documentation>
+	</xsd:annotation>
+	<!-- ===== Imports / Include ===== -->
+	<xsd:include schemaLocation="../COMMON/IRS-IRefileTypes.xsd"/>
+	<!-- ================================ -->
+	<!-- =====Form Types Declarations===== -->
+	<!-- ================================ -->
+	<xsd:complexType name="Form1099RDetailType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 1099 R Detail Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-01-14</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the form 1099 R.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="TaxYr" type="YearType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Tax Year</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecordId" type="RecordIdType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Record Identifier</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IssuerOfficeCd" type="Code4Type" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Issuer Office Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CFSFElectionStateCd" type="StateType" minOccurs="0" maxOccurs="62">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Combined Federal/State Filing Election State Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="VoidInd" type="DigitBooleanType" fixed="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Void Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CorrectedInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Corrected Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PrevSubmittedRecRecipientGrp" type="PrevSubmittedRecRecipientGrpType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Previously Submitted Record Recipient Group</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecipientDetail" type="RecipientDetailType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recipient Detail</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecipientAccountNum" type="Text30Type" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Recipient Account Number</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="GrossDistributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Gross distribution</Description>
+						<LineNumber>Line 1</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TaxableAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Taxable amount</Description>
+						<LineNumber>Line 2a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TxblAmountNotDeterminedInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Taxable amount not determined</Description>
+						<LineNumber>Line 2b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalDistributionInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total distribution</Description>
+						<LineNumber>Line 2b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CapitalGainAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Capital gain (included in Box 2a)</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FederalIncomeTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Federal income tax withheld</Description>
+						<LineNumber>Line 4</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EmployeeContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Employee contributions / Designated Roth contributions or insurance premiums</Description>
+						<LineNumber>Line 5</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NetUnrlzdSecuritiesApprcnAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Net unrealized appreciation in employer’s securities</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Form1099RDistributionCd">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Distribution code(s) IRA/SEP/SIMPLE</Description>
+						<LineNumber>Line 7</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="1"/>
+						<xsd:enumeration value="18"/>
+						<xsd:enumeration value="1B"/>
+						<xsd:enumeration value="1D"/>
+						<xsd:enumeration value="1K"/>
+						<xsd:enumeration value="1L"/>
+						<xsd:enumeration value="1M"/>
+						<xsd:enumeration value="1P"/>
+						<xsd:enumeration value="2"/>
+						<xsd:enumeration value="28"/>
+						<xsd:enumeration value="2B"/>
+						<xsd:enumeration value="2D"/>
+						<xsd:enumeration value="2K"/>
+						<xsd:enumeration value="2L"/>
+						<xsd:enumeration value="2M"/>
+						<xsd:enumeration value="2P"/>
+						<xsd:enumeration value="3"/>
+						<xsd:enumeration value="3D"/>
+						<xsd:enumeration value="4"/>
+						<xsd:enumeration value="48"/>
+						<xsd:enumeration value="4A"/>
+						<xsd:enumeration value="4B"/>
+						<xsd:enumeration value="4D"/>
+						<xsd:enumeration value="4G"/>
+						<xsd:enumeration value="4H"/>
+						<xsd:enumeration value="4K"/>
+						<xsd:enumeration value="4L"/>
+						<xsd:enumeration value="4M"/>
+						<xsd:enumeration value="4P"/>
+						<xsd:enumeration value="5"/>
+						<xsd:enumeration value="6"/>
+						<xsd:enumeration value="6W"/>
+						<xsd:enumeration value="7"/>
+						<xsd:enumeration value="7A"/>
+						<xsd:enumeration value="7B"/>
+						<xsd:enumeration value="7D"/>
+						<xsd:enumeration value="7K"/>
+						<xsd:enumeration value="7L"/>
+						<xsd:enumeration value="7M"/>
+						<xsd:enumeration value="8"/>
+						<xsd:enumeration value="81"/>
+						<xsd:enumeration value="82"/>
+						<xsd:enumeration value="84"/>
+						<xsd:enumeration value="8B"/>
+						<xsd:enumeration value="8J"/>
+						<xsd:enumeration value="8K"/>
+						<xsd:enumeration value="9"/>
+						<xsd:enumeration value="A"/>
+						<xsd:enumeration value="A4"/>
+						<xsd:enumeration value="A7"/>
+						<xsd:enumeration value="B"/>
+						<xsd:enumeration value="B1"/>
+						<xsd:enumeration value="B2"/>
+						<xsd:enumeration value="B4"/>
+						<xsd:enumeration value="B7"/>
+						<xsd:enumeration value="B8"/>
+						<xsd:enumeration value="BG"/>
+						<xsd:enumeration value="BL"/>
+						<xsd:enumeration value="BM"/>
+						<xsd:enumeration value="BP"/>
+						<xsd:enumeration value="BU"/>
+						<xsd:enumeration value="C"/>
+						<xsd:enumeration value="CD"/>
+						<xsd:enumeration value="D"/>
+						<xsd:enumeration value="D1"/>
+						<xsd:enumeration value="D2"/>
+						<xsd:enumeration value="D3"/>
+						<xsd:enumeration value="D4"/>
+						<xsd:enumeration value="D7"/>
+						<xsd:enumeration value="DC"/>
+						<xsd:enumeration value="E"/>
+						<xsd:enumeration value="F"/>
+						<xsd:enumeration value="G"/>
+						<xsd:enumeration value="G4"/>
+						<xsd:enumeration value="GB"/>
+						<xsd:enumeration value="GK"/>
+						<xsd:enumeration value="H"/>
+						<xsd:enumeration value="H4"/>
+						<xsd:enumeration value="J"/>
+						<xsd:enumeration value="J8"/>
+						<xsd:enumeration value="JP"/>
+						<xsd:enumeration value="JS"/>
+						<xsd:enumeration value="K"/>
+						<xsd:enumeration value="K1"/>
+						<xsd:enumeration value="K2"/>
+						<xsd:enumeration value="K4"/>
+						<xsd:enumeration value="K7"/>
+						<xsd:enumeration value="K8"/>
+						<xsd:enumeration value="KG"/>
+						<xsd:enumeration value="L"/>
+						<xsd:enumeration value="L1"/>
+						<xsd:enumeration value="L2"/>
+						<xsd:enumeration value="L4"/>
+						<xsd:enumeration value="L7"/>
+						<xsd:enumeration value="LB"/>
+						<xsd:enumeration value="M"/>
+						<xsd:enumeration value="M1"/>
+						<xsd:enumeration value="M2"/>
+						<xsd:enumeration value="M4"/>
+						<xsd:enumeration value="M7"/>
+						<xsd:enumeration value="MB"/>
+						<xsd:enumeration value="N"/>
+						<xsd:enumeration value="P"/>
+						<xsd:enumeration value="P1"/>
+						<xsd:enumeration value="P2"/>
+						<xsd:enumeration value="P4"/>
+						<xsd:enumeration value="PB"/>
+						<xsd:enumeration value="PJ"/>
+						<xsd:enumeration value="Q"/>
+						<xsd:enumeration value="R"/>
+						<xsd:enumeration value="S"/>
+						<xsd:enumeration value="SJ"/>
+						<xsd:enumeration value="T"/>
+						<xsd:enumeration value="U"/>
+						<xsd:enumeration value="UB"/>
+						<xsd:enumeration value="W"/>
+						<xsd:enumeration value="W6"/>
+						<xsd:enumeration value="Y4"/>
+						<xsd:enumeration value="Y7"/>
+						<xsd:enumeration value="YK"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="IRASEPSIMPLEInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>IRA/SEP/SIMPLE</Description>
+						<LineNumber>Line 7</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="OtherDistributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Other</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RcpntOthDistributionPct" type="RatioType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Other %</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RcpntTotalDistributionPct" type="RatioType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>"Your percentage of total distribution %</Description>
+						<LineNumber>Line 9a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalEmployeeContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total employee contributions</Description>
+						<LineNumber>Line 9b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IRRAllocatedAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Amount allocable to IRR within 5 years</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesignatedROTHAcctFirstYr" type="YearType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>1st year of desigignated Roth contribution</Description>
+						<LineNumber>Line 11</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FATCAFilingRequirementInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Check if the recipient is not the designated beneficiary</Description>
+						<LineNumber>Line 12</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PaymentDt" type="DateNoTimeZoneType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Date of payment</Description>
+						<LineNumber>Line 13</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="StateLocalTaxGrp" type="StateLocalTaxGrpType" minOccurs="0" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State and Local Tax</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Form1099RTotalAmtGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 1099 R Total Amount Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2021-10-21</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the form 1099 R total amounts.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="FederalIncomeTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Federal Income Tax Withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="GrossDistributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Gross distribution</Description>
+						<LineNumber>Line 1</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TaxableAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Taxable amount</Description>
+						<LineNumber>Line 2a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CapitalGainAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Capital gain (included in Box 2a)</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EmployeeContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Employee contributions / Designated Roth contributions or insurance premiums</Description>
+						<LineNumber>Line 5</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NetUnrlzdSecuritiesApprcnAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Net unrealized appreciation in employer’s securities</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="OtherDistributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Other</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalEmployeeContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total employee contributions</Description>
+						<LineNumber>Line 9b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IRRAllocatedAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Amount allocable to IRR within 5 years</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Form1099RTotalByStateGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Form 1099 R Total by State Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2021-10-21</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the form 1099 R totals by state</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="StateAbbreviationCd" type="StateType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State Abbreviation Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalReportedRcpntFormCnt" type="TotalNumberNonNegativeType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total Reported Recipient Form Count</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FederalIncomeTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Federal Income Tax Withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="StateTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>State Tax Withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LocalTaxWithheldAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Local Tax withheld Amount</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="GrossDistributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Gross distribution</Description>
+						<LineNumber>Line 1</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TaxableAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Taxable amount</Description>
+						<LineNumber>Line 2a</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CapitalGainAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Capital gain (included in Box 2a)</Description>
+						<LineNumber>Line 3</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EmployeeContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Employee contributions / Designated Roth contributions or insurance premiums</Description>
+						<LineNumber>Line 5</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="NetUnrlzdSecuritiesApprcnAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Net unrealized appreciation in employer’s securities</Description>
+						<LineNumber>Line 6</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="OtherDistributionAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Other</Description>
+						<LineNumber>Line 8</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalEmployeeContributionsAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total employee contributions</Description>
+						<LineNumber>Line 9b</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IRRAllocatedAmt" type="USDecimalAmountNNType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Amount allocable to IRR within 5 years</Description>
+						<LineNumber>Line 10</LineNumber>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

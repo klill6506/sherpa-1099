@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2016 (x64) (http://www.altova.com) by User (IRS) -->
+<xsd:schema xmlns="urn:us:gov:treasury:irs:ir" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:us:gov:treasury:irs:ir" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+	<xsd:annotation>
+		<xsd:documentation>
+			<FormDocumentation>
+				<DescriptionTxt>IR (Information Return) Status and Acknowledgement Response Schema</DescriptionTxt>
+				<PurposeTxt>Information Return Status and Acknowledgement Response Schema</PurposeTxt>
+				<VersonDt>2025-04-30</VersonDt>
+			</FormDocumentation>
+			<Component>
+				<DictionaryEntryNm>IR (Information Return) Status and Acknowledgement Response Schema</DictionaryEntryNm>
+				<MajorVersionNum>1</MajorVersionNum>
+				<MinorVersionNum>1</MinorVersionNum>
+				<VersionEffectiveBeginDt>2025-04-30</VersionEffectiveBeginDt>
+				<VersionDescriptionTxt>Updated version</VersionDescriptionTxt>
+				<DescriptionTxt>The content model for information returns Status and Acknowledgement Response</DescriptionTxt>
+			</Component>
+		</xsd:documentation>
+	</xsd:annotation>
+	<!-- ================================ -->
+	<!-- ===== Root Element Declarations ===== -->
+	<!-- ================================ -->
+	<xsd:element name="TransStatusOrAckResponse" type="TransStatusOrAckResponseType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR Status or Acknowledgement Response Details</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-04-30</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Updated Version</VersionDescriptionTxt>
+					<DescriptionTxt>The root element for Status or Acknowledgement Response</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<!-- ======================== -->
+	<!-- ===== Type Defintions ===== -->
+	<!-- ======================== -->
+	<xsd:complexType name="TransStatusOrAckResponseType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR Status or Acknowledgement Response Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-04-30</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Updated Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with IR Status or Acknowledgement Response</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ResultGrp" type="ResultGrpType" minOccurs="1" maxOccurs="100"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ResultGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR Status or Acknowledgement Response Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-04-30</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Updated Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with IR Status or Acknowledgement Response</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SearchId" type="SearchIdType"/>
+			<xsd:element name="TransmissionResultGrp" type="TransmissionResultGrpType"/>
+			<xsd:element name="SubmissionResultGrp" type="SubmissionResultGrpType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="TransmissionResultGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Transmission Result Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-04-30</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Updated Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with Transmission Result</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="UniqueTransmissionId" type="EnterpriseBusCorrelationIdType" minOccurs="0"/>
+			<xsd:element name="ReceiptId" type="ReceiptIdType" minOccurs="0"/>
+			<xsd:element name="TransmissionStatusCd" type="TransmissionStatusCodeType"/>
+			<xsd:element name="ErrorInformationGrp" type="ErrorInformationGrpType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="SubmissionResultGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Submission Result Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-03-30</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with Submission Result</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SubmissionId" type="SubmissionIdType" minOccurs="0"/>
+			<xsd:element name="SubmissionStatusCd" type="SubmissionStatusCodeType"/>
+			<xsd:element name="ErrorInformationGrp" type="ErrorInformationGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="RecordResultGrp" type="RecordResultGrpType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="RecordResultGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Record Result Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-03-30</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with Record Result</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="RecordId" type="RecordIdType" minOccurs="0"/>
+			<xsd:element name="ErrorInformationGrp" type="ErrorInformationGrpType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ErrorInformationGrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Error Information Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2021-08-23</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<Description>A group that provides error related information</Description>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ErrorMessageCd" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Component>
+							<DictionaryEntryNm>Error Message Code</DictionaryEntryNm>
+							<MajorVersionNum>1</MajorVersionNum>
+							<MinorVersionNum>0</MinorVersionNum>
+							<VersionEffectiveBeginDt>2012-11-01</VersionEffectiveBeginDt>
+							<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+							<DescriptionTxt>A code that identifies a type of error</DescriptionTxt>
+						</Component>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ErrorMessageTxt" type="xsd:string" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Component>
+							<DictionaryEntryNm>Error Message Text</DictionaryEntryNm>
+							<MajorVersionNum>1</MajorVersionNum>
+							<MinorVersionNum>0</MinorVersionNum>
+							<VersionEffectiveBeginDt>2012-11-01</VersionEffectiveBeginDt>
+							<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+							<DescriptionTxt>Contains description of an error message</DescriptionTxt>
+						</Component>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ErrorValueTxt" type="xsd:string" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Component>
+							<DictionaryEntryNm>Error Value Text</DictionaryEntryNm>
+							<MajorVersionNum>1</MajorVersionNum>
+							<MinorVersionNum>0</MinorVersionNum>
+							<VersionEffectiveBeginDt>2013-03-05</VersionEffectiveBeginDt>
+							<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+							<DescriptionTxt>Value of the data element that caused the error</DescriptionTxt>
+							<DataElementId>173928</DataElementId>
+						</Component>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ElementPathTxt" type="xsd:string" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Component>
+							<DictionaryEntryNm>Element Path Content</DictionaryEntryNm>
+							<MajorVersionNum>1</MajorVersionNum>
+							<MinorVersionNum>0</MinorVersionNum>
+							<VersionEffectiveBeginDt>2021-08-23</VersionEffectiveBeginDt>
+							<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+							<DescriptionTxt>Contains the path identifying a specific element</DescriptionTxt>
+						</Component>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="SearchIdType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Search ID Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-02-08</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>A search ID that the request is for. IDs can be either Receipt ID (RID) or Unique Transmission ID (UTID) depending on what was put in the Search Parameter Type Indicator.
+					
+					Receipt ID format example is "2020-63385508791-4a6c57eda"
+					Unique Transmission ID format example is "550e8400-e29b-41d4-a716-446655440000:IRIS:BB002::A"</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}:IRIS:[a-zA-Z0-9]{5}::(A|U)|[1-9][0-9]{3}\-[0-9]{11}\-[0-9a-zA-Z]{9}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="EnterpriseBusCorrelationIdType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Enterprise Business Correlation Identifier Type</DictionaryEntryNm>
+					<MajorVersionNum>3</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2022-01-12</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Replace with IRIS-only version</VersionDescriptionTxt>
+					<DescriptionTxt>Unique Transmission ID. A business correlation identifier used for all request and response enterprise messages.</DescriptionTxt>
+					<Status>A</Status>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}:IRIS:[a-zA-Z0-9]{5}::(A|U)"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="TransmissionStatusCodeType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Information Returns Submission Status Type</DictionaryEntryNm>
+					<MajorVersionNum>2</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2012-09-01</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The IR submission status type code types.</DescriptionTxt>
+					<DataElementId/>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="Accepted"/>
+			<xsd:enumeration value="Accepted with Errors"/>
+			<xsd:enumeration value="Partially Accepted"/>
+			<xsd:enumeration value="Rejected"/>
+			<xsd:enumeration value="Processing"/>
+			<xsd:enumeration value="Not Found"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="SubmissionIdType">
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="8"/>
+			<xsd:pattern value="[1-9][0-9]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="SubmissionStatusCodeType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Submissions Status Type</DictionaryEntryNm>
+					<MajorVersionNum>2</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2012-09-01</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The form(s) submission status type code</DescriptionTxt>
+					<DataElementId> </DataElementId>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="Accepted"/>
+			<xsd:enumeration value="Accepted with Errors"/>
+			<xsd:enumeration value="Rejected"/>
+			<xsd:enumeration value="Processing"/>
+			<xsd:enumeration value="Not Found"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="RecordIdType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Unique Record Identification Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2014-11-03</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>Unique Record identification type.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="8"/>
+			<xsd:pattern value="[1-9][0-9]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="ReceiptIdType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Reciept Identification Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-0-01</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>Receipt identification type.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[1-9][0-9]{3}\-[0-9]{11}\-[0-9a-zA-Z]{9}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:schema>

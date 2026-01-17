@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2024 rel. 2 sp1 (x64) (https://www.altova.com) by IRS Software Management (OPO OIT) -->
+<xsd:schema xmlns="urn:us:gov:treasury:irs:ir" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:us:gov:treasury:irs:ir" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+	<xsd:annotation>
+		<xsd:documentation>
+			<DescriptionTxt>IR (Information Return) Schema - IR (Information Return) Transmission</DescriptionTxt>
+			<PurposeTxt>IR (Information Return) Transmission</PurposeTxt>
+			<TaxYr>2025</TaxYr>
+			<VersionNum>2.0.3</VersionNum>
+			<VersionDt>2025-08-28</VersionDt>
+		</xsd:documentation>
+	</xsd:annotation>
+	<!-- ===== Imports ===== -->
+	<xsd:include schemaLocation="../COMMON/IRS-IRefileTypes.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1042SType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099AType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099BType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099CAPType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099CType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099DAType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099DIVType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099GType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099INTType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099KType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099LSType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099LTCType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099MISCType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099NECType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099OIDType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099PATRType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099QAType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099QType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099RType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099SAType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099SBType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1099SType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form8809Type.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1097BTCType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1098Type.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1098CType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1098EType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1098FType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1098QType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form1098TType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form3921Type.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form3922Type.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form5498Type.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form5498ESAType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form5498QAType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-Form5498SAType.xsd"/>
+	<xsd:include schemaLocation="../FORM_TYPES/IRS-FormW2GType.xsd"/>
+	<!-- ================================ -->
+	<!-- =====Form Type Declarations===== -->
+	<!-- ================================ -->
+	<xsd:element name="IRTransmission" type="IRTransmissionType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR  Transmission Details</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2021-06-03</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with IR Transmission</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<!-- ======================== -->
+	<!-- ===== Type Defintions ===== -->
+	<!-- ======================== -->
+	<xsd:complexType name="IRTransmissionType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR Transmission Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2021-07-03</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial Version</VersionDescriptionTxt>
+					<DescriptionTxt>The elements associated with IR transmission</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="IRTransmissionManifest" type="IRTransmissionManifestType"/>
+			<xsd:element name="IRSubmission1Grp" type="IRSubmission1GrpType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="IRSubmission2Grp" type="IRSubmission2GrpType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="IRSubmission3Grp" type="IRSubmission3GrpType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="IRTransmissionManifestType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR (Information Return) Transmission Manifest Type</DictionaryEntryNm>
+					<MajorVersionNum>2</MajorVersionNum>
+					<MinorVersionNum>1</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-01-15</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>2.1</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for the IR (Information Return) transmission manifest.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SchemaVersionNum" type="StringType" fixed="2.0.3"/>
+			<xsd:element name="UniqueTransmissionId" type="EnterpriseBusCorrelationIdType"/>
+			<xsd:element name="TaxYr" type="YearType"/>
+			<xsd:element name="PriorYearDataInd" type="DigitBooleanType"/>
+			<xsd:element name="TransmissionTypeCd" type="TransmissionTypeCdType"/>
+			<xsd:element name="TestCd" type="TestCdType"/>
+			<xsd:element name="OriginalReceiptId" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>ReceiptId in the format Year-11 digit numeric-9 digit alphanumeric, as in 2020-63385508791-4a6c57eda</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string">
+						<xsd:pattern value="[1-9][0-9]{3}\-[0-9]{11}\-[0-9a-zA-Z]{9}"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="TransmitterGrp" type="TransmitterGrpType"/>
+			<xsd:element name="VendorCd" type="VendorCdType"/>
+			<xsd:element name="SoftwareId" type="SoftwareIdType"/>
+			<xsd:element name="VendorGrp" type="VendorGrpType" minOccurs="0"/>
+			<xsd:element name="TotalIssuerFormCnt" type="TotalNumberNonNegativeType"/>
+			<xsd:element name="TotalRecipientFormCnt" type="TotalNumberNonNegativeType"/>
+			<xsd:element name="PaperSubmissionInd" type="DigitBooleanType" fixed="0"/>
+			<xsd:element name="MediaSourceCd" type="MediaSourceCdType"/>
+			<xsd:element name="SubmissionChannelCd" type="SubmissionChannelCdType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission1GrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Information Return (IR) Submission Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2015-10-27</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>A group that wraps the data related to a (IR) information return submission</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="IRSubmission1Header" type="IRSubmission1HeaderType"/>
+			<xsd:element name="IRSubmission1Detail" type="IRSubmission1DetailType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission1HeaderType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR (Information Return) Submission 1 Header Type</DictionaryEntryNm>
+					<MajorVersionNum>2</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2023-03-15</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for IR (Information Return) submission 1 header.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SubmissionId" type="SubmissionIdType"/>
+			<xsd:element name="OriginalUniqueSubmissionId" type="UniqueSubmissionIdType" minOccurs="0"/>
+			<xsd:element name="TaxYr" type="YearType"/>
+			<xsd:element name="TransferAgentGrp" type="TransferAgentGrpType" minOccurs="0"/>
+			<xsd:element name="IssuerDetail" type="IssuerDetailType"/>
+			<xsd:element name="ContactPersonInformationGrp" type="ContactPersonInformationGrpType" minOccurs="0"/>
+			<xsd:element name="FormTypeCd">
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="1099A"/>
+						<xsd:enumeration value="1099B"/>
+						<xsd:enumeration value="1099C"/>
+						<xsd:enumeration value="1099CAP"/>
+						<xsd:enumeration value="1099DA"/>
+						<xsd:enumeration value="1099DIV"/>
+						<xsd:enumeration value="1099G"/>
+						<xsd:enumeration value="1099INT"/>
+						<xsd:enumeration value="1099K"/>
+						<xsd:enumeration value="1099LS"/>
+						<xsd:enumeration value="1099LTC"/>
+						<xsd:enumeration value="1099MISC"/>
+						<xsd:enumeration value="1099NEC"/>
+						<xsd:enumeration value="1099OID"/>
+						<xsd:enumeration value="1099PATR"/>
+						<xsd:enumeration value="1099QA"/>
+						<xsd:enumeration value="1099Q"/>
+						<xsd:enumeration value="1099R"/>
+						<xsd:enumeration value="1099SA"/>
+						<xsd:enumeration value="1099SB"/>
+						<xsd:enumeration value="1099S"/>
+						<xsd:enumeration value="1097BTC"/>
+						<xsd:enumeration value="1098"/>
+						<xsd:enumeration value="1098C"/>
+						<xsd:enumeration value="1098E"/>
+						<xsd:enumeration value="1098F"/>
+						<xsd:enumeration value="1098Q"/>
+						<xsd:enumeration value="1098T"/>
+						<xsd:enumeration value="3921"/>
+						<xsd:enumeration value="3922"/>
+						<xsd:enumeration value="5498"/>
+						<xsd:enumeration value="5498ESA"/>
+						<xsd:enumeration value="5498QA"/>
+						<xsd:enumeration value="5498SA"/>
+						<xsd:enumeration value="W2G"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="ParentFormTypeCd">
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="1096"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="CFSFElectionInd" type="DigitBooleanType"/>
+			<xsd:element name="JuratSignatureGrp" type="JuratSignatureGrpType" minOccurs="0"/>
+			<xsd:element name="TotalReportedRcpntFormCnt" type="TotalNumberNonNegativeType"/>
+			<xsd:element name="IRSubmission1FormTotals" type="IRSubmission1FormTotalsType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission1FormTotalsType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR (Information Return) Submission 1 Form Specific Totals</DictionaryEntryNm>
+					<MajorVersionNum>2</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2023-03-15</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for IR (Information Return) Submission 1 Form Specific Totals</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice>
+			<xsd:element name="Form1099ATotalAmtGrp" type="Form1099ATotalAmtGrpType"/>
+			<xsd:sequence>
+				<xsd:element name="Form1099BTotalAmtGrp" type="Form1099BTotalAmtGrpType"/>
+				<xsd:element name="Form1099BTotalByStateGrp" type="Form1099BTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:element name="Form1099CAPTotalAmtGrp" type="Form1099CAPTotalAmtGrpType"/>
+			<xsd:element name="Form1099CTotalAmtGrp" type="Form1099CTotalAmtGrpType"/>
+			<xsd:sequence>
+				<xsd:element name="Form1099DATotalAmtGrp" type="Form1099DATotalAmtGrpType"/>
+				<xsd:element name="Form1099DATotalByStateGrp" type="Form1099DATotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:sequence>
+				<xsd:element name="Form1099DIVTotalAmtGrp" type="Form1099DIVTotalAmtGrpType"/>
+				<xsd:element name="Form1099DIVTotalByStateGrp" type="Form1099DIVTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:sequence>
+				<xsd:element name="Form1099GTotalAmtGrp" type="Form1099GTotalAmtGrpType"/>
+				<xsd:element name="Form1099GTotalByStateGrp" type="Form1099GTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:sequence>
+				<xsd:element name="Form1099INTTotalAmtGrp" type="Form1099INTTotalAmtGrpType"/>
+				<xsd:element name="Form1099INTTotalByStateGrp" type="Form1099INTTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:sequence>
+				<xsd:element name="Form1099KTotalAmtGrp" type="Form1099KTotalAmtGrpType"/>
+				<xsd:element name="Form1099KTotalByStateGrp" type="Form1099KTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:element name="Form1099LSTotalAmtGrp" type="Form1099LSTotalAmtGrpType"/>
+			<xsd:element name="Form1099LTCTotalAmtGrp" type="Form1099LTCTotalAmtGrpType"/>
+			<xsd:sequence>
+				<xsd:element name="Form1099MISCTotalAmtGrp" type="Form1099MISCTotalAmtGrpType"/>
+				<xsd:element name="Form1099MISCTotalByStateGrp" type="Form1099MISCTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:sequence>
+				<xsd:element name="Form1099NECTotalAmtGrp" type="Form1099NECTotalAmtGrpType"/>
+				<xsd:element name="Form1099NECTotalByStateGrp" type="Form1099NECTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:sequence>
+				<xsd:element name="Form1099OIDTotalAmtGrp" type="Form1099OIDTotalAmtGrpType"/>
+				<xsd:element name="Form1099OIDTotalByStateGrp" type="Form1099OIDTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:sequence>
+				<xsd:element name="Form1099PATRTotalAmtGrp" type="Form1099PATRTotalAmtGrpType"/>
+				<xsd:element name="Form1099PATRTotalByStateGrp" type="Form1099PATRTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:element name="Form1099QATotalAmtGrp" type="Form1099QATotalAmtGrpType"/>
+			<xsd:element name="Form1099QTotalAmtGrp" type="Form1099QTotalAmtGrpType"/>
+			<xsd:sequence>
+				<xsd:element name="Form1099RTotalAmtGrp" type="Form1099RTotalAmtGrpType"/>
+				<xsd:element name="Form1099RTotalByStateGrp" type="Form1099RTotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:element name="Form1099SATotalAmtGrp" type="Form1099SATotalAmtGrpType"/>
+			<xsd:element name="Form1099SBTotalAmtGrp" type="Form1099SBTotalAmtGrpType"/>
+			<xsd:element name="Form1099STotalAmtGrp" type="Form1099STotalAmtGrpType"/>
+			<xsd:element name="Form1097BTCTotalAmtGrp" type="Form1097BTCTotalAmtGrpType"/>
+			<xsd:element name="Form1098TotalAmtGrp" type="Form1098TotalAmtGrpType"/>
+			<xsd:element name="Form1098CTotalAmtGrp" type="Form1098CTotalAmtGrpType"/>
+			<xsd:element name="Form1098ETotalAmtGrp" type="Form1098ETotalAmtGrpType"/>
+			<xsd:element name="Form1098FTotalAmtGrp" type="Form1098FTotalAmtGrpType"/>
+			<xsd:element name="Form1098QTotalAmtGrp" type="Form1098QTotalAmtGrpType"/>
+			<xsd:element name="Form1098TTotalAmtGrp" type="Form1098TTotalAmtGrpType"/>
+			<xsd:element name="Form3921TotalAmtGrp" type="Form3921TotalAmtGrpType"/>
+			<xsd:element name="Form3922TotalAmtGrp" type="Form3922TotalAmtGrpType"/>
+			<xsd:sequence>
+				<xsd:element name="Form5498TotalAmtGrp" type="Form5498TotalAmtGrpType"/>
+				<xsd:element name="Form5498TotalByStateGrp" type="Form5498TotalByStateGrpType" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:element name="Form5498ESATotalAmtGrp" type="Form5498ESATotalAmtGrpType"/>
+			<xsd:element name="Form5498QATotalAmtGrp" type="Form5498QATotalAmtGrpType"/>
+			<xsd:element name="Form5498SATotalAmtGrp" type="Form5498SATotalAmtGrpType"/>
+			<xsd:element name="FormW2GTotalAmtGrp" type="FormW2GTotalAmtGrpType"/>
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission1DetailType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR (Information Return) Submission 1 Detail Type</DictionaryEntryNm>
+					<MajorVersionNum>2</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2023-03-15</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for IR (Information Return) submission 1 detail - wraps information return contents/detail</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice>
+			<xsd:element name="Form1099ADetail" type="Form1099ADetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099BDetail" type="Form1099BDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099CAPDetail" type="Form1099CAPDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099CDetail" type="Form1099CDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099DADetail" type="Form1099DADetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099DIVDetail" type="Form1099DIVDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099GDetail" type="Form1099GDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099INTDetail" type="Form1099INTDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099KDetail" type="Form1099KDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099LSDetail" type="Form1099LSDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099LTCDetail" type="Form1099LTCDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099MISCDetail" type="Form1099MISCDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099NECDetail" type="Form1099NECDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099OIDDetail" type="Form1099OIDDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099PATRDetail" type="Form1099PATRDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099QADetail" type="Form1099QADetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099QDetail" type="Form1099QDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099RDetail" type="Form1099RDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099SADetail" type="Form1099SADetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099SBDetail" type="Form1099SBDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1099SDetail" type="Form1099SDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1097BTCDetail" type="Form1097BTCDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1098Detail" type="Form1098DetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1098CDetail" type="Form1098CDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1098EDetail" type="Form1098EDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1098FDetail" type="Form1098FDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1098QDetail" type="Form1098QDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form1098TDetail" type="Form1098TDetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form3921Detail" type="Form3921DetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form3922Detail" type="Form3922DetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form5498Detail" type="Form5498DetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form5498ESADetail" type="Form5498ESADetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form5498QADetail" type="Form5498QADetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Form5498SADetail" type="Form5498SADetailType" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="FormW2GDetail" type="FormW2GDetailType" minOccurs="1" maxOccurs="unbounded"/>
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission2GrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Information Return (IR) Submission 2 Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2015-10-27</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>A group that wraps the data related to a (IR) information return submission 2</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="IRSubmission2Header" type="IRSubmission2HeaderType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission2HeaderType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR (Information Return) Submission 2 Header Type</DictionaryEntryNm>
+					<MajorVersionNum>2</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2023-03-15</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for IR (Information Return) submission 2 header.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SubmissionId" type="SubmissionIdType"/>
+			<xsd:element name="TaxYr" type="YearType"/>
+			<xsd:element name="FormTypeCd">
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="8809"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:choice>
+				<xsd:element name="Form8809Detail" type="Form8809DetailType"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission3GrpType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>Information Return (IR) Submission 3 Group Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-03-12</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>A group that wraps the data related to (IR) information return submission 3 group</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="IRSubmission3Header" type="IRSubmission3HeaderType"/>
+			<xsd:element name="Form1042SDetail" type="Form1042SDetailType" maxOccurs="unbounded"/> 
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="IRSubmission3HeaderType">
+		<xsd:annotation>
+			<xsd:documentation>
+				<Component>
+					<DictionaryEntryNm>IR (Information Return) Submission 3 Header Type</DictionaryEntryNm>
+					<MajorVersionNum>1</MajorVersionNum>
+					<MinorVersionNum>0</MinorVersionNum>
+					<VersionEffectiveBeginDt>2025-03-12</VersionEffectiveBeginDt>
+					<VersionDescriptionTxt>Initial version</VersionDescriptionTxt>
+					<DescriptionTxt>The content model for IR (Information Return) submission 3 header.</DescriptionTxt>
+				</Component>
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SubmissionId" type="SubmissionIdType"/>
+			<xsd:element name="OriginalUniqueSubmissionId" type="UniqueSubmissionIdType" minOccurs="0"/>
+			<xsd:element name="TaxYr" type="YearType"/>
+			<xsd:element name="ChapterTypeCd" type="ChapterTypeCdType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Chapter Type Code</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FinalReturnInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Final Return Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ProRataBasisInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Pro Rata Basis Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalReportedRcpntFormCnt" type="TotalNumberNonNegativeType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Total Reported Recipient Form Count</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SubsqYrWithholdingPrtshpIntInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Subsequent Year Withholding Partnership Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="QIOrWPOrWTRevisingReportingInd" type="DigitBooleanType">
+				<xsd:annotation>
+					<xsd:documentation>
+						<Description>Qualified Intermediary or Withholding Foreign Partnership, or Withholding Foreign Trust Revising Indicator</Description>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FormTypeCd">
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="1042S"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="ParentFormTypeCd">
+				<xsd:simpleType>
+					<xsd:restriction base="StringType">
+						<xsd:enumeration value="1042T"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Form1042TIssuerDetail">
+				<xsd:complexType>
+					<xsd:annotation>
+						<xsd:documentation>
+							<Description>Form 1042-T Issuer Detail</Description>
+						</xsd:documentation>
+					</xsd:annotation>
+					<xsd:sequence>
+						<xsd:element name="ForeignEntityInd" type="DigitBooleanType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Foreign Entity Indicator</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="EIN" type="EINType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>EIN (Employer Identification Number)</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="TINSubmittedTypeCd" type="TINSubmittedTypeCdType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>A code used to identify the TIN submitted type code</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="Chapter3StatusCd" type="TwoDigitCodeType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Chapter 3 Status Code</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="Chapter4StatusCd" type="TwoDigitCodeType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Chapter 4 Status Code</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:choice>
+							<xsd:sequence>
+								<xsd:element name="PersonNameControlTxt" type="PersonNameControlType" minOccurs="0"/>
+								<xsd:element name="PersonName" type="OtherCompletePersonNameType"/>
+							</xsd:sequence>
+							<xsd:sequence>
+								<xsd:element name="BusinessNameControlTxt" type="BusinessNameControlType" minOccurs="0"/>
+								<xsd:element name="BusinessName" type="BusinessNameType"/>
+							</xsd:sequence>
+						</xsd:choice>
+						<xsd:element name="AdditionalIssuerTxt" type="NameTextType" minOccurs="0"></xsd:element>
+						<xsd:element name="GIIN" type="GIINType" minOccurs="0">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>GIIN</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="CountryCd" type="AllCountriesType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Country</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="FTIN" type="FTINType" minOccurs="0">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>FTIN</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						<xsd:element name="MailingAddressGrp" type="AddressGrpType">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Mailing Address Group</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+						
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ContactPersonInformationGrp" type="ContactPersonInformationGrpType" minOccurs="0">
+							<xsd:annotation>
+								<xsd:documentation>
+									<Description>Contact Person Information Group</Description>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:element>
+			<xsd:element name="JuratSignatureGrp" type="JuratSignatureGrpType" minOccurs="0"/>
+			<xsd:element name="Form1042STotalAmtGrp" type="Form1042STotalAmtGrpType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

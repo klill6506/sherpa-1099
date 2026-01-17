@@ -18,9 +18,9 @@ Usage:
     client.test_connection()
 """
 
-from .config import IRISConfig, load_config, load_config_from_dotenv
-from .iris_auth import IRISAuthenticator, IRISAuthError, AccessToken
-from .iris_client import IRISClient, IRISClientError, SubmissionResult, SubmissionStatus
+from config import IRISConfig, load_config, load_config_from_dotenv
+from iris_auth import IRISAuthenticator, IRISAuthError, AccessToken
+from iris_client import IRISClient, IRISClientError, SubmissionResult, SubmissionStatus
 
 __all__ = [
     # Config
