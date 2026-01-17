@@ -853,19 +853,27 @@ class IRISClient:
             root = ET.fromstring(response.content)
             ns = {"irs": "urn:us:gov:treasury:irs:ir"}
 
-            # Extract receipt ID
+            # Extract receipt ID (in ResultGrp/TransmissionResultGrp/ReceiptId)
             if not receipt_id:
                 rid_elem = root.find(".//irs:ReceiptId", ns)
                 receipt_id = rid_elem.text if rid_elem is not None else ""
 
-            # Extract transmission ID
+            # Extract transmission ID (SearchId in response)
             if not transmission_id:
-                tid_elem = root.find(".//irs:UniqueTransmissionId", ns)
+                tid_elem = root.find(".//irs:SearchId", ns)
+                if tid_elem is None:
+                    tid_elem = root.find(".//irs:UniqueTransmissionId", ns)
                 transmission_id = tid_elem.text if tid_elem is not None else ""
 
-            # Extract status
-            status_elem = root.find(".//irs:StatusCd", ns)
+            # Extract status - IRS uses TransmissionStatusCd in response
+            status_elem = root.find(".//irs:TransmissionStatusCd", ns)
+            if status_elem is None:
+                # Fallback to other possible element names
+                status_elem = root.find(".//irs:StatusCd", ns)
             status_text = status_elem.text.lower() if status_elem is not None else "unknown"
+
+            # Normalize status text (IRS may return "Accepted with Errors" with spaces)
+            status_text = status_text.replace(" ", "_").replace("-", "_")
 
             status_map = {
                 "accepted": SubmissionStatus.ACCEPTED,
@@ -876,6 +884,7 @@ class IRISClient:
                 "accepted_with_errors": SubmissionStatus.ACCEPTED_WITH_ERRORS,
             }
             status = status_map.get(status_text, SubmissionStatus.UNKNOWN)
+            logger.info(f"Parsed status: {status_text} -> {status}")
 
             # Extract form-level results
             form_results = []
