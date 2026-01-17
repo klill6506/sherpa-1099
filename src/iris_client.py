@@ -97,7 +97,18 @@ class SubmissionResult:
 
     @property
     def is_success(self) -> bool:
-        """Check if submission was successful (fully or partially accepted)."""
+        """Check if submission was received by IRS (pending, processing, or accepted)."""
+        return self.status in (
+            SubmissionStatus.PENDING,
+            SubmissionStatus.PROCESSING,
+            SubmissionStatus.ACCEPTED,
+            SubmissionStatus.ACCEPTED_WITH_ERRORS,
+            SubmissionStatus.PARTIALLY_ACCEPTED,
+        )
+
+    @property
+    def is_final_accepted(self) -> bool:
+        """Check if submission has been fully processed and accepted."""
         return self.status in (
             SubmissionStatus.ACCEPTED,
             SubmissionStatus.ACCEPTED_WITH_ERRORS,

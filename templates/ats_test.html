@@ -177,22 +177,22 @@
 
     <!-- Submission Result -->
     <template x-if="result">
-        <div :class="result.success ? 'bg-sherpa-teal/15 border-sherpa-teal/30' : 'bg-red-500/15 border-red-500/30'"
+        <div :class="result.success || result.status === 'pending' || result.status === 'processing' ? 'bg-sherpa-teal/15 border-sherpa-teal/30' : 'bg-red-500/15 border-red-500/30'"
              class="rounded-2xl border shadow-sherpa p-6">
             <div class="flex items-start gap-4">
-                <template x-if="result.success">
+                <template x-if="result.success || result.status === 'pending' || result.status === 'processing'">
                     <svg class="w-6 h-6 text-sherpa-teal flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </template>
-                <template x-if="!result.success">
+                <template x-if="!result.success && result.status !== 'pending' && result.status !== 'processing'">
                     <svg class="w-6 h-6 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </template>
                 <div class="flex-1">
-                    <h3 class="font-medium mb-2" :class="result.success ? 'text-sherpa-teal' : 'text-red-400'"
-                        x-text="result.success ? 'ATS Test Submitted Successfully!' : 'Submission Failed'"></h3>
+                    <h3 class="font-medium mb-2" :class="result.success || result.status === 'pending' || result.status === 'processing' ? 'text-sherpa-teal' : 'text-red-400'"
+                        x-text="result.success || result.status === 'pending' || result.status === 'processing' ? 'Submission Received by IRS' : 'Submission Failed'"></h3>
                     <div class="text-sm text-sherpa-muted space-y-1">
                         <p><strong>Status:</strong> <span x-text="result.status"></span></p>
                         <p><strong>Message:</strong> <span x-text="result.message"></span></p>
