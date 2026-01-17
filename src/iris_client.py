@@ -618,6 +618,9 @@ class IRISClient:
         request_xml = self._build_status_request(receipt_id, transmission_id)
 
         try:
+            # Log the request XML for debugging
+            logger.info(f"Status request XML: {request_xml.decode('utf-8')[:500]}")
+
             # Use status endpoint from config (not base URL + path)
             response = self._request_url(
                 method="POST",
@@ -631,8 +634,11 @@ class IRISClient:
             elif response.status_code == 404:
                 raise IRISClientError(f"Submission not found")
             else:
+                # Log response body for debugging
+                error_detail = self._extract_error_message(response)
+                logger.error(f"Status check failed: HTTP {response.status_code}, Response: {response.text[:500] if response.text else 'empty'}")
                 raise IRISClientError(
-                    f"Status check failed with HTTP status {response.status_code}"
+                    f"Status check failed with HTTP status {response.status_code}: {error_detail}"
                 )
 
         except IRISClientError:
