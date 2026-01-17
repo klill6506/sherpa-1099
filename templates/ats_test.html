@@ -254,12 +254,12 @@
     <!-- Standalone Status Checker -->
     <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
         <h2 class="text-lg font-medium text-sherpa-text mb-4">Check Submission Status</h2>
-        <p class="text-sm text-sherpa-muted mb-4">Enter a Transmission ID to check its status without submitting again.</p>
+        <p class="text-sm text-sherpa-muted mb-4">Enter a Receipt ID or Transmission ID to check status.</p>
 
         <div class="flex flex-col sm:flex-row gap-3">
             <input type="text"
                    x-model="manualTransmissionId"
-                   placeholder="e.g., 50b48319-5db1-421f-82d0-dbb4cf594548:IRIS:DG5BW::T"
+                   placeholder="Receipt ID (2026-...) or Transmission ID (...:IRIS:...)"
                    class="flex-1 px-4 py-3 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm font-mono placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
             <button @click="checkManualStatus()"
                     :disabled="!manualTransmissionId || checkingManualStatus"
@@ -267,6 +267,10 @@
                 <span x-show="!checkingManualStatus">Check Status</span>
                 <span x-show="checkingManualStatus">Checking...</span>
             </button>
+        </div>
+
+        <div class="mt-2 text-xs text-sherpa-subtle">
+            <span class="text-sherpa-teal font-medium">Tip:</span> Receipt ID (starts with year like 2026-) is more reliable for status checks than Transmission ID.
         </div>
 
         <!-- Your previous transmission IDs -->
@@ -456,7 +460,27 @@ function atsTestForm() {
         },
 
         async checkManualStatus() {
-            if (!this.manualTransmissionId) return;
+            const input = this.manualTransmissionId.trim();
+            if (!input) return;
+
+            // Smart detection: Receipt ID vs UTID
+            // Receipt ID format: YYYY-NNNNNNNNNNN-XXXXXXXXX (starts with year)
+            // UTID format: UUID:IRIS:TCC::T/P/A (contains :IRIS:)
+            let payload = {};
+            if (/^20\d{2}-/.test(input)) {
+                // Looks like a Receipt ID (starts with year like 2025- or 2026-)
+                payload = { receipt_id: input };
+            } else if (input.includes(':IRIS:')) {
+                // Looks like a UTID
+                payload = { transmission_id: input };
+            } else {
+                // Unknown format - show validation error
+                this.manualStatusResult = {
+                    status: 'error',
+                    message: 'Invalid ID format. Enter either a Receipt ID (starts with year, e.g., 2026-12345678901-abc123def) or a Transmission ID (contains :IRIS:, e.g., uuid:IRIS:TCC::T)'
+                };
+                return;
+            }
 
             this.checkingManualStatus = true;
             this.manualStatusResult = null;
@@ -464,9 +488,7 @@ function atsTestForm() {
                 const response = await fetch('/api/efile/check-status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        transmission_id: this.manualTransmissionId.trim()
-                    })
+                    body: JSON.stringify(payload)
                 });
                 this.manualStatusResult = await response.json();
             } catch (error) {
