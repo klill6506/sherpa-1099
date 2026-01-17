@@ -196,6 +196,11 @@
                     <div class="text-sm text-sherpa-muted space-y-1">
                         <p><strong>Status:</strong> <span x-text="result.status"></span></p>
                         <p><strong>Message:</strong> <span x-text="result.message"></span></p>
+                        <template x-if="result.receipt_id && result.receipt_id !== 'unknown'">
+                            <p><strong>Receipt ID:</strong> <span class="font-mono text-xs text-sherpa-teal" x-text="result.receipt_id"></span>
+                                <span class="text-xs text-sherpa-subtle ml-2">(use this to check status)</span>
+                            </p>
+                        </template>
                         <template x-if="result.transmission_id">
                             <p><strong>Transmission ID:</strong> <span class="font-mono text-xs" x-text="result.transmission_id"></span></p>
                         </template>

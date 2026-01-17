@@ -1444,6 +1444,7 @@ class ATSTestRequest(BaseModel):
 class ATSTestResponse(BaseModel):
     """Response from ATS test submission."""
     success: bool
+    receipt_id: Optional[str] = None  # IRS-assigned receipt ID for status queries
     transmission_id: str
     status: str
     message: str
@@ -1921,6 +1922,7 @@ async def ats_test_submit(request: ATSTestRequest):
 
         return ATSTestResponse(
             success=result.is_success,
+            receipt_id=result.receipt_id,
             transmission_id=result.unique_transmission_id,
             status=result.status.value,
             message=result.message,

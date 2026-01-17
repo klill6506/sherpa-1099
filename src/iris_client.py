@@ -497,6 +497,10 @@ class IRISClient:
     ) -> SubmissionResult:
         """Parse IRS submission response XML."""
         try:
+            # Log raw response for debugging
+            logger.info(f"IRS submit response status: {response.status_code}")
+            logger.info(f"IRS submit response body: {response.text[:2000]}")
+
             # IRS returns XML response
             root = ET.fromstring(response.content)
             ns = {"irs": "urn:us:gov:treasury:irs:ir"}
