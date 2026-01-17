@@ -238,6 +238,58 @@ class IRISClient:
             logger.error(f"Request failed: {type(e).__name__}")
             raise IRISClientError(f"IRIS API request failed: {type(e).__name__}")
 
+    def _request_url(
+        self,
+        method: str,
+        url: str,
+        data: Optional[bytes] = None,
+        params: Optional[Dict[str, str]] = None,
+        content_type: str = "application/xml",
+    ) -> requests.Response:
+        """
+        Make authenticated request to a full URL.
+
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            url: Full URL to request
+            data: Request body (bytes for XML)
+            params: Query parameters
+            content_type: Content type header
+
+        Returns:
+            Response object
+
+        Raises:
+            IRISClientError: If request fails
+        """
+        headers = self._get_headers(content_type=content_type)
+
+        try:
+            logger.info(f"Making {method} request to {url}")
+            response = self._session.request(
+                method=method,
+                url=url,
+                headers=headers,
+                data=data,
+                params=params,
+                timeout=120,  # XML submissions can take time
+            )
+
+            # Log status but NOT response body
+            logger.debug(f"Response status: {response.status_code}")
+
+            return response
+
+        except requests.exceptions.Timeout:
+            logger.error("Request timed out")
+            raise IRISClientError("IRIS API request timed out")
+        except requests.exceptions.ConnectionError:
+            logger.error("Connection error")
+            raise IRISClientError("Failed to connect to IRIS API")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed: {type(e).__name__}")
+            raise IRISClientError(f"IRIS API request failed: {type(e).__name__}")
+
     def test_connection(self) -> bool:
         """
         Test API connectivity and authentication.
@@ -298,9 +350,10 @@ class IRISClient:
         logger.info(f"Submitting XML transmission: {transmission_id[:36]}...")
 
         try:
-            response = self._request(
+            # Use intake endpoint from config (not base URL + path)
+            response = self._request_url(
                 method="POST",
-                endpoint=IRIS_SUBMIT_PATH,
+                url=self.config.intake_endpoint,
                 data=xml_content,
                 content_type="application/xml",
             )
@@ -475,9 +528,10 @@ class IRISClient:
         request_xml = self._build_status_request(receipt_id, transmission_id)
 
         try:
-            response = self._request(
+            # Use status endpoint from config (not base URL + path)
+            response = self._request_url(
                 method="POST",
-                endpoint=IRIS_STATUS_PATH,
+                url=self.config.status_endpoint,
                 data=request_xml,
                 content_type="application/xml",
             )
@@ -601,9 +655,10 @@ class IRISClient:
         request_xml = self._build_ack_request(receipt_id, transmission_id)
 
         try:
-            response = self._request(
+            # Use status endpoint from config (same endpoint, different request type)
+            response = self._request_url(
                 method="POST",
-                endpoint=IRIS_ACK_PATH,
+                url=self.config.status_endpoint,
                 data=request_xml,
                 content_type="application/xml",
             )

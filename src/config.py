@@ -18,10 +18,12 @@ class IRISConfig:
     # IRS Client ID (provided via env var or .env file)
     client_id: str
 
-    # IRIS API base URLs
-    # ATS (Assurance Testing System) endpoints - TEST environment
-    # Production endpoints would be different
-    auth_endpoint: str
+    # IRIS API endpoints
+    auth_endpoint: str  # OAuth token endpoint
+    intake_endpoint: str  # XML submission endpoint
+    status_endpoint: str  # Status/acknowledgment endpoint
+
+    # Legacy field for backwards compatibility
     api_base_url: str
 
     # Private key - either path to file OR the PEM content directly
@@ -76,8 +78,9 @@ def load_config() -> IRISConfig:
     Optional environment variables:
         IRIS_KEY_ID: Key ID matching JWKS registration (default: iris-a2a-2025)
         IRIS_ENVIRONMENT: "ATS" for test, "PROD" for production (default: ATS)
-        IRIS_AUTH_ENDPOINT: OAuth token endpoint (default: ATS endpoint)
-        IRIS_API_BASE_URL: IRIS API base URL (default: ATS URL)
+        IRIS_AUTH_ENDPOINT: OAuth token endpoint
+        IRIS_INTAKE_ENDPOINT: XML submission endpoint
+        IRIS_STATUS_ENDPOINT: Status/acknowledgment endpoint
 
     Returns:
         IRISConfig: Validated configuration object
@@ -111,26 +114,44 @@ def load_config() -> IRISConfig:
     environment = os.environ.get("IRIS_ENVIRONMENT", "ATS").upper()
 
     # Set endpoints based on environment
-    # TODO: These are placeholder URLs. Replace with actual IRS IRIS endpoints
-    # when documentation is available. The IRS provides different base URLs
-    # for ATS (test) vs Production environments.
+    # ATS (test) and PROD have different base URLs
     if environment == "ATS":
         # ATS (Assurance Testing System) - Test environment
-        # TODO: Replace with actual IRS ATS OAuth endpoint
+        # Correct IRS ATS endpoints
         default_auth_endpoint = os.environ.get(
             "IRIS_AUTH_ENDPOINT",
-            "https://ats-api.irs.gov/oauth/token"  # TODO: Verify actual endpoint
+            "https://api.alt.www4.irs.gov/auth/oauth/v2/token"
         )
-        # TODO: Replace with actual IRS ATS API base URL
+        default_intake_endpoint = os.environ.get(
+            "IRIS_INTAKE_ENDPOINT",
+            "https://api.alt.www4.irs.gov/IRIntakeAcceptanceA2A/1.0/irisa2a/v1/intake-acceptance"
+        )
+        default_status_endpoint = os.environ.get(
+            "IRIS_STATUS_ENDPOINT",
+            "https://api.alt.www4.irs.gov/IRIntakeAcceptanceA2A/1.0/iris/transstatusorack"
+        )
+        # Legacy base URL (for backwards compatibility)
         default_api_base = os.environ.get(
             "IRIS_API_BASE_URL",
-            "https://ats-api.irs.gov/iris/v1"  # TODO: Verify actual endpoint
+            "https://api.alt.www4.irs.gov/IRIntakeAcceptanceA2A/1.0"
         )
     elif environment == "PROD":
-        # Production - NOT YET IMPLEMENTED
-        raise ValueError(
-            "Production environment not yet configured. "
-            "Use IRIS_ENVIRONMENT=ATS for testing."
+        # Production endpoints (without 'alt')
+        default_auth_endpoint = os.environ.get(
+            "IRIS_AUTH_ENDPOINT",
+            "https://api.www4.irs.gov/auth/oauth/v2/token"
+        )
+        default_intake_endpoint = os.environ.get(
+            "IRIS_INTAKE_ENDPOINT",
+            "https://api.www4.irs.gov/IRIntakeAcceptanceA2A/1.0/irisa2a/v1/intake-acceptance"
+        )
+        default_status_endpoint = os.environ.get(
+            "IRIS_STATUS_ENDPOINT",
+            "https://api.www4.irs.gov/IRIntakeAcceptanceA2A/1.0/iris/transstatusorack"
+        )
+        default_api_base = os.environ.get(
+            "IRIS_API_BASE_URL",
+            "https://api.www4.irs.gov/IRIntakeAcceptanceA2A/1.0"
         )
     else:
         raise ValueError(
@@ -140,6 +161,8 @@ def load_config() -> IRISConfig:
     return IRISConfig(
         client_id=client_id,
         auth_endpoint=default_auth_endpoint,
+        intake_endpoint=default_intake_endpoint,
+        status_endpoint=default_status_endpoint,
         api_base_url=default_api_base,
         private_key_path=private_key_path,
         private_key_pem=private_key_pem if private_key_pem else None,
