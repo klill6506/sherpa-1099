@@ -691,7 +691,12 @@ class IRISClient:
             self._add_elem(root, "SearchId", receipt_id, ns)
         else:
             self._add_elem(root, "SearchParameterTypeCd", "UTID", ns)
-            self._add_elem(root, "SearchId", transmission_id, ns)
+            # IRS schema requires UTID to end with ::A or ::U for status lookup
+            # Convert our ::T (test) or ::P (prod) indicator to ::A for the query
+            search_id = transmission_id
+            if search_id and (search_id.endswith("::T") or search_id.endswith("::P")):
+                search_id = search_id[:-1] + "A"  # Replace T/P with A
+            self._add_elem(root, "SearchId", search_id, ns)
 
         return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
