@@ -34,6 +34,13 @@ from iris_auth import IRISAuthenticator, IRISAuthError, AccessToken
 # Configure logger - be careful about what gets logged
 logger = logging.getLogger(__name__)
 
+# Store last raw response for debugging
+_last_submit_response = {"status": None, "body": None, "headers": None}
+
+def get_last_submit_response():
+    """Return the last raw IRS submit response for debugging."""
+    return _last_submit_response
+
 # IRS IRIS endpoints (based on IRS documentation)
 # ATS (Assurance Testing System) endpoints for testing
 ATS_BASE_URL = "https://la.www4.irs.gov"
@@ -496,7 +503,14 @@ class IRISClient:
         transmission_id: str,
     ) -> SubmissionResult:
         """Parse IRS submission response XML."""
+        global _last_submit_response
         try:
+            # Store raw response for debugging
+            _last_submit_response = {
+                "status": response.status_code,
+                "body": response.text,
+                "headers": dict(response.headers),
+            }
             # Log raw response for debugging
             logger.info(f"IRS submit response status: {response.status_code}")
             logger.info(f"IRS submit response body: {response.text[:2000]}")
