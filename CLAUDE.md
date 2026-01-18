@@ -26,14 +26,42 @@ Or double-click: `run_api.bat`
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
 **Last session:** 2026-01-17
-**Working on:** IRS IRIS e-filing integration - COMPLETE
-**Completed:**
-- IRIS XML Generator (`src/iris_xml_generator.py`) - generates IRS-compliant XML per TY2025 v1.2 schema
-- Updated IRIS Client (`src/iris_client.py`) - XML submission, status checking, acknowledgment retrieval
-- XML Validator (`src/iris_xml_validator.py`) - validates against IRS schema and business rules
-- E-Filing API Router (`api/routers/efile.py`) - endpoints for preview, validate, submit, status, acknowledgment
-**Next steps:** Test with IRS ATS (Assurance Testing System) when credentials are active
-**Blockers:** Need to configure transmitter environment variables (TRANSMITTER_TIN, TRANSMITTER_TCC, etc.)
+**Working on:** ATS certification testing - debugging status check "Not Found" issue
+
+### What's Working:
+- ATS test submission succeeds (HTTP 200, status=pending, Transmission ID returned)
+- XML generation and validation working
+- Status check endpoint working (calls IRS, gets response)
+
+### Current Issue:
+- Status check returns "Not Found" for all submitted Transmission IDs
+- IRS doesn't return a Receipt ID in the submit response (we expected one)
+- Need to see raw IRS submit response to understand what they actually return
+
+### Debug Setup (ready to use):
+1. Submit ATS test at: https://sherpa-1099.onrender.com/ats-test
+2. Then check raw IRS response at: https://sherpa-1099.onrender.com/api/efile/ats-test/last-submit-response
+3. This will show exactly what IRS returns (status, headers, body XML)
+
+### Your Transmission IDs (all show "Not Found"):
+- `50b48319-5db1-421f-82d0-dbb4cf594548:IRIS:DG5BW::T`
+- `5197d8f6-a49e-4ae4-b280-0c493cea0401:IRIS:DG5BW::T`
+- `50053890-2741-4aa3-a219-041d1160345e:IRIS:DG5BW::T`
+
+### Key Question to Resolve:
+Does IRS return a Receipt ID immediately on submit, or only later in the status/ack response?
+The IRS sample files suggest Receipt ID only appears AFTER processing (not at submit time).
+
+### Recent Code Changes:
+- Added `NOT_FOUND` status enum and handling
+- Smart input detection for Receipt ID vs Transmission ID in status checker
+- Added `/api/efile/ats-test/last-submit-response` debug endpoint to capture raw IRS response
+- Status messages now explain each status type
+
+### Files Modified This Session:
+- `src/iris_client.py` - Added NOT_FOUND status, debug response storage
+- `api/routers/efile.py` - Added debug endpoint, status messages
+- `templates/ats_test.html` - UI improvements for status checking
 
 ## Key Files
 | File | Purpose |
