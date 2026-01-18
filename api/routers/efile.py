@@ -2076,3 +2076,44 @@ async def check_status_debug(request: StatusCheckRequest):
             "error": str(e),
             "error_type": type(e).__name__,
         }
+
+
+@router.get("/check-ack-debug/{receipt_id}")
+async def check_ack_debug(receipt_id: str):
+    """
+    Debug endpoint - returns raw IRS acknowledgment response XML for a receipt ID.
+    Use this to see the actual error details from IRS.
+    """
+    try:
+        config = load_config()
+        client = IRISClient(config)
+
+        # Build the acknowledgment request XML (type "A" not "S")
+        request_xml = client._build_status_request(
+            receipt_id=receipt_id,
+            transmission_id=None,
+            request_type="A",  # Acknowledgment has more details than Status
+        )
+
+        # Make the request directly
+        response = client._request_url(
+            method="POST",
+            url=client.config.status_endpoint,
+            data=request_xml,
+            content_type="application/xml",
+        )
+
+        return {
+            "receipt_id": receipt_id,
+            "request_xml": request_xml.decode("utf-8"),
+            "response_status": response.status_code,
+            "response_xml": response.text,
+        }
+
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc(),
+        }
