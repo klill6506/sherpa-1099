@@ -668,8 +668,62 @@ class IRISClient:
         root: ET.Element,
         ns: Dict[str, str],
     ) -> List[FormError]:
-        """Extract form-level errors from response."""
+        """Extract form-level errors from response.
+
+        IRS error structure (from TransStatusOrAckResponse):
+        - ErrorInformationGrp (inside TransmissionResultGrp or RecordResultGrp)
+          - ErrorMessageCd
+          - ErrorMessageTxt
+          - ErrorValueTxt
+          - ElementPathTxt
+        """
         errors = []
+
+        # Find all ErrorInformationGrp elements (IRS's actual structure)
+        for error_grp in root.findall(".//irs:ErrorInformationGrp", ns):
+            # Try to find parent RecordResultGrp for record_id
+            record_id = ""
+            # Walk up to find RecordId - check parent elements
+            parent = error_grp
+            for _ in range(5):  # Look up to 5 levels
+                parent_tag = parent.tag if hasattr(parent, 'tag') else ""
+                if "RecordResultGrp" in parent_tag:
+                    rid_elem = parent.find("irs:RecordId", ns)
+                    if rid_elem is not None:
+                        record_id = rid_elem.text or ""
+                    break
+                # ElementTree doesn't have parent, so we search differently
+                break
+
+            # Also search for RecordId as sibling
+            for rid_elem in root.findall(".//irs:RecordId", ns):
+                if rid_elem.text:
+                    record_id = rid_elem.text
+                    break
+
+            code_elem = error_grp.find("irs:ErrorMessageCd", ns)
+            code = code_elem.text if code_elem is not None else "UNKNOWN"
+
+            msg_elem = error_grp.find("irs:ErrorMessageTxt", ns)
+            message = msg_elem.text if msg_elem is not None else "Unknown error"
+
+            # ElementPathTxt can help identify the field
+            path_elem = error_grp.find("irs:ElementPathTxt", ns)
+            field_name = path_elem.text if path_elem is not None else None
+
+            # ErrorValueTxt shows the bad value
+            value_elem = error_grp.find("irs:ErrorValueTxt", ns)
+            if value_elem is not None and value_elem.text:
+                message = f"{message} (value: {value_elem.text})"
+
+            errors.append(FormError(
+                record_id=record_id,
+                error_code=code,
+                error_message=message,
+                field_name=field_name,
+            ))
+
+        # Also try old structure for backwards compatibility
         for error_elem in root.findall(".//irs:Error", ns):
             record_id = ""
             record_elem = error_elem.find("irs:RecordId", ns)
@@ -829,19 +883,31 @@ class IRISClient:
     ) -> SubmissionResult:
         """Parse status response XML."""
         try:
+            # Log raw response for debugging
+            logger.info(f"Status response body: {response.text[:2000]}")
+
             root = ET.fromstring(response.content)
             ns = {"irs": "urn:us:gov:treasury:irs:ir"}
 
-            status_elem = root.find(".//irs:StatusCd", ns)
+            # IRS uses TransmissionStatusCd not StatusCd
+            status_elem = root.find(".//irs:TransmissionStatusCd", ns)
+            if status_elem is None:
+                status_elem = root.find(".//irs:StatusCd", ns)
+            if status_elem is None:
+                status_elem = root.find(".//irs:SubmissionStatusCd", ns)
             status_text = status_elem.text.lower() if status_elem is not None else "unknown"
+            logger.info(f"Parsed status: {status_text}")
 
             status_map = {
                 "accepted": SubmissionStatus.ACCEPTED,
                 "rejected": SubmissionStatus.REJECTED,
                 "pending": SubmissionStatus.PENDING,
                 "processing": SubmissionStatus.PROCESSING,
+                "partially accepted": SubmissionStatus.PARTIALLY_ACCEPTED,
                 "partially_accepted": SubmissionStatus.PARTIALLY_ACCEPTED,
+                "accepted with errors": SubmissionStatus.ACCEPTED_WITH_ERRORS,
                 "accepted_with_errors": SubmissionStatus.ACCEPTED_WITH_ERRORS,
+                "not found": SubmissionStatus.NOT_FOUND,
             }
             status = status_map.get(status_text, SubmissionStatus.UNKNOWN)
 
@@ -854,6 +920,7 @@ class IRISClient:
             accepted_count = self._get_xml_int(root, ".//irs:AcceptedCnt", ns, 0)
             rejected_count = self._get_xml_int(root, ".//irs:RejectedCnt", ns, 0)
             errors = self._extract_form_errors(root, ns)
+            logger.info(f"Parsed {len(errors)} errors from response")
 
             return SubmissionResult(
                 receipt_id=receipt_id,
