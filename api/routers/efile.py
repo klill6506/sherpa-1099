@@ -1745,7 +1745,8 @@ async def ats_test_preview_xml(request: ATSTestRequest) -> Response:
                     break
                 recipient_data = ATS_TEST_RECIPIENTS[recipient_idx]
                 recipient = build_ats_recipient(recipient_data)
-                record_id = f"{issuer_idx + 1}-{j + 1}"
+                # IRS RecordId must be simple integer pattern [1-9][0-9]* - NOT "1-1" format!
+                record_id = str(recipient_idx + 1)
 
                 form_data = build_ats_form_data(
                     request.form_type,
@@ -1824,7 +1825,8 @@ async def ats_test_submit(request: ATSTestRequest):
                     break
                 recipient_data = ATS_TEST_RECIPIENTS[recipient_idx]
                 recipient = build_ats_recipient(recipient_data)
-                record_id = f"{issuer_idx + 1}-{j + 1}"
+                # IRS RecordId must be simple integer pattern [1-9][0-9]* - NOT "1-1" format!
+                record_id = str(recipient_idx + 1)
 
                 form_data = build_ats_form_data(
                     request.form_type,

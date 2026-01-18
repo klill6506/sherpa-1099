@@ -335,12 +335,22 @@ class IRISXMLGenerator:
         return "1" if value else "0"
 
     def _get_tin_type_code(self, tin_type: str) -> str:
-        """Convert TIN type to IRS code."""
+        """Convert TIN type to IRS schema code.
+
+        IRS IRIS schema requires:
+        - BUSINESS_TIN (for EIN)
+        - INDIVIDUAL_TIN (for SSN, ITIN, ATIN)
+        - UNKNOWN
+
+        NOT 'EIN' or 'SSN' directly!
+        """
         type_map = {
-            "EIN": "EIN",
+            "EIN": "BUSINESS_TIN",
             "SSN": "INDIVIDUAL_TIN",
             "ITIN": "INDIVIDUAL_TIN",
             "ATIN": "INDIVIDUAL_TIN",
+            "BUSINESS_TIN": "BUSINESS_TIN",
+            "INDIVIDUAL_TIN": "INDIVIDUAL_TIN",
         }
         return type_map.get(tin_type.upper(), "INDIVIDUAL_TIN")
 
@@ -1038,17 +1048,19 @@ class IRISXMLGenerator:
         """
         Generate a Unique Transmission ID (UTID) per IRS Pub 5718/5719 requirements.
 
-        Format: {UUID}:IRIS:{TCC}::{TestIndicator}
-        - UUID: Random UUID (without dashes for compactness, or with - IRS accepts both)
+        Format: {UUID}:IRIS:{TCC}::{EnvironmentIndicator}
+        - UUID: Random UUID (with dashes)
         - IRIS: Literal string
         - TCC: Transmitter Control Code (must match TransmitterControlCd in manifest)
-        - TestIndicator: T for test, P for production
+        - EnvironmentIndicator: A for ATS (test), U for Production
+          NOTE: IRS uses A/U, NOT T/P as previously assumed!
 
         The TCC portion of UTID MUST match TransmitterControlCd or transmission will reject.
         """
-        test_indicator = "T" if self.is_test else "P"
+        # IRS schema requires: A = ATS (test), U = Production (not T/P!)
+        env_indicator = "A" if self.is_test else "U"
         tcc = self.transmitter.tcc[:5].upper() if self.transmitter.tcc else "XXXXX"
-        return f"{uuid.uuid4()}:IRIS:{tcc}::{test_indicator}"
+        return f"{uuid.uuid4()}:IRIS:{tcc}::{env_indicator}"
 
     def generate_transmission(
         self,
