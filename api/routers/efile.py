@@ -1944,6 +1944,121 @@ async def ats_test_submit(request: ATSTestRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/ats-test/submit-debug")
+async def submit_ats_test_debug(request: ATSTestRequest):
+    """
+    Debug endpoint - submits ATS test and returns raw IRS response XML.
+    WARNING: This actually submits to IRS ATS!
+    """
+    from src.iris_xml_generator import IRISXMLGenerator, TransmitterInfo, PayerInfo, RecipientInfo, FormData
+
+    try:
+        config = load_config()
+
+        # Build the same XML as the regular submit
+        transmitter = TransmitterInfo(
+            tin=os.environ.get("TRANSMITTER_TIN", ""),
+            tin_type=os.environ.get("TRANSMITTER_TIN_TYPE", "EIN"),
+            tcc=os.environ.get("TRANSMITTER_TCC", ""),
+            business_name=os.environ.get("TRANSMITTER_BUSINESS_NAME", ""),
+            address_line_1=os.environ.get("TRANSMITTER_ADDRESS1", ""),
+            city=os.environ.get("TRANSMITTER_CITY", ""),
+            state=os.environ.get("TRANSMITTER_STATE", ""),
+            zip_code=os.environ.get("TRANSMITTER_ZIP", ""),
+            contact_name=os.environ.get("TRANSMITTER_CONTACT_NAME", ""),
+            contact_email=os.environ.get("TRANSMITTER_CONTACT_EMAIL", ""),
+            contact_phone=os.environ.get("TRANSMITTER_CONTACT_PHONE", ""),
+        )
+
+        generator = IRISXMLGenerator(
+            transmitter=transmitter,
+            tax_year=request.tax_year,
+            is_test=True,
+            software_id=os.environ.get("IRS_SOFTWARE_ID", ""),
+        )
+
+        # Use first test issuer only for debug
+        issuer_data = ATS_TEST_ISSUERS[0]
+        payer = PayerInfo(
+            tin=issuer_data["tin"],
+            tin_type="EIN",
+            business_name=issuer_data["name"],
+            address_line_1=issuer_data["address"],
+            city=issuer_data["city"],
+            state=issuer_data["state"],
+            zip_code=issuer_data["zip"],
+        )
+
+        recipients = []
+        for r in issuer_data["recipients"][:1]:  # Just 1 recipient
+            recipients.append(RecipientInfo(
+                tin=r["tin"],
+                tin_type="SSN",
+                first_name=r["first_name"],
+                last_name=r["last_name"],
+                address_line_1=r["address"],
+                city=r["city"],
+                state=r["state"],
+                zip_code=r["zip"],
+            ))
+
+        forms = []
+        for r in recipients:
+            forms.append(FormData(
+                form_type=request.form_type,
+                recipient=r,
+                amounts={"box1": 5000.00},
+            ))
+
+        generator.add_submission(payer, forms)
+        xml_bytes = generator.generate()
+
+        # Submit directly and capture raw response
+        client = IRISClient(config)
+
+        # Get auth token
+        token = client._get_oauth_token()
+
+        # Make the actual request
+        import requests as req_lib
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "multipart/form-data; boundary=BOUNDARY",
+        }
+
+        # Build multipart body
+        body = (
+            b"--BOUNDARY\r\n"
+            b'Content-Disposition: form-data; name="file"; filename="submission.xml"\r\n'
+            b"Content-Type: application/xml\r\n\r\n"
+            + xml_bytes +
+            b"\r\n--BOUNDARY--\r\n"
+        )
+
+        response = req_lib.post(
+            config.intake_endpoint,
+            headers=headers,
+            data=body,
+            timeout=60,
+        )
+
+        return {
+            "intake_endpoint": config.intake_endpoint,
+            "request_size": len(xml_bytes),
+            "response_status": response.status_code,
+            "response_headers": dict(response.headers),
+            "response_body": response.text[:5000],
+        }
+
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc(),
+        }
+
+
 # =============================================================================
 # SUBMISSION STATUS CHECK
 # =============================================================================
