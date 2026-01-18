@@ -574,17 +574,21 @@ class IRISClient:
             logger.info(f"Found XML tags: {list(all_tags)[:20]}")
 
             # Extract receipt ID - try multiple possible element names
-            receipt_elem = root.find(".//irs:ReceiptId", ns)
+            # IRS IntakeA2AResponse uses lowercase "receiptId" with no namespace!
+            receipt_elem = root.find(".//receiptId")  # IRS actual format
             if receipt_elem is None:
-                # Try without namespace
-                receipt_elem = root.find(".//ReceiptId")
+                receipt_elem = root.find(".//ReceiptId")  # Pascal case
             if receipt_elem is None:
-                # Try TransmissionReceiptId
+                receipt_elem = root.find(".//irs:ReceiptId", ns)  # With namespace
+            if receipt_elem is None:
                 receipt_elem = root.find(".//irs:TransmissionReceiptId", ns)
             receipt_id = receipt_elem.text if receipt_elem is not None else "unknown"
             logger.info(f"Extracted ReceiptId: {receipt_id}")
 
             # Extract status - try multiple possible element names
+            # NOTE: The IntakeA2AResponse only contains receiptId, no status!
+            # If we got a receiptId, the submission was accepted for processing.
+            # Status (Accepted/Rejected/etc) comes from the separate status/ack endpoint.
             status_elem = root.find(".//irs:StatusCd", ns)
             if status_elem is None:
                 status_elem = root.find(".//irs:TransmissionStatusCd", ns)
@@ -592,7 +596,14 @@ class IRISClient:
                 status_elem = root.find(".//StatusCd")
             if status_elem is None:
                 status_elem = root.find(".//TransmissionStatusCd")
-            status_text = status_elem.text.lower() if status_elem is not None else "pending"
+
+            if status_elem is not None:
+                status_text = status_elem.text.lower()
+            elif receipt_id and receipt_id != "unknown":
+                # Got a receipt ID but no status = submission accepted for processing
+                status_text = "processing"
+            else:
+                status_text = "pending"
             logger.info(f"Extracted Status: {status_text}")
 
             status_map = {
