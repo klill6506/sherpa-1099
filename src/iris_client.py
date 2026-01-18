@@ -37,9 +37,34 @@ logger = logging.getLogger(__name__)
 # Store last raw response for debugging
 _last_submit_response = {"status": None, "body": None, "headers": None}
 
+# File path for persisted response (survives restarts)
+_RESPONSE_LOG_FILE = Path(__file__).parent.parent / "logs" / "last_irs_response.json"
+
 def get_last_submit_response():
     """Return the last raw IRS submit response for debugging."""
+    global _last_submit_response
+    # Try to load from file if memory is empty
+    if _last_submit_response.get("status") is None and _RESPONSE_LOG_FILE.exists():
+        try:
+            import json
+            with open(_RESPONSE_LOG_FILE, "r") as f:
+                _last_submit_response = json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not load persisted response: {e}")
     return _last_submit_response
+
+def _persist_response(response_data: dict):
+    """Persist response to file for debugging across restarts."""
+    global _last_submit_response
+    _last_submit_response = response_data
+    try:
+        import json
+        _RESPONSE_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(_RESPONSE_LOG_FILE, "w") as f:
+            json.dump(response_data, f, indent=2, default=str)
+        logger.info(f"Response persisted to {_RESPONSE_LOG_FILE}")
+    except Exception as e:
+        logger.warning(f"Could not persist response: {e}")
 
 # IRS IRIS endpoints (based on IRS documentation)
 # ATS (Assurance Testing System) endpoints for testing
@@ -503,29 +528,72 @@ class IRISClient:
         transmission_id: str,
     ) -> SubmissionResult:
         """Parse IRS submission response XML."""
-        global _last_submit_response
         try:
-            # Store raw response for debugging
-            _last_submit_response = {
+            # Store raw response for debugging - persist to file
+            response_data = {
                 "status": response.status_code,
                 "body": response.text,
                 "headers": dict(response.headers),
+                "timestamp": datetime.utcnow().isoformat(),
+                "transmission_id": transmission_id,
+                "content_type": response.headers.get("Content-Type", "unknown"),
             }
-            # Log raw response for debugging
-            logger.info(f"IRS submit response status: {response.status_code}")
-            logger.info(f"IRS submit response body: {response.text[:2000]}")
+            _persist_response(response_data)
+
+            # Log raw response for debugging - LOG THE FULL RESPONSE
+            logger.info(f"=" * 60)
+            logger.info(f"IRS SUBMIT RESPONSE - FULL DETAILS")
+            logger.info(f"=" * 60)
+            logger.info(f"HTTP Status: {response.status_code}")
+            logger.info(f"Content-Type: {response.headers.get('Content-Type', 'not set')}")
+            logger.info(f"Content-Length: {response.headers.get('Content-Length', 'not set')}")
+            logger.info(f"Response Body (first 5000 chars):")
+            logger.info(response.text[:5000] if response.text else "(empty)")
+            logger.info(f"=" * 60)
 
             # IRS returns XML response
+            # Check if response looks like XML
+            content_type = response.headers.get("Content-Type", "")
+            if not response.text or not response.text.strip().startswith("<?xml") and not response.text.strip().startswith("<"):
+                logger.error(f"IRS returned non-XML response. Content-Type: {content_type}")
+                logger.error(f"Response body: {response.text[:1000] if response.text else '(empty)'}")
+                return SubmissionResult(
+                    receipt_id="non_xml_response",
+                    unique_transmission_id=transmission_id,
+                    status=SubmissionStatus.UNKNOWN,
+                    message=f"IRS returned non-XML response: {response.text[:200] if response.text else '(empty)'}",
+                    timestamp=datetime.utcnow(),
+                )
+
             root = ET.fromstring(response.content)
             ns = {"irs": "urn:us:gov:treasury:irs:ir"}
 
-            # Extract receipt ID
-            receipt_elem = root.find(".//irs:ReceiptId", ns)
-            receipt_id = receipt_elem.text if receipt_elem is not None else "unknown"
+            # Log all elements found (for debugging)
+            logger.info("Parsing XML response, looking for key elements...")
+            all_tags = set(elem.tag for elem in root.iter())
+            logger.info(f"Found XML tags: {list(all_tags)[:20]}")
 
-            # Extract status
+            # Extract receipt ID - try multiple possible element names
+            receipt_elem = root.find(".//irs:ReceiptId", ns)
+            if receipt_elem is None:
+                # Try without namespace
+                receipt_elem = root.find(".//ReceiptId")
+            if receipt_elem is None:
+                # Try TransmissionReceiptId
+                receipt_elem = root.find(".//irs:TransmissionReceiptId", ns)
+            receipt_id = receipt_elem.text if receipt_elem is not None else "unknown"
+            logger.info(f"Extracted ReceiptId: {receipt_id}")
+
+            # Extract status - try multiple possible element names
             status_elem = root.find(".//irs:StatusCd", ns)
+            if status_elem is None:
+                status_elem = root.find(".//irs:TransmissionStatusCd", ns)
+            if status_elem is None:
+                status_elem = root.find(".//StatusCd")
+            if status_elem is None:
+                status_elem = root.find(".//TransmissionStatusCd")
             status_text = status_elem.text.lower() if status_elem is not None else "pending"
+            logger.info(f"Extracted Status: {status_text}")
 
             status_map = {
                 "accepted": SubmissionStatus.ACCEPTED,
