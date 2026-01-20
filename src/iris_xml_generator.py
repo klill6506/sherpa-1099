@@ -1086,6 +1086,15 @@ class IRISXMLGenerator:
         total_issuers = len(batches)
         total_recipients = sum(len(b.forms) for b in batches)
 
+        # Determine transmission type based on whether any forms are corrections
+        # O=Original, C=Corrected, R=Replacement
+        has_corrections = any(
+            getattr(form, 'is_corrected', False)
+            for batch in batches
+            for form in batch.forms
+        )
+        transmission_type = "C" if has_corrections else "O"
+
         # Register namespace
         ET.register_namespace("", IRIS_NS)
 
@@ -1104,7 +1113,7 @@ class IRISXMLGenerator:
         self._add_element(manifest, "UniqueTransmissionId", transmission_id)
         self._add_element(manifest, "TaxYr", str(tax_year))
         self._add_element(manifest, "PriorYearDataInd", self._bool_to_indicator(self.is_prior_year))
-        self._add_element(manifest, "TransmissionTypeCd", "O")  # O=Original, R=Replacement
+        self._add_element(manifest, "TransmissionTypeCd", transmission_type)
         self._add_element(manifest, "TestCd", "T" if self.is_test else "P")
 
         # Transmitter group
