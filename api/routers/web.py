@@ -510,7 +510,7 @@ async def ats_test_page(request: Request):
 @router.get("/download-template")
 async def download_template():
     """Download the 1099 import template Excel file."""
-    base_dir = Path(__file__).parent.parent.parent
+    base_dir = Path(__file__).resolve().parent.parent.parent
 
     # Try multiple possible template file names
     template_candidates = [
@@ -528,7 +528,13 @@ async def download_template():
 
     if not template_path:
         from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Template file not found")
+        # List what files actually exist for debugging
+        import os
+        xlsx_files = [f for f in os.listdir(base_dir) if f.endswith('.xlsx')]
+        raise HTTPException(
+            status_code=404,
+            detail=f"Template file not found. Base dir: {base_dir}, xlsx files found: {xlsx_files}"
+        )
 
     return FileResponse(
         path=str(template_path),
