@@ -251,6 +251,107 @@
         </div>
     </template>
 
+    <!-- ATS Correction Test Section -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <h2 class="text-lg font-medium text-sherpa-text mb-4">ATS Correction Test</h2>
+        <p class="text-sm text-sherpa-muted mb-4">
+            Submit a corrected 1099 to test correction filing capability. You need an accepted original submission first.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-sherpa-muted mb-1">Original Receipt ID</label>
+                <input type="text"
+                       x-model="correctionReceiptId"
+                       placeholder="2025-68698468914-b0b2da138"
+                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm font-mono placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                <p class="text-xs text-sherpa-subtle mt-1">From your accepted original submission</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-sherpa-muted mb-1">Original UTID</label>
+                <input type="text"
+                       x-model="correctionUtid"
+                       placeholder="49c5c09b-xxxx-xxxx-xxxx-xxxxxxxxxxxx::A"
+                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm font-mono placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                <p class="text-xs text-sherpa-subtle mt-1">Unique Transmission ID (ends with ::A for ATS)</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-sherpa-muted mb-1">Recipients to Correct</label>
+                <input type="text"
+                       x-model="correctionRecipients"
+                       placeholder="1"
+                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                <p class="text-xs text-sherpa-subtle mt-1">Comma-separated recipient numbers (1-10), e.g., "1" or "1,2"</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-sherpa-muted mb-1">Amount Adjustment</label>
+                <input type="number"
+                       x-model.number="correctionAmountAdj"
+                       placeholder="50.00"
+                       step="0.01"
+                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                <p class="text-xs text-sherpa-subtle mt-1">Amount to add to original (e.g., 50.00 changes $1100 to $1150)</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+            <button @click="previewCorrectionXml()"
+                    :disabled="!correctionReceiptId || !correctionUtid || previewingCorrection"
+                    class="px-4 py-2 rounded-xl border border-sherpa-border text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-panel disabled:opacity-50 disabled:cursor-not-allowed">
+                <span x-show="!previewingCorrection">Preview Correction XML</span>
+                <span x-show="previewingCorrection">Generating...</span>
+            </button>
+            <button @click="submitCorrection()"
+                    :disabled="!correctionReceiptId || !correctionUtid || submittingCorrection"
+                    class="px-6 py-2 rounded-xl bg-sherpa-amber text-sherpa-bg text-sm font-semibold hover:bg-sherpa-amber/90 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span x-show="!submittingCorrection">Submit Correction to IRS</span>
+                <span x-show="submittingCorrection">Submitting...</span>
+            </button>
+        </div>
+
+        <!-- Correction Result -->
+        <template x-if="correctionResult">
+            <div class="mt-4 p-4 rounded-xl"
+                 :class="correctionResult.success || correctionResult.status === 'pending' || correctionResult.status === 'processing' ? 'bg-sherpa-teal/10 border border-sherpa-teal/30' : 'bg-red-500/10 border border-red-500/30'">
+                <h4 class="font-medium mb-2" :class="correctionResult.success || correctionResult.status === 'pending' || correctionResult.status === 'processing' ? 'text-sherpa-teal' : 'text-red-400'"
+                    x-text="correctionResult.success || correctionResult.status === 'pending' || correctionResult.status === 'processing' ? 'Correction Submitted' : 'Correction Failed'"></h4>
+                <div class="text-sm text-sherpa-muted space-y-1">
+                    <p><strong>Status:</strong> <span x-text="correctionResult.status"></span></p>
+                    <p><strong>Message:</strong> <span x-text="correctionResult.message"></span></p>
+                    <template x-if="correctionResult.receipt_id">
+                        <p><strong>Correction Receipt ID:</strong> <span class="font-mono text-xs text-sherpa-teal" x-text="correctionResult.receipt_id"></span></p>
+                    </template>
+                    <template x-if="correctionResult.transmission_id">
+                        <p><strong>Correction UTID:</strong> <span class="font-mono text-xs" x-text="correctionResult.transmission_id"></span></p>
+                    </template>
+                    <template x-if="correctionResult.corrected_records && correctionResult.corrected_records.length > 0">
+                        <div class="mt-2 pt-2 border-t border-sherpa-border/50">
+                            <strong>Corrected Records:</strong>
+                            <div class="mt-1 space-y-1">
+                                <template x-for="rec in correctionResult.corrected_records" :key="rec.record_id">
+                                    <p class="text-xs ml-2">• Record <span x-text="rec.record_id"></span> (<span x-text="rec.recipient_name"></span>): $<span x-text="rec.original_amount.toFixed(2)"></span> → $<span x-text="rec.corrected_amount.toFixed(2)"></span></p>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="correctionResult.errors && correctionResult.errors.length > 0">
+                        <div class="mt-2 pt-2 border-t border-red-500/30">
+                            <strong class="text-red-400">Errors:</strong>
+                            <div class="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                                <template x-for="err in correctionResult.errors" :key="err.code || err.message">
+                                    <p class="text-xs text-red-400 ml-2">• <span x-text="err.message || err.code"></span></p>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <!-- Standalone Status Checker -->
     <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
         <h2 class="text-lg font-medium text-sherpa-text mb-4">Check Submission Status</h2>
@@ -374,6 +475,14 @@ function atsTestForm() {
         manualStatusResult: null,
         checkingStatus: false,
         statusResult: null,
+        // Correction test
+        correctionReceiptId: '',
+        correctionUtid: '',
+        correctionRecipients: '1',
+        correctionAmountAdj: 50.00,
+        previewingCorrection: false,
+        submittingCorrection: false,
+        correctionResult: null,
 
         async init() {
             // Load transmitter config on page load
@@ -498,6 +607,72 @@ function atsTestForm() {
                 };
             } finally {
                 this.checkingManualStatus = false;
+            }
+        },
+
+        // Parse comma-separated recipient numbers
+        parseRecipients() {
+            const parts = this.correctionRecipients.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 10);
+            return parts.length > 0 ? parts : [1];
+        },
+
+        async previewCorrectionXml() {
+            if (!this.correctionReceiptId || !this.correctionUtid) return;
+
+            this.previewingCorrection = true;
+            try {
+                const response = await fetch('/api/efile/ats-test/correction/preview-xml', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        form_type: this.formType,
+                        tax_year: this.taxYear,
+                        original_receipt_id: this.correctionReceiptId,
+                        original_utid: this.correctionUtid,
+                        recipients_to_correct: this.parseRecipients(),
+                        amount_adjustment: this.correctionAmountAdj
+                    })
+                });
+                this.xmlContent = await response.text();
+                this.showXmlPreview = true;
+            } catch (error) {
+                alert('Error generating correction XML preview: ' + error.message);
+            } finally {
+                this.previewingCorrection = false;
+            }
+        },
+
+        async submitCorrection() {
+            if (!this.correctionReceiptId || !this.correctionUtid) return;
+
+            if (!confirm('Submit ATS correction test to IRS?\n\nThis will submit corrected forms referencing your original accepted submission.')) {
+                return;
+            }
+
+            this.submittingCorrection = true;
+            this.correctionResult = null;
+            try {
+                const response = await fetch('/api/efile/ats-test/correction/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        form_type: this.formType,
+                        tax_year: this.taxYear,
+                        original_receipt_id: this.correctionReceiptId,
+                        original_utid: this.correctionUtid,
+                        recipients_to_correct: this.parseRecipients(),
+                        amount_adjustment: this.correctionAmountAdj
+                    })
+                });
+                this.correctionResult = await response.json();
+            } catch (error) {
+                this.correctionResult = {
+                    success: false,
+                    status: 'error',
+                    message: 'Request failed: ' + error.message
+                };
+            } finally {
+                this.submittingCorrection = false;
             }
         }
     };

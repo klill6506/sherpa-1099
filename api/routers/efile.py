@@ -1957,6 +1957,425 @@ async def get_last_submit_response_endpoint():
 
 
 # =============================================================================
+# ATS CORRECTION TEST
+# =============================================================================
+
+class ATSCorrectionRequest(BaseModel):
+    """Request for ATS correction test submission."""
+    form_type: str = Field(default="1099NEC", pattern="^(1099NEC|1099MISC|1099S|1098)$")
+    tax_year: int = Field(default=2025, ge=2020, le=2030)
+    original_receipt_id: str = Field(..., description="Receipt ID from original accepted submission")
+    original_utid: str = Field(..., description="Unique Transmission ID from original (e.g., 49c5c09b...::A)")
+    # Which recipients to correct (by 1-based index, default is just recipient 1)
+    recipients_to_correct: List[int] = Field(default=[1], description="Which recipient indices to correct (1-10)")
+    # Amount adjustment for correction
+    amount_adjustment: float = Field(default=50.00, description="Amount to add to original compensation")
+
+
+class ATSCorrectionResponse(BaseModel):
+    """Response from ATS correction test submission."""
+    success: bool
+    receipt_id: Optional[str] = None
+    transmission_id: str
+    status: str
+    message: str
+    submission_count: int = 0
+    recipient_count: int = 0
+    corrected_records: List[dict] = Field(default_factory=list)
+    errors: List[dict] = Field(default_factory=list)
+
+
+def build_ats_form_data_corrected(
+    form_type: str,
+    recipient: RecipientInfo,
+    record_id: str,
+    tax_year: int,
+    recipient_idx: int,
+    original_utid: str,
+    amount_adjustment: Decimal,
+) -> Form1099NECData | Form1099MISCData | Form1099SData | Form1098Data:
+    """
+    Build corrected ATS form data - same as original but with:
+    - is_corrected = True
+    - original_record_id = UniqueRecordId from original submission
+    - Adjusted amount (original + adjustment)
+    """
+    # Original base amount per recipient (same formula as build_ats_form_data)
+    base_amount = Decimal(str(1000 + (recipient_idx * 100)))
+    corrected_amount = base_amount + amount_adjustment
+
+    # Build the UniqueRecordId for referencing the original
+    # Format: {UTID}|{SubmissionSequence}|{RecordSequence}
+    # For ATS test with 5 issuers, 2 recipients each:
+    # - Issuer 1 (submission 1): recipients 1,2 -> record_ids 1,2
+    # - Issuer 2 (submission 2): recipients 3,4 -> record_ids 3,4
+    # - etc.
+    issuer_idx = (recipient_idx - 1) // 2  # 0-based issuer index
+    submission_seq = issuer_idx + 1  # 1-based submission sequence
+    record_seq = record_id  # This is the record_id within submission
+
+    # The UniqueRecordId format from IRS: {UTID}|{SubmissionSeq}|{RecordSeq}
+    original_unique_record_id = f"{original_utid}|{submission_seq}|{record_seq}"
+
+    if form_type == "1099NEC":
+        return Form1099NECData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            nonemployee_compensation=corrected_amount,
+            direct_sales_indicator=False,
+            federal_tax_withheld=Decimal("0.00"),
+            state_local_taxes=[],
+            is_corrected=True,
+            original_record_id=original_unique_record_id,
+            cfsf_states=[],
+        )
+    elif form_type == "1099MISC":
+        return Form1099MISCData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            rents=corrected_amount,
+            royalties=Decimal("0.00"),
+            other_income=Decimal("0.00"),
+            federal_tax_withheld=Decimal("0.00"),
+            fishing_boat_proceeds=Decimal("0.00"),
+            medical_healthcare_payments=Decimal("0.00"),
+            direct_sales_indicator=False,
+            substitute_payments=Decimal("0.00"),
+            crop_insurance_proceeds=Decimal("0.00"),
+            gross_proceeds_attorney=Decimal("0.00"),
+            fish_purchased_resale=Decimal("0.00"),
+            section_409a_deferrals=Decimal("0.00"),
+            nonqualified_deferred_comp=Decimal("0.00"),
+            state_local_taxes=[],
+            is_corrected=True,
+            original_record_id=original_unique_record_id,
+            cfsf_states=[],
+        )
+    elif form_type == "1099S":
+        return Form1099SData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            closing_date=date(tax_year, 6, 15),
+            gross_proceeds=corrected_amount * Decimal("100"),
+            address_or_legal_desc="123 Test Property, Austin TX 78701",
+            transferor_received_consideration=False,
+            transferor_is_foreign_person=False,
+            buyers_real_estate_tax=Decimal("0.00"),
+            is_corrected=True,
+            original_record_id=original_unique_record_id,
+        )
+    elif form_type == "1098":
+        return Form1098Data(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            mortgage_interest_received=corrected_amount * Decimal("10"),
+            outstanding_mortgage_principal=corrected_amount * Decimal("100"),
+            mortgage_origination_date=date(tax_year - 5, 1, 15),
+            refund_of_overpaid_interest=Decimal("0.00"),
+            mortgage_insurance_premiums=Decimal("0.00"),
+            points_paid_on_purchase=Decimal("0.00"),
+            property_address_same_as_borrower=True,
+            property_address="",
+            properties_securing_mortgage_count=1,
+            other_info="",
+            mortgage_acquisition_date=None,
+            is_corrected=True,
+            original_record_id=original_unique_record_id,
+        )
+    else:
+        raise ValueError(f"Unknown form type: {form_type}")
+
+
+@router.post("/ats-test/correction/preview-xml")
+async def ats_correction_preview_xml(request: ATSCorrectionRequest) -> Response:
+    """
+    Generate ATS correction test XML for preview without submitting.
+
+    Creates corrected versions of specified recipients from the original ATS test.
+    The CorrectedInd will be set to "1" and PrevSubmittedRecRecipientGrp will
+    reference the original UniqueRecordId.
+    """
+    try:
+        batches = []
+        corrected_records = []
+        amount_adjustment = Decimal(str(request.amount_adjustment))
+
+        # For correction test, we only include the issuers/recipients that are being corrected
+        # Group recipients by issuer
+        recipients_by_issuer = {}
+        for recipient_idx in request.recipients_to_correct:
+            if recipient_idx < 1 or recipient_idx > 10:
+                continue
+            issuer_idx = (recipient_idx - 1) // 2  # 0-based
+            if issuer_idx not in recipients_by_issuer:
+                recipients_by_issuer[issuer_idx] = []
+            recipients_by_issuer[issuer_idx].append(recipient_idx)
+
+        # Build batches for each affected issuer
+        for issuer_idx, recipient_indices in recipients_by_issuer.items():
+            issuer_data = ATS_TEST_ISSUERS[issuer_idx]
+            issuer = build_ats_issuer(issuer_data)
+            forms = []
+
+            for recipient_idx in recipient_indices:
+                recipient_data = ATS_TEST_RECIPIENTS[recipient_idx - 1]  # Convert to 0-based
+                recipient = build_ats_recipient(recipient_data)
+                record_id = str(recipient_idx)  # Keep same record_id as original
+
+                form_data = build_ats_form_data_corrected(
+                    request.form_type,
+                    recipient,
+                    record_id,
+                    request.tax_year,
+                    recipient_idx,
+                    request.original_utid,
+                    amount_adjustment,
+                )
+                forms.append(form_data)
+
+                corrected_records.append({
+                    "record_id": record_id,
+                    "recipient_name": recipient_data["name"],
+                    "original_amount": float(1000 + (recipient_idx * 100)),
+                    "corrected_amount": float(1000 + (recipient_idx * 100) + request.amount_adjustment),
+                    "original_unique_record_id": form_data.original_record_id,
+                })
+
+            batch = SubmissionBatch(
+                issuer=issuer,
+                form_type=request.form_type,
+                tax_year=request.tax_year,
+                forms=forms,
+                cfsf_election=False,
+            )
+            batches.append(batch)
+
+        if not batches:
+            raise HTTPException(status_code=400, detail="No valid recipients to correct")
+
+        # Generate XML
+        transmitter = get_transmitter_config()
+        software_id = get_software_id()
+
+        generator = IRISXMLGenerator(
+            transmitter=transmitter,
+            software_id=software_id,
+            is_test=True,
+        )
+
+        xml_content = generator.generate_transmission(
+            batches=batches,
+            tax_year=request.tax_year,
+        )
+
+        return Response(
+            content=xml_content,
+            media_type="application/xml",
+            headers={
+                "Content-Disposition": f"attachment; filename=ats_correction_{request.form_type}_{request.tax_year}.xml"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error generating ATS correction XML preview")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ats-test/correction/submit", response_model=ATSCorrectionResponse)
+async def ats_correction_submit(request: ATSCorrectionRequest):
+    """
+    Submit ATS correction test to IRS.
+
+    This creates corrected versions of forms from a previously accepted original submission.
+    The corrected forms will have:
+    - CorrectedInd = "1"
+    - PrevSubmittedRecRecipientGrp/UniqueRecordId referencing the original
+
+    Required inputs:
+    - original_receipt_id: The Receipt ID from the original accepted submission
+    - original_utid: The Unique Transmission ID (UTID) from the original (ends with ::A for ATS)
+    - recipients_to_correct: Which recipients (1-10) to include in correction
+    - amount_adjustment: How much to add/subtract from original amount
+
+    The goal is to get this corrected submission Accepted by IRS ATS.
+    """
+    try:
+        batches = []
+        corrected_records = []
+        total_recipients = 0
+        amount_adjustment = Decimal(str(request.amount_adjustment))
+
+        # Validate UTID format (should end with ::A for ATS)
+        if not request.original_utid.endswith("::A"):
+            logger.warning(f"Original UTID doesn't end with ::A: {request.original_utid}")
+
+        # Group recipients by issuer
+        recipients_by_issuer = {}
+        for recipient_idx in request.recipients_to_correct:
+            if recipient_idx < 1 or recipient_idx > 10:
+                continue
+            issuer_idx = (recipient_idx - 1) // 2
+            if issuer_idx not in recipients_by_issuer:
+                recipients_by_issuer[issuer_idx] = []
+            recipients_by_issuer[issuer_idx].append(recipient_idx)
+
+        # Build batches for each affected issuer
+        for issuer_idx, recipient_indices in recipients_by_issuer.items():
+            issuer_data = ATS_TEST_ISSUERS[issuer_idx]
+            issuer = build_ats_issuer(issuer_data)
+            forms = []
+
+            for recipient_idx in recipient_indices:
+                recipient_data = ATS_TEST_RECIPIENTS[recipient_idx - 1]
+                recipient = build_ats_recipient(recipient_data)
+                record_id = str(recipient_idx)
+
+                form_data = build_ats_form_data_corrected(
+                    request.form_type,
+                    recipient,
+                    record_id,
+                    request.tax_year,
+                    recipient_idx,
+                    request.original_utid,
+                    amount_adjustment,
+                )
+                forms.append(form_data)
+                total_recipients += 1
+
+                corrected_records.append({
+                    "record_id": record_id,
+                    "recipient_name": recipient_data["name"],
+                    "original_amount": float(1000 + (recipient_idx * 100)),
+                    "corrected_amount": float(1000 + (recipient_idx * 100) + request.amount_adjustment),
+                    "original_unique_record_id": form_data.original_record_id,
+                })
+
+            batch = SubmissionBatch(
+                issuer=issuer,
+                form_type=request.form_type,
+                tax_year=request.tax_year,
+                forms=forms,
+                cfsf_election=False,
+            )
+            batches.append(batch)
+
+        if not batches:
+            raise HTTPException(status_code=400, detail="No valid recipients to correct")
+
+        # Generate XML
+        transmitter = get_transmitter_config()
+        software_id = get_software_id()
+
+        generator = IRISXMLGenerator(
+            transmitter=transmitter,
+            software_id=software_id,
+            is_test=True,
+        )
+
+        xml_bytes = generator.generate_transmission_bytes(
+            batches=batches,
+            tax_year=request.tax_year,
+        )
+
+        # Validate XML before submission
+        is_valid, validation_errors = validate_iris_xml(xml_bytes)
+        if not is_valid:
+            error_messages = [e["message"] for e in validation_errors if e.get("type") == "error"]
+            logger.error(f"ATS correction XML validation failed: {error_messages[:5]}")
+            return ATSCorrectionResponse(
+                success=False,
+                transmission_id="",
+                status="validation_error",
+                message=f"XML validation failed: {error_messages[0] if error_messages else 'Unknown error'}",
+                submission_count=len(batches),
+                recipient_count=total_recipients,
+                corrected_records=corrected_records,
+                errors=validation_errors[:10],
+            )
+
+        # Submit to IRS ATS
+        try:
+            config = load_config()
+            client = IRISClient(config)
+            result = client.submit_xml(xml_bytes)
+        except IRISClientError as e:
+            logger.error(f"ATS correction IRIS submission failed: {e}")
+            return ATSCorrectionResponse(
+                success=False,
+                transmission_id="",
+                status="error",
+                message=str(e),
+                submission_count=len(batches),
+                recipient_count=total_recipients,
+                corrected_records=corrected_records,
+            )
+        except Exception as e:
+            logger.error(f"ATS correction IRIS submission error: {e}")
+            return ATSCorrectionResponse(
+                success=False,
+                transmission_id="",
+                status="error",
+                message=f"Submission error: {type(e).__name__}: {str(e)}",
+                submission_count=len(batches),
+                recipient_count=total_recipients,
+                corrected_records=corrected_records,
+            )
+
+        # Log activity
+        log_activity(
+            action="ats_correction_submitted",
+            entity_type="ats_certification",
+            entity_id=None,
+            filer_id=None,
+            operating_year_id=None,
+            details={
+                "form_type": request.form_type,
+                "tax_year": request.tax_year,
+                "original_receipt_id": request.original_receipt_id,
+                "original_utid": request.original_utid,
+                "submission_count": len(batches),
+                "recipient_count": total_recipients,
+                "corrected_records": corrected_records,
+                "transmission_id": result.unique_transmission_id,
+                "receipt_id": result.receipt_id,
+                "status": result.status.value,
+            },
+        )
+
+        return ATSCorrectionResponse(
+            success=result.is_success,
+            receipt_id=result.receipt_id,
+            transmission_id=result.unique_transmission_id,
+            status=result.status.value,
+            message=result.message,
+            submission_count=len(batches),
+            recipient_count=total_recipients,
+            corrected_records=corrected_records,
+            errors=[
+                {
+                    "record_id": e.record_id,
+                    "code": e.error_code,
+                    "message": e.error_message,
+                    "field": e.field_name,
+                }
+                for e in result.errors
+            ],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error submitting ATS correction to IRS")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
 # SUBMISSION STATUS CHECK
 # =============================================================================
 
