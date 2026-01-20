@@ -1991,7 +1991,7 @@ def build_ats_form_data_corrected(
     record_id: str,
     tax_year: int,
     recipient_idx: int,
-    original_utid: str,
+    original_receipt_id: str,
     amount_adjustment: Decimal,
 ) -> Form1099NECData | Form1099MISCData | Form1099SData | Form1098Data:
     """
@@ -2005,7 +2005,8 @@ def build_ats_form_data_corrected(
     corrected_amount = base_amount + amount_adjustment
 
     # Build the UniqueRecordId for referencing the original
-    # Format: {UTID}|{SubmissionSequence}|{RecordSequence}
+    # IRS UniqueRecordId format: {ReceiptId}|{SubmissionSequence}|{RecordSequence}
+    # where ReceiptId is the IRS-assigned receipt ID (format: YYYY-11digits-9chars)
     # For ATS test with 5 issuers, 2 recipients each:
     # - Issuer 1 (submission 1): recipients 1,2 -> record_ids 1,2
     # - Issuer 2 (submission 2): recipients 3,4 -> record_ids 3,4
@@ -2014,8 +2015,9 @@ def build_ats_form_data_corrected(
     submission_seq = issuer_idx + 1  # 1-based submission sequence
     record_seq = record_id  # This is the record_id within submission
 
-    # The UniqueRecordId format from IRS: {UTID}|{SubmissionSeq}|{RecordSeq}
-    original_unique_record_id = f"{original_utid}|{submission_seq}|{record_seq}"
+    # IRS UniqueRecordId pattern: [1-9][0-9]{3}\-[0-9]{11}\-[0-9a-zA-Z]{9}\|[1-9][0-9]{0,7}\|[1-9][0-9]{0,7}
+    # Example: 2025-68698468914-b0b2da138|1|1
+    original_unique_record_id = f"{original_receipt_id}|{submission_seq}|{record_seq}"
 
     if form_type == "1099NEC":
         return Form1099NECData(
@@ -2132,7 +2134,7 @@ async def ats_correction_preview_xml(request: ATSCorrectionRequest) -> Response:
                     record_id,
                     request.tax_year,
                     recipient_idx,
-                    request.original_utid,
+                    request.original_receipt_id,
                     amount_adjustment,
                 )
                 forms.append(form_data)
@@ -2242,7 +2244,7 @@ async def ats_correction_submit(request: ATSCorrectionRequest):
                     record_id,
                     request.tax_year,
                     recipient_idx,
-                    request.original_utid,
+                    request.original_receipt_id,
                     amount_adjustment,
                 )
                 forms.append(form_data)
