@@ -1442,7 +1442,9 @@ class ATSTestRequest(BaseModel):
     # CF/SF (Combined Federal/State Filing) test mode
     # When enabled, one submission (issuer #5) will include CF/SF state data
     cfsf_enabled: bool = Field(default=False, description="Enable CF/SF test for issuer #5")
-    cfsf_state: str = Field(default="TX", description="State code for CF/SF election (2-letter)")
+    # Note: TX is NOT a CF/SF participating state. Valid states per IRS SHAREDIRFORM019_002:
+    # AL, AZ, AR, CA, CT, CO, DC, DE, GA, HI, ID, IN, KS, LA, MA, MD, ME, MI, MN, MS, MT, NE, NJ, NM, NC, ND, OH, OK, OR, PA, RI, SC, WI
+    cfsf_state: str = Field(default="AZ", description="State code for CF/SF election (2-letter)")
 
 
 class ATSTestResponse(BaseModel):
