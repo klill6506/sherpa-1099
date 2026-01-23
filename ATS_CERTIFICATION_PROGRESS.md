@@ -12,6 +12,7 @@ Both original and corrected submissions have been accepted by the IRS ATS (Assur
 |------|------------|--------|
 | Original | `2025-68698468914-b0b2da138` | Accepted |
 | Correction | `2025-68934943854-5e8e457a6` | Accepted |
+| CF/SF (AZ) | `2025-69209066354-3c172e642` | Accepted |
 
 ---
 
@@ -61,14 +62,14 @@ transmission_type = "C" if has_corrections else "O"
 
 ## CF/SF (Combined Federal/State Filing) Test
 
-### Status: READY FOR TESTING
+### Status: COMPLETE ✅
 
-CF/SF capability has been added to the ATS test system. Per Pub 5719, the CF/SF test can be included as one of the five submissions in the standard ATS test transmission.
+CF/SF test submission accepted! Receipt ID: `2025-69209066354-3c172e642`
 
 ### How CF/SF Testing Works
 
 1. On the ATS Test page, check "Enable CF/SF Test (Combined Federal/State Filing)"
-2. Select a CF/SF participating state (default: TX)
+2. Select a CF/SF participating state (default: AZ - Arizona)
 3. Submit the ATS test - Issuer #5 (Epsilon) will include:
    - `CFSFElectionInd = "1"` at the submission header level
    - `CFSFElectionStateCd` at the form detail level
@@ -99,10 +100,14 @@ Per Pub 5719, the IRS Help Desk may request the "Submission ID for CF/SF, if app
 
 ## Next Steps
 
-1. **CF/SF Testing** - Submit ATS test with CF/SF enabled and verify acceptance
-2. **Production Filing** - With ATS certification complete, the system is ready for production 1099-NEC filings
-3. **Documentation** - Update any internal documentation about the correction workflow
-4. **Monitoring** - Set up monitoring for production submission status tracking
+1. **Production Filing** - With ATS certification complete, the system is ready for production 1099-NEC filings
+2. **Documentation** - Update any internal documentation about the correction workflow
+3. **Monitoring** - Set up monitoring for production submission status tracking
+
+### Important Note on CF/SF States
+
+Texas (TX) is **NOT** a CF/SF participating state. Valid states per IRS error SHAREDIRFORM019_002:
+> AL, AZ, AR, CA, CT, CO, DC, DE, GA, HI, ID, IN, KS, LA, MA, MD, ME, MI, MN, MS, MT, NE, NJ, NM, NC, ND, OH, OK, OR, PA, RI, SC, WI
 
 ---
 
