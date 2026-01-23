@@ -97,6 +97,55 @@
                 <p class="text-xs text-sherpa-muted mt-2">Select the tax year for the test submission</p>
             </div>
         </div>
+
+        <!-- CF/SF Test Option (only for 1099-NEC and 1099-MISC) -->
+        <template x-if="formType === '1099NEC' || formType === '1099MISC'">
+            <div class="mt-6 pt-6 border-t border-sherpa-border">
+                <div class="flex items-start gap-4">
+                    <div class="flex items-center h-6">
+                        <input type="checkbox"
+                               x-model="cfsfEnabled"
+                               id="cfsfEnabled"
+                               class="w-4 h-4 rounded border-sherpa-border bg-sherpa-panel text-sherpa-purple focus:ring-sherpa-purple">
+                    </div>
+                    <div class="flex-1">
+                        <label for="cfsfEnabled" class="text-sm font-medium text-sherpa-text cursor-pointer">
+                            Enable CF/SF Test (Combined Federal/State Filing)
+                        </label>
+                        <p class="text-xs text-sherpa-muted mt-1">
+                            Per Pub 5719, the CF/SF test can be included as one of the five submissions.
+                            When enabled, Issuer #5 (Epsilon) will include state filing data.
+                        </p>
+                        <template x-if="cfsfEnabled">
+                            <div class="mt-3 flex items-center gap-3">
+                                <label class="text-xs text-sherpa-subtle">State:</label>
+                                <select x-model="cfsfState" class="px-3 py-1.5 rounded-lg bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm focus:ring-2 focus:ring-sherpa-purple focus:border-transparent">
+                                    <option value="TX">TX - Texas</option>
+                                    <option value="AZ">AZ - Arizona</option>
+                                    <option value="CA">CA - California</option>
+                                    <option value="CO">CO - Colorado</option>
+                                    <option value="GA">GA - Georgia</option>
+                                    <option value="ID">ID - Idaho</option>
+                                    <option value="IN">IN - Indiana</option>
+                                    <option value="KS">KS - Kansas</option>
+                                    <option value="MD">MD - Maryland</option>
+                                    <option value="MO">MO - Missouri</option>
+                                    <option value="MT">MT - Montana</option>
+                                    <option value="NC">NC - North Carolina</option>
+                                    <option value="ND">ND - North Dakota</option>
+                                    <option value="NE">NE - Nebraska</option>
+                                    <option value="NJ">NJ - New Jersey</option>
+                                    <option value="OK">OK - Oklahoma</option>
+                                    <option value="SC">SC - South Carolina</option>
+                                    <option value="WI">WI - Wisconsin</option>
+                                </select>
+                                <span class="text-xs text-sherpa-subtle">(CF/SF participating state)</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
 
     <!-- Transmitter Config Status -->
@@ -206,6 +255,24 @@
                         </template>
                         <p><strong>Submissions:</strong> <span x-text="result.submission_count"></span> issuers</p>
                         <p><strong>Recipients:</strong> <span x-text="result.recipient_count"></span> total records</p>
+
+                        <!-- CF/SF Info -->
+                        <template x-if="result.cfsf_enabled">
+                            <div class="mt-3 p-3 rounded-lg bg-sherpa-purple/10 border border-sherpa-purple/30">
+                                <div class="flex items-center gap-2 text-sherpa-purple font-medium text-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    CF/SF Test Included
+                                </div>
+                                <p class="text-xs text-sherpa-muted mt-1">
+                                    Submission #<span x-text="result.cfsf_submission_index"></span> includes <span x-text="result.cfsf_state"></span> state filing data.
+                                </p>
+                                <p class="text-xs text-sherpa-subtle mt-1">
+                                    <strong>Note:</strong> After acceptance, provide the Submission ID for this issuer to IRS Help Desk if requested.
+                                </p>
+                            </div>
+                        </template>
 
                         <!-- Status Check Button -->
                         <template x-if="result.transmission_id">
@@ -475,6 +542,9 @@ function atsTestForm() {
         manualStatusResult: null,
         checkingStatus: false,
         statusResult: null,
+        // CF/SF test options
+        cfsfEnabled: false,
+        cfsfState: 'TX',
         // Correction test
         correctionReceiptId: '',
         correctionUtid: '',
@@ -502,7 +572,9 @@ function atsTestForm() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         form_type: this.formType,
-                        tax_year: this.taxYear
+                        tax_year: this.taxYear,
+                        cfsf_enabled: this.cfsfEnabled && (this.formType === '1099NEC' || this.formType === '1099MISC'),
+                        cfsf_state: this.cfsfState
                     })
                 });
                 this.xmlContent = await response.text();
@@ -515,7 +587,12 @@ function atsTestForm() {
         },
 
         async submitTest() {
-            if (!confirm('Are you sure you want to submit the ATS certification test to IRS?\n\nThis will send 1 transmission with 5 issuers and 10 total records.')) {
+            const cfsfIncluded = this.cfsfEnabled && (this.formType === '1099NEC' || this.formType === '1099MISC');
+            let confirmMsg = 'Are you sure you want to submit the ATS certification test to IRS?\n\nThis will send 1 transmission with 5 issuers and 10 total records.';
+            if (cfsfIncluded) {
+                confirmMsg += `\n\nCF/SF ENABLED: Issuer #5 will include ${this.cfsfState} state filing data.`;
+            }
+            if (!confirm(confirmMsg)) {
                 return;
             }
 
@@ -527,7 +604,9 @@ function atsTestForm() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         form_type: this.formType,
-                        tax_year: this.taxYear
+                        tax_year: this.taxYear,
+                        cfsf_enabled: cfsfIncluded,
+                        cfsf_state: this.cfsfState
                     })
                 });
                 this.result = await response.json();

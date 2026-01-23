@@ -1439,6 +1439,10 @@ class ATSTestRequest(BaseModel):
     """Request for ATS certification test submission."""
     form_type: str = Field(default="1099NEC", pattern="^(1099NEC|1099MISC|1099S|1098)$")
     tax_year: int = Field(default=2025, ge=2020, le=2030)
+    # CF/SF (Combined Federal/State Filing) test mode
+    # When enabled, one submission (issuer #5) will include CF/SF state data
+    cfsf_enabled: bool = Field(default=False, description="Enable CF/SF test for issuer #5")
+    cfsf_state: str = Field(default="TX", description="State code for CF/SF election (2-letter)")
 
 
 class ATSTestResponse(BaseModel):
@@ -1452,6 +1456,10 @@ class ATSTestResponse(BaseModel):
     recipient_count: int = 0
     xml_preview: Optional[str] = None
     errors: List[dict] = Field(default_factory=list)
+    # CF/SF specific fields
+    cfsf_enabled: bool = Field(default=False, description="Whether CF/SF was included")
+    cfsf_submission_index: Optional[int] = Field(None, description="Which submission (1-5) has CF/SF")
+    cfsf_state: Optional[str] = Field(None, description="State code used for CF/SF")
 
 
 # ATS Test Data: 5 fake issuers with 2 recipients each
@@ -1722,6 +1730,114 @@ def build_ats_form_data(
         raise ValueError(f"Unknown form type: {form_type}")
 
 
+def build_ats_form_data_cfsf(
+    form_type: str,
+    recipient: RecipientInfo,
+    record_id: str,
+    tax_year: int,
+    amount_base: int,
+    cfsf_state: str = "TX",
+):
+    """
+    Build test form data with CF/SF (Combined Federal/State Filing) state information.
+
+    Per IRS schema, CF/SF forms need:
+    - CFSFElectionStateCd at form level (array of state codes)
+    - StateLocalTaxGrp with state withholding/income info
+
+    Args:
+        form_type: Type of form (1099NEC, 1099MISC, etc.)
+        recipient: RecipientInfo for the form
+        record_id: Record ID string
+        tax_year: Tax year
+        amount_base: Base amount multiplier (1-10)
+        cfsf_state: 2-letter state code for CF/SF election
+
+    Returns:
+        Form data object with CF/SF state info populated
+    """
+    # Vary amounts slightly for each recipient
+    amount = Decimal(str(1000 + amount_base * 100))
+
+    # Calculate state withholding (use 5% of income for testing)
+    state_income = amount
+    state_withheld = (amount * Decimal("0.05")).quantize(Decimal("0.01"))
+
+    # Build state/local tax info for CF/SF
+    state_tax = StateLocalTax(
+        state_code=cfsf_state.upper(),
+        state_id_number=f"0000{amount_base:05d}",  # Test state ID
+        state_tax_withheld=state_withheld,
+        state_income=state_income,
+        local_tax_withheld=Decimal("0.00"),
+        local_income=Decimal("0.00"),
+        locality_name=None,
+    )
+
+    if form_type == "1099NEC":
+        return Form1099NECData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            nonemployee_compensation=amount,
+            direct_sales_indicator=False,
+            federal_tax_withheld=Decimal("0.00"),
+            state_local_taxes=[state_tax],  # Include state tax info
+            is_corrected=False,
+            cfsf_states=[cfsf_state.upper()],  # CF/SF election states
+        )
+    elif form_type == "1099MISC":
+        return Form1099MISCData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            rents=amount,
+            royalties=Decimal("0.00"),
+            other_income=Decimal("0.00"),
+            federal_tax_withheld=Decimal("0.00"),
+            state_local_taxes=[state_tax],  # Include state tax info
+            is_corrected=False,
+            cfsf_states=[cfsf_state.upper()],  # CF/SF election states
+        )
+    elif form_type == "1099S":
+        # 1099-S does not participate in CF/SF program
+        # Return standard form without state info
+        return Form1099SData(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            closing_date=date(tax_year, 6, 15),
+            gross_proceeds=amount * 100,
+            address_or_legal_desc=f"Test Property {record_id}, {cfsf_state}",
+            transferor_received_consideration=False,
+            transferor_is_foreign_person=False,
+            buyers_real_estate_tax=Decimal("0.00"),
+            is_corrected=False,
+        )
+    elif form_type == "1098":
+        # 1098 does not participate in CF/SF program
+        # Return standard form without state info
+        return Form1098Data(
+            record_id=record_id,
+            tax_year=tax_year,
+            recipient=recipient,
+            mortgage_interest_received=amount * 10,
+            outstanding_mortgage_principal=amount * 100,
+            mortgage_origination_date=date(tax_year - 5, 1, 15),
+            refund_of_overpaid_interest=Decimal("0.00"),
+            mortgage_insurance_premiums=Decimal("0.00"),
+            points_paid_on_purchase=Decimal("0.00"),
+            property_address_same_as_borrower=True,
+            property_address="",
+            properties_securing_mortgage_count=1,
+            other_info="",
+            mortgage_acquisition_date=None,
+            is_corrected=False,
+        )
+    else:
+        raise ValueError(f"Unknown form type: {form_type}")
+
+
 @router.post("/ats-test/preview-xml")
 async def ats_test_preview_xml(request: ATSTestRequest) -> Response:
     """
@@ -1729,15 +1845,23 @@ async def ats_test_preview_xml(request: ATSTestRequest) -> Response:
 
     Creates 5 submissions (issuers) with 2 payees each = 10 total records.
     All TINs start with 000 as required for IRS ATS testing.
+
+    If cfsf_enabled=True, issuer #5 will include CF/SF state filing data.
     """
     try:
         batches = []
         recipient_idx = 0
+        # Per Pub 5719, CF/SF test can be one of the 5 submissions
+        # We use issuer #5 (index 4) for CF/SF when enabled
+        cfsf_issuer_index = 4
 
         # Build 5 submission batches (one per issuer)
         for issuer_idx, issuer_data in enumerate(ATS_TEST_ISSUERS):
             issuer = build_ats_issuer(issuer_data)
             forms = []
+
+            # Check if this issuer should use CF/SF
+            is_cfsf_issuer = request.cfsf_enabled and issuer_idx == cfsf_issuer_index
 
             # 2 recipients per issuer
             for j in range(2):
@@ -1748,13 +1872,24 @@ async def ats_test_preview_xml(request: ATSTestRequest) -> Response:
                 # IRS RecordId must be simple integer pattern [1-9][0-9]* - NOT "1-1" format!
                 record_id = str(recipient_idx + 1)
 
-                form_data = build_ats_form_data(
-                    request.form_type,
-                    recipient,
-                    record_id,
-                    request.tax_year,
-                    recipient_idx + 1,
-                )
+                # Use CF/SF builder for the CF/SF issuer
+                if is_cfsf_issuer and request.form_type in ("1099NEC", "1099MISC"):
+                    form_data = build_ats_form_data_cfsf(
+                        request.form_type,
+                        recipient,
+                        record_id,
+                        request.tax_year,
+                        recipient_idx + 1,
+                        cfsf_state=request.cfsf_state,
+                    )
+                else:
+                    form_data = build_ats_form_data(
+                        request.form_type,
+                        recipient,
+                        record_id,
+                        request.tax_year,
+                        recipient_idx + 1,
+                    )
                 forms.append(form_data)
                 recipient_idx += 1
 
@@ -1763,7 +1898,8 @@ async def ats_test_preview_xml(request: ATSTestRequest) -> Response:
                 form_type=request.form_type,
                 tax_year=request.tax_year,
                 forms=forms,
-                cfsf_election=False,
+                # Set CF/SF election at submission level
+                cfsf_election=is_cfsf_issuer and request.form_type in ("1099NEC", "1099MISC"),
             )
             batches.append(batch)
 
@@ -1782,11 +1918,13 @@ async def ats_test_preview_xml(request: ATSTestRequest) -> Response:
             tax_year=request.tax_year,
         )
 
+        # Include CF/SF indicator in filename
+        filename_suffix = "_cfsf" if request.cfsf_enabled else ""
         return Response(
             content=xml_content,
             media_type="application/xml",
             headers={
-                "Content-Disposition": f"attachment; filename=ats_test_{request.form_type}_{request.tax_year}.xml"
+                "Content-Disposition": f"attachment; filename=ats_test_{request.form_type}_{request.tax_year}{filename_suffix}.xml"
             }
         )
 
@@ -1806,6 +1944,9 @@ async def ats_test_submit(request: ATSTestRequest):
     All TINs start with 000 as required for IRS ATS testing.
     Test File Indicator is set to "T".
 
+    If cfsf_enabled=True, issuer #5 will include CF/SF state filing data.
+    Per Pub 5719, the CF/SF test can be included as one of the five submissions.
+
     This is a one-time process for IRS ATS certification.
     Production filings will be done one client at a time.
     """
@@ -1813,11 +1954,17 @@ async def ats_test_submit(request: ATSTestRequest):
         batches = []
         recipient_idx = 0
         total_recipients = 0
+        # Per Pub 5719, CF/SF test can be one of the 5 submissions
+        # We use issuer #5 (index 4) for CF/SF when enabled
+        cfsf_issuer_index = 4
 
         # Build 5 submission batches (one per issuer)
         for issuer_idx, issuer_data in enumerate(ATS_TEST_ISSUERS):
             issuer = build_ats_issuer(issuer_data)
             forms = []
+
+            # Check if this issuer should use CF/SF
+            is_cfsf_issuer = request.cfsf_enabled and issuer_idx == cfsf_issuer_index
 
             # 2 recipients per issuer
             for j in range(2):
@@ -1828,13 +1975,24 @@ async def ats_test_submit(request: ATSTestRequest):
                 # IRS RecordId must be simple integer pattern [1-9][0-9]* - NOT "1-1" format!
                 record_id = str(recipient_idx + 1)
 
-                form_data = build_ats_form_data(
-                    request.form_type,
-                    recipient,
-                    record_id,
-                    request.tax_year,
-                    recipient_idx + 1,
-                )
+                # Use CF/SF builder for the CF/SF issuer
+                if is_cfsf_issuer and request.form_type in ("1099NEC", "1099MISC"):
+                    form_data = build_ats_form_data_cfsf(
+                        request.form_type,
+                        recipient,
+                        record_id,
+                        request.tax_year,
+                        recipient_idx + 1,
+                        cfsf_state=request.cfsf_state,
+                    )
+                else:
+                    form_data = build_ats_form_data(
+                        request.form_type,
+                        recipient,
+                        record_id,
+                        request.tax_year,
+                        recipient_idx + 1,
+                    )
                 forms.append(form_data)
                 recipient_idx += 1
                 total_recipients += 1
@@ -1844,7 +2002,8 @@ async def ats_test_submit(request: ATSTestRequest):
                 form_type=request.form_type,
                 tax_year=request.tax_year,
                 forms=forms,
-                cfsf_election=False,
+                # Set CF/SF election at submission level
+                cfsf_election=is_cfsf_issuer and request.form_type in ("1099NEC", "1099MISC"),
             )
             batches.append(batch)
 
@@ -1919,15 +2078,22 @@ async def ats_test_submit(request: ATSTestRequest):
                 "transmission_id": result.unique_transmission_id,
                 "receipt_id": result.receipt_id,
                 "status": result.status.value,
+                "cfsf_enabled": request.cfsf_enabled,
+                "cfsf_state": request.cfsf_state if request.cfsf_enabled else None,
             },
         )
+
+        # Build response message, noting CF/SF if enabled
+        response_message = result.message
+        if request.cfsf_enabled and request.form_type in ("1099NEC", "1099MISC"):
+            response_message += f" [CF/SF enabled for Issuer #5 ({request.cfsf_state})]"
 
         return ATSTestResponse(
             success=result.is_success,
             receipt_id=result.receipt_id,
             transmission_id=result.unique_transmission_id,
             status=result.status.value,
-            message=result.message,
+            message=response_message,
             submission_count=len(batches),
             recipient_count=total_recipients,
             errors=[
@@ -1939,6 +2105,10 @@ async def ats_test_submit(request: ATSTestRequest):
                 }
                 for e in result.errors
             ],
+            # CF/SF tracking fields
+            cfsf_enabled=request.cfsf_enabled and request.form_type in ("1099NEC", "1099MISC"),
+            cfsf_submission_index=5 if (request.cfsf_enabled and request.form_type in ("1099NEC", "1099MISC")) else None,
+            cfsf_state=request.cfsf_state if (request.cfsf_enabled and request.form_type in ("1099NEC", "1099MISC")) else None,
         )
 
     except Exception as e:
