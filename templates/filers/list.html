@@ -5,61 +5,63 @@
 {% block content %}
 <div x-data="filersPage()" x-init="loadFilingStatus()" class="space-y-6">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-sherpa-text">Filers</h1>
-            <p class="text-sherpa-muted">Tax Year {{ operating_year.year if operating_year else '2025' }} &middot; <span x-text="summary.total || {{ filers|length }}"></span> filers</p>
-        </div>
-        <div class="flex gap-3">
-            <button @click="syncFilers()"
-                    :disabled="syncing"
-                    class="inline-flex items-center px-4 py-2 bg-white border border-sherpa-border rounded-lg text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-gray-50 transition-colors disabled:opacity-50">
-                <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': syncing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                <span x-show="!syncing">Sync Status</span>
-                <span x-show="syncing">Syncing...</span>
-            </button>
-            <a href="/imports/upload" class="inline-flex items-center px-4 py-2 bg-sherpa-green hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-                Import Data
-            </a>
-            <a href="/filers/new" class="inline-flex items-center px-4 py-2 bg-sherpa-green hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Add Filer
-            </a>
+    <div class="glass rounded-2xl shadow-glass p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-sherpa-text">Filers</h1>
+                <p class="text-sherpa-muted">Tax Year {{ operating_year.year if operating_year else '2025' }} &middot; <span x-text="summary.total || {{ filers|length }}"></span> filers</p>
+            </div>
+            <div class="flex gap-3">
+                <button @click="syncFilers()"
+                        :disabled="syncing"
+                        class="inline-flex items-center px-4 py-2 glass-light rounded-xl text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-white/60 transition-all disabled:opacity-50">
+                    <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': syncing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span x-show="!syncing">Sync Status</span>
+                    <span x-show="syncing">Syncing...</span>
+                </button>
+                <a href="/imports/upload" class="inline-flex items-center px-4 py-2 bg-sherpa-blue hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Import Data
+                </a>
+                <a href="/filers/new" class="inline-flex items-center px-4 py-2 bg-sherpa-green hover:bg-emerald-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Filer
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <div class="bg-white rounded-xl shadow-sm border border-sherpa-border p-4">
+        <div class="glass rounded-xl shadow-glass-sm p-4 text-center">
             <div class="text-2xl font-bold text-sherpa-text" x-text="summary.total || {{ filers|length }}"></div>
-            <div class="text-xs text-sherpa-subtle">Total Filers</div>
+            <div class="text-xs text-sherpa-subtle">Total</div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-sherpa-border p-4">
+        <div class="glass rounded-xl shadow-glass-sm p-4 text-center">
             <div class="text-2xl font-bold text-sherpa-subtle" x-text="summary.NOT_FILED || 0"></div>
             <div class="text-xs text-sherpa-subtle">Not Filed</div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-sherpa-border p-4">
+        <div class="glass rounded-xl shadow-glass-sm p-4 text-center">
             <div class="text-2xl font-bold text-sherpa-amber" x-text="summary.SUBMITTED || 0"></div>
             <div class="text-xs text-sherpa-subtle">Submitted</div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-sherpa-border p-4">
+        <div class="glass rounded-xl shadow-glass-sm p-4 text-center">
             <div class="text-2xl font-bold text-sherpa-amber" x-text="summary.PROCESSING || 0"></div>
             <div class="text-xs text-sherpa-subtle">Processing</div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-sherpa-border p-4">
+        <div class="glass rounded-xl shadow-glass-sm p-4 text-center">
             <div class="text-2xl font-bold text-sherpa-blue" x-text="(summary.ACCEPTED || 0) + (summary.ACCEPTED_WITH_ERRORS || 0)"></div>
             <div class="text-xs text-sherpa-subtle">Accepted</div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-sherpa-border p-4">
-            <div class="text-2xl font-bold text-sherpa-red" x-text="summary.REJECTED || 0"></div>
-            <div class="text-xs text-sherpa-subtle">Rejected</div>
+        <div class="glass rounded-xl shadow-glass-sm p-4 text-center" :class="(summary.REJECTED || 0) > 0 ? 'ring-2 ring-sherpa-red/30' : ''">
+            <div class="text-2xl font-bold" :class="(summary.REJECTED || 0) > 0 ? 'text-sherpa-red' : 'text-sherpa-subtle'" x-text="summary.REJECTED || 0"></div>
+            <div class="text-xs" :class="(summary.REJECTED || 0) > 0 ? 'text-sherpa-red' : 'text-sherpa-subtle'">Rejected</div>
         </div>
     </div>
 
@@ -69,10 +71,10 @@
             <input type="text"
                    x-model="searchTerm"
                    placeholder="Search filers by name or preparer..."
-                   class="w-full px-4 py-2 rounded-lg bg-white border border-sherpa-border text-sherpa-text placeholder-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                   class="w-full px-4 py-2.5 rounded-xl glass text-sherpa-text placeholder-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:outline-none">
         </div>
         <select x-model="statusFilter" @change="loadFilingStatus()"
-                class="px-4 py-2 rounded-lg bg-white border border-sherpa-border text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                class="px-4 py-2.5 rounded-xl glass text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:outline-none">
             <option value="">All Statuses</option>
             <option value="NOT_FILED">Not Filed</option>
             <option value="SUBMITTED">Submitted</option>
@@ -83,11 +85,11 @@
     </div>
 
     <!-- Filers Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-sherpa-border overflow-hidden">
+    <div class="glass rounded-2xl shadow-glass overflow-hidden">
         {% if filers|length == 0 %}
         <div class="p-12 text-center">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-sherpa-panel flex items-center justify-center">
-                <svg class="w-8 h-8 text-sherpa-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-sherpa-blue/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-sherpa-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
             </div>
@@ -100,20 +102,20 @@
         {% else %}
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-gray-50 border-b border-sherpa-border">
+                <thead class="bg-white/40 border-b border-white/30">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Filer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Preparer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Forms</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Receipt ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Last Submitted</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Filer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Preparer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Forms</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Receipt ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Last Submitted</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-sherpa-muted uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-sherpa-border">
+                <tbody class="divide-y divide-white/20">
                     <template x-for="filer in filteredFilers" :key="filer.id">
-                        <tr class="hover:bg-gray-50 transition-colors">
+                        <tr class="hover:bg-white/40 transition-colors">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -200,23 +202,23 @@
 
     <!-- Preparer Assignment Modal -->
     <template x-if="showPreparerModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showPreparerModal = false">
-            <div class="bg-white rounded-xl shadow-lg border border-sherpa-border p-6 w-full max-w-md">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" @click.self="showPreparerModal = false">
+            <div class="glass rounded-2xl shadow-glass p-6 w-full max-w-md">
                 <h3 class="text-lg font-semibold text-sherpa-text mb-4">Assign Preparer</h3>
                 <p class="text-sm text-sherpa-muted mb-4">Assign a preparer for <span class="font-medium text-sherpa-text" x-text="selectedFiler?.name"></span></p>
 
                 <input type="text"
                        x-model="preparerName"
                        placeholder="Preparer name"
-                       class="w-full px-4 py-2 rounded-lg bg-white border border-sherpa-border text-sherpa-text placeholder-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent mb-4">
+                       class="w-full px-4 py-2.5 rounded-xl glass-light text-sherpa-text placeholder-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:outline-none mb-4">
 
                 <div class="flex justify-end gap-3">
-                    <button @click="showPreparerModal = false" class="px-4 py-2 text-sm font-medium text-sherpa-muted hover:text-sherpa-text rounded-lg hover:bg-gray-50">
+                    <button @click="showPreparerModal = false" class="px-4 py-2 text-sm font-medium text-sherpa-muted hover:text-sherpa-text rounded-xl hover:bg-white/40 transition-colors">
                         Cancel
                     </button>
                     <button @click="assignPreparer()"
                             :disabled="!preparerName || assigningPreparer"
-                            class="px-4 py-2 bg-sherpa-blue hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                            class="px-4 py-2 bg-sherpa-blue hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
                         <span x-show="!assigningPreparer">Assign</span>
                         <span x-show="assigningPreparer">Saving...</span>
                     </button>
@@ -227,26 +229,26 @@
 
     <!-- Errors Modal -->
     <template x-if="showErrorsModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showErrorsModal = false">
-            <div class="bg-white rounded-xl shadow-lg border border-sherpa-border p-6 w-full max-w-lg">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" @click.self="showErrorsModal = false">
+            <div class="glass rounded-2xl shadow-glass p-6 w-full max-w-lg">
                 <h3 class="text-lg font-semibold text-sherpa-text mb-4">Filing Errors</h3>
                 <p class="text-sm text-sherpa-muted mb-4"><span class="font-medium text-sherpa-text" x-text="selectedFiler?.name"></span></p>
 
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto">
+                <div class="bg-sherpa-red/10 border border-sherpa-red/20 rounded-xl p-4 mb-4 max-h-64 overflow-y-auto">
                     <template x-if="selectedErrors && selectedErrors.length > 0">
                         <ul class="space-y-2">
                             <template x-for="error in selectedErrors" :key="error">
-                                <li class="text-sm text-red-800" x-text="error"></li>
+                                <li class="text-sm text-sherpa-red" x-text="error"></li>
                             </template>
                         </ul>
                     </template>
                     <template x-if="!selectedErrors || selectedErrors.length === 0">
-                        <p class="text-sm text-red-800">No error details available.</p>
+                        <p class="text-sm text-sherpa-red">No error details available.</p>
                     </template>
                 </div>
 
                 <div class="flex justify-end">
-                    <button @click="showErrorsModal = false" class="px-4 py-2 bg-sherpa-blue hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    <button @click="showErrorsModal = false" class="px-4 py-2 bg-sherpa-blue hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors">
                         Close
                     </button>
                 </div>
