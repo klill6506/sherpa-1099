@@ -32,14 +32,14 @@
                             "light-muted": "#4a6b8a",
                             "light-subtle": "#7a9ab8",
 
-                            // Dark mode colors
-                            "dark-bg": "#0B1220",
-                            "dark-card": "#111C2F",
-                            "dark-panel": "#0F1B2D",
-                            "dark-border": "#23314D",
+                            // Dark mode colors (charcoal)
+                            "dark-bg": "#1a1f2e",
+                            "dark-card": "#252b3d",
+                            "dark-panel": "#1f2536",
+                            "dark-border": "#353d52",
                             "dark-text": "#E6EDF7",
                             "dark-muted": "#B7C3D6",
-                            "dark-subtle": "#7D8AA5",
+                            "dark-subtle": "#8892a8",
                         }
                     },
                     boxShadow: {
@@ -64,32 +64,23 @@
             background-attachment: fixed;
         }
 
-        /* Blue mountains - back layer */
+        /* Distant mountains - back layer (lighter blue, atmospheric) */
         html:not(.dark) body::before {
             content: '';
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 50vh;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 400' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='mtn1' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236BA3D6'/%3E%3Cstop offset='100%25' stop-color='%238FC1E8'/%3E%3C/linearGradient%3E%3ClinearGradient id='mtn2' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2387B8E0'/%3E%3Cstop offset='100%25' stop-color='%23A5D0F0'/%3E%3C/linearGradient%3E%3ClinearGradient id='mtn3' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23A0CBE8'/%3E%3Cstop offset='100%25' stop-color='%23C5E2F5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23mtn1)' d='M0,400 L0,200 L150,120 L300,180 L400,80 L550,160 L650,60 L800,150 L950,50 L1100,140 L1200,70 L1350,160 L1440,100 L1440,400 Z'/%3E%3Cpath fill='url(%23mtn2)' d='M0,400 L0,250 L100,180 L250,230 L350,140 L500,210 L600,120 L750,200 L900,110 L1050,190 L1150,130 L1300,200 L1440,150 L1440,400 Z'/%3E%3Cpath fill='url(%23mtn3)' d='M0,400 L0,300 L80,250 L200,290 L300,220 L450,280 L550,200 L700,270 L850,190 L1000,260 L1100,210 L1250,270 L1440,230 L1440,400 Z'/%3E%3C/svg%3E") no-repeat bottom center;
+            height: 45vh;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='xMidYMax slice'%3E%3Cdefs%3E%3ClinearGradient id='distant' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23a8cce3'/%3E%3Cstop offset='100%25' stop-color='%23c4dff2'/%3E%3C/linearGradient%3E%3ClinearGradient id='mid' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%237db5d6'/%3E%3Cstop offset='100%25' stop-color='%23a5d0ea'/%3E%3C/linearGradient%3E%3ClinearGradient id='front' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%235a9bc4'/%3E%3Cstop offset='100%25' stop-color='%2388c0de'/%3E%3C/linearGradient%3E%3ClinearGradient id='snow1' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='100%25' stop-color='%23e8f4fc'/%3E%3C/linearGradient%3E%3C/defs%3E%3C!-- Distant range --silhouette --%3E%3Cpath fill='url(%23distant)' d='M0,320 L0,180 Q60,150 120,165 Q180,130 240,145 Q320,90 400,120 Q480,80 560,100 Q640,60 720,85 Q800,50 880,75 Q960,40 1040,70 Q1120,55 1200,80 Q1280,65 1360,95 Q1400,85 1440,100 L1440,320 Z'/%3E%3C!-- Distant snow caps --%3E%3Cpath fill='white' opacity='0.7' d='M720,85 Q700,95 690,110 Q720,100 750,110 Q740,95 720,85 Z M880,75 Q858,88 848,105 Q880,92 912,105 Q902,88 880,75 Z M1040,70 Q1015,85 1005,102 Q1040,88 1075,102 Q1065,85 1040,70 Z'/%3E%3C!-- Middle range --%3E%3Cpath fill='url(%23mid)' d='M0,320 L0,210 Q80,180 160,195 Q240,150 320,175 Q420,110 520,145 Q600,100 680,130 Q780,80 880,115 Q960,85 1040,110 Q1140,75 1240,105 Q1320,90 1400,115 L1440,105 L1440,320 Z'/%3E%3C!-- Middle snow caps --%3E%3Cpath fill='url(%23snow1)' d='M520,145 Q490,160 475,185 Q520,165 565,185 Q550,160 520,145 Z M680,130 Q650,148 638,170 Q680,152 722,170 Q710,148 680,130 Z M880,115 Q845,135 830,160 Q880,138 930,160 Q915,135 880,115 Z M1040,110 Q1008,130 995,155 Q1040,133 1085,155 Q1072,130 1040,110 Z M1240,105 Q1205,128 1190,155 Q1240,130 1290,155 Q1275,128 1240,105 Z'/%3E%3C!-- Front range --%3E%3Cpath fill='url(%23front)' d='M0,320 L0,250 Q100,220 200,240 Q320,180 440,215 Q540,160 640,195 Q760,140 880,180 Q980,150 1080,175 Q1180,145 1280,175 Q1360,160 1440,180 L1440,320 Z'/%3E%3C!-- Front snow caps --%3E%3Cpath fill='white' d='M440,215 Q405,235 388,262 Q440,238 492,262 Q475,235 440,215 Z M640,195 Q600,220 582,250 Q640,222 698,250 Q680,220 640,195 Z M880,180 Q835,208 815,242 Q880,210 945,242 Q925,208 880,180 Z M1080,175 Q1040,202 1022,235 Q1080,205 1138,235 Q1120,202 1080,175 Z M1280,175 Q1242,200 1225,232 Q1280,203 1335,232 Q1318,200 1280,175 Z'/%3E%3C!-- Treeline hint at base --%3E%3Cpath fill='%234a8ab5' opacity='0.6' d='M0,320 L0,290 Q30,280 60,285 Q90,275 120,282 Q150,272 180,280 Q210,270 240,278 Q270,268 300,276 Q330,266 360,275 Q390,265 420,274 Q450,264 480,273 Q510,263 540,272 Q570,262 600,271 Q630,261 660,270 Q690,260 720,269 Q750,259 780,268 Q810,258 840,267 Q870,257 900,266 Q930,256 960,265 Q990,255 1020,264 Q1050,254 1080,263 Q1110,253 1140,262 Q1170,252 1200,261 Q1230,251 1260,260 Q1290,250 1320,259 Q1350,249 1380,258 Q1410,248 1440,257 L1440,320 Z'/%3E%3C/svg%3E") no-repeat bottom center;
             background-size: cover;
             pointer-events: none;
             z-index: 0;
         }
 
-        /* Snow caps on mountains */
+        /* No second layer needed - all in one SVG */
         html:not(.dark) body::after {
-            content: '';
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50vh;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 400' preserveAspectRatio='none'%3E%3Cpath fill='white' opacity='0.6' d='M400,80 L380,95 L400,90 L420,95 Z M650,60 L625,80 L650,72 L675,80 Z M950,50 L920,75 L950,65 L980,75 Z M1200,70 L1175,90 L1200,82 L1225,90 Z'/%3E%3Cpath fill='white' opacity='0.5' d='M350,140 L330,155 L350,148 L370,155 Z M600,120 L578,138 L600,130 L622,138 Z M900,110 L875,130 L900,120 L925,130 Z M1150,130 L1128,148 L1150,140 L1172,148 Z'/%3E%3C/svg%3E") no-repeat bottom center;
-            background-size: cover;
-            pointer-events: none;
-            z-index: 0;
+            display: none;
         }
 
         /* Frosted glass - Light */
@@ -113,9 +104,9 @@
         html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(100,150,200,0.3); border-radius: 4px; }
         html:not(.dark) ::-webkit-scrollbar-thumb:hover { background: rgba(100,150,200,0.5); }
 
-        /* ========== DARK MODE ========== */
+        /* ========== DARK MODE (Charcoal) ========== */
         html.dark body {
-            background: #0B1220;
+            background: #1a1f2e;
         }
 
         html.dark body::before,
@@ -123,24 +114,24 @@
             display: none;
         }
 
-        /* Cards - Dark */
+        /* Cards - Dark (Charcoal) */
         html.dark .glass {
-            background: #111C2F;
+            background: #252b3d;
             backdrop-filter: none;
-            border: 1px solid #23314D;
+            border: 1px solid #353d52;
         }
 
         html.dark .glass-light {
-            background: #0F1B2D;
+            background: #1f2536;
             backdrop-filter: none;
-            border: 1px solid #23314D;
+            border: 1px solid #353d52;
         }
 
         /* Dark scrollbar */
         html.dark ::-webkit-scrollbar { width: 8px; height: 8px; }
-        html.dark ::-webkit-scrollbar-track { background: #0B1220; }
-        html.dark ::-webkit-scrollbar-thumb { background: #23314D; border-radius: 4px; }
-        html.dark ::-webkit-scrollbar-thumb:hover { background: #2E4066; }
+        html.dark ::-webkit-scrollbar-track { background: #1a1f2e; }
+        html.dark ::-webkit-scrollbar-thumb { background: #353d52; border-radius: 4px; }
+        html.dark ::-webkit-scrollbar-thumb:hover { background: #454f68; }
 
         /* ========== Theme-aware utility classes ========== */
         .theme-text { color: #1e3a5f; }
@@ -153,17 +144,17 @@
         .dark .theme-subtle { color: #7D8AA5; }
 
         .theme-bg { background-color: #e8f4fc; }
-        .dark .theme-bg { background-color: #0B1220; }
+        .dark .theme-bg { background-color: #1a1f2e; }
 
         .theme-card { background-color: rgba(255, 255, 255, 0.85); }
-        .dark .theme-card { background-color: #111C2F; }
+        .dark .theme-card { background-color: #252b3d; }
 
         .theme-border { border-color: rgba(255, 255, 255, 0.5); }
-        .dark .theme-border { border-color: #23314D; }
+        .dark .theme-border { border-color: #353d52; }
 
         /* Hover states */
         .theme-hover:hover { background-color: rgba(255, 255, 255, 0.5); }
-        .dark .theme-hover:hover { background-color: #111C2F; }
+        .dark .theme-hover:hover { background-color: #2d3548; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
