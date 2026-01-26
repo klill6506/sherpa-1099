@@ -82,6 +82,13 @@
             <option value="ACCEPTED">Accepted</option>
             <option value="REJECTED">Rejected</option>
         </select>
+        <select x-model="preparerFilter"
+                class="px-4 py-2.5 rounded-xl glass text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:outline-none">
+            <option value="">All Preparers</option>
+            <template x-for="preparer in uniquePreparers" :key="preparer">
+                <option :value="preparer" x-text="preparer"></option>
+            </template>
+        </select>
     </div>
 
     <!-- Filers Table -->
@@ -269,6 +276,7 @@ function filersPage() {
         summary: { total: serverFilers.length },
         searchTerm: '',
         statusFilter: '',
+        preparerFilter: '',
         syncing: false,
 
         // Preparer modal
@@ -281,6 +289,15 @@ function filersPage() {
         showErrorsModal: false,
         selectedErrors: [],
 
+        get uniquePreparers() {
+            const preparers = new Set();
+            for (const filerId in this.filingStatusMap) {
+                const name = this.filingStatusMap[filerId]?.prepared_by_name;
+                if (name) preparers.add(name);
+            }
+            return Array.from(preparers).sort();
+        },
+
         get filteredFilers() {
             let result = this.filers;
 
@@ -289,6 +306,14 @@ function filersPage() {
                 result = result.filter(f => {
                     const status = this.getFilingStatus(f.id)?.status || 'NOT_FILED';
                     return status === this.statusFilter;
+                });
+            }
+
+            // Filter by preparer
+            if (this.preparerFilter) {
+                result = result.filter(f => {
+                    const preparer = this.getFilingStatus(f.id)?.prepared_by_name;
+                    return preparer === this.preparerFilter;
                 });
             }
 
@@ -301,6 +326,26 @@ function filersPage() {
                            (status?.prepared_by_name && status.prepared_by_name.toLowerCase().includes(term));
                 });
             }
+
+            // Default sort: Rejected → Not Filed → Pending (Submitted/Processing) → Accepted
+            const statusOrder = {
+                'REJECTED': 0,
+                'NOT_FILED': 1,
+                'SUBMITTED': 2,
+                'PROCESSING': 3,
+                'ACCEPTED': 4,
+                'ACCEPTED_WITH_ERRORS': 5
+            };
+
+            result = [...result].sort((a, b) => {
+                const statusA = this.getFilingStatus(a.id)?.status || 'NOT_FILED';
+                const statusB = this.getFilingStatus(b.id)?.status || 'NOT_FILED';
+                const orderA = statusOrder[statusA] ?? 99;
+                const orderB = statusOrder[statusB] ?? 99;
+                if (orderA !== orderB) return orderA - orderB;
+                // Secondary sort by name
+                return a.name.localeCompare(b.name);
+            });
 
             return result;
         },

@@ -210,7 +210,7 @@ def generate_1099_nec_pdf(
     c.rect(LEFT_MARGIN, recipient_box_top - recipient_box_height, recipient_box_width, recipient_box_height)
 
     c.setFont("Helvetica", 6)
-    c.drawString(LEFT_MARGIN + 3, recipient_box_top - 8, "RECIPIENT'S name and street address (including apt. no.)")
+    c.drawString(LEFT_MARGIN + 3, recipient_box_top - 8, "RECIPIENT'S name")
 
     # Recipient info
     c.setFont("Helvetica-Bold", 10)

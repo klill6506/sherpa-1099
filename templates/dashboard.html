@@ -84,14 +84,14 @@
                         <div class="px-6 py-4 flex items-center justify-between hover:bg-white/30 transition-colors">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl flex items-center justify-center"
-                                     :class="item.status === 'REJECTED' ? 'bg-sherpa-red/10' : item.status === 'NOT_FILED' ? 'bg-sherpa-amber/10' : 'bg-sherpa-blue/10'">
+                                     :class="item.status === 'REJECTED' ? 'bg-sherpa-red/10' : item.status === 'NOT_FILED' ? 'bg-gray-100' : (item.status === 'SUBMITTED' || item.status === 'PROCESSING') ? 'bg-sherpa-amber/10' : 'bg-sherpa-blue/10'">
                                     <svg x-show="item.status === 'REJECTED'" class="w-5 h-5 text-sherpa-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                     </svg>
-                                    <svg x-show="item.status === 'NOT_FILED'" class="w-5 h-5 text-sherpa-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg x-show="item.status === 'NOT_FILED'" class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    <svg x-show="item.status === 'PROCESSING' || item.status === 'SUBMITTED'" class="w-5 h-5 text-sherpa-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg x-show="item.status === 'PROCESSING' || item.status === 'SUBMITTED'" class="w-5 h-5 text-sherpa-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
@@ -158,36 +158,24 @@
                 </div>
             </div>
 
-            <!-- Quick Links -->
+            <!-- View All Filers -->
             <div class="glass rounded-2xl shadow-glass p-6">
-                <h2 class="text-lg font-semibold text-sherpa-text mb-4">Quick Links</h2>
-                <div class="space-y-2">
-                    <a href="/filers" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/40 transition-colors">
-                        <div class="w-8 h-8 rounded-lg bg-sherpa-blue/10 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-sherpa-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="/filers" class="flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-sherpa-blue/10 flex items-center justify-center group-hover:bg-sherpa-blue/20 transition-colors">
+                            <svg class="w-5 h-5 text-sherpa-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
                             </svg>
                         </div>
-                        <span class="text-sm font-medium text-sherpa-text">All Filers</span>
-                        <span class="ml-auto text-xs text-sherpa-subtle" x-text="summary.total + ' total'"></span>
-                    </a>
-                    <a href="/imports" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/40 transition-colors">
-                        <div class="w-8 h-8 rounded-lg bg-sherpa-green/10 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-sherpa-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                            </svg>
+                        <div>
+                            <span class="text-sm font-semibold text-sherpa-text group-hover:text-sherpa-blue transition-colors">View All Filers</span>
+                            <p class="text-xs text-sherpa-subtle" x-text="summary.total + ' total filers'"></p>
                         </div>
-                        <span class="text-sm font-medium text-sherpa-text">Import History</span>
-                    </a>
-                    <a href="/ats-test" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/40 transition-colors">
-                        <div class="w-8 h-8 rounded-lg bg-sherpa-amber/10 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-sherpa-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <span class="text-sm font-medium text-sherpa-text">ATS Testing</span>
-                    </a>
-                </div>
+                    </div>
+                    <svg class="w-5 h-5 text-sherpa-subtle group-hover:text-sherpa-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
             </div>
         </div>
     </div>
@@ -202,11 +190,11 @@ function homePage() {
         summary: {},
 
         get needsAttention() {
-            // Rejected first, then Not Filed, then Processing (max 5)
+            // Rejected first, then Not Filed, then Processing (max 10)
             const rejected = this.workQueue.filter(i => i.status === 'REJECTED');
             const notFiled = this.workQueue.filter(i => i.status === 'NOT_FILED');
             const processing = this.workQueue.filter(i => i.status === 'SUBMITTED' || i.status === 'PROCESSING');
-            return [...rejected, ...notFiled, ...processing].slice(0, 5);
+            return [...rejected, ...notFiled, ...processing].slice(0, 10);
         },
 
         async loadWorkQueue() {
