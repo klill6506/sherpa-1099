@@ -214,7 +214,7 @@ def generate_1099_nec_pdf(
 
     # Recipient info
     c.setFont("Helvetica-Bold", 10)
-    y_pos = recipient_box_top - 24
+    y_pos = recipient_box_top - 36  # Adjusted down from 24 (total 12 points)
     c.drawString(LEFT_MARGIN + 5, y_pos, recipient_name)
 
     c.setFont("Helvetica", 9)
