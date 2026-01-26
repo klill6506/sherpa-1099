@@ -143,3 +143,21 @@ IRS_SOFTWARE_ID=...                # IRS-assigned software ID
 - `README_IRIS.md` - IRIS API documentation
 - `README_HOTFIX.txt` - Recent fixes
 - `IRS API Client ID Application Summary.pdf` - Registration info
+
+## File Operations
+
+**Allowed without asking:**
+- Create new files
+- Modify existing files
+- Run dev commands (pip install, uvicorn, pytest)
+- Create/modify within the current project folder
+
+**Ask before:**
+- Deleting any files
+- Bulk renames
+- Operations affecting folders outside the project
+- Changing port assignments
+- Major architectural changes
+
+---
+

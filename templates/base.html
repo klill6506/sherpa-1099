@@ -13,22 +13,36 @@
             theme: {
                 extend: {
                     colors: {
+                        // Sherpa Light Theme - Semantic Colors
                         sherpa: {
-                            bg: "#0B1220",
-                            panel: "#0F1B2D",
-                            card: "#111C2F",
-                            border: "#23314D",
-                            text: "#E6EDF7",
-                            muted: "#B7C3D6",
-                            subtle: "#7D8AA5",
-                            blue: "#4DA3FF",
-                            teal: "#2ED3C6",
-                            amber: "#FFB14A",
-                            red: "#FF5D6C"
+                            // Backgrounds
+                            page: "#f8fafc",      // slate-50 - page background
+                            card: "#ffffff",       // white - cards
+                            panel: "#f1f5f9",      // slate-100 - subtle panels
+
+                            // Borders
+                            border: "#e2e8f0",     // slate-200
+
+                            // Text
+                            text: "#111827",       // gray-900 - primary text
+                            muted: "#4b5563",      // gray-600 - secondary text
+                            subtle: "#9ca3af",     // gray-400 - placeholder/disabled
+
+                            // Semantic Colors
+                            blue: "#2563eb",       // blue-600 - primary/good/confirmed
+                            green: "#059669",      // emerald-600 - start/create/go
+                            amber: "#d97706",      // amber-600 - pending/waiting
+                            red: "#dc2626",        // red-600 - errors/bad ONLY
+
+                            // Light variants for pills/badges
+                            "blue-light": "#dbeafe",    // blue-100
+                            "green-light": "#d1fae5",   // emerald-100
+                            "amber-light": "#fef3c7",   // amber-100
+                            "red-light": "#fee2e2",     // red-100
                         }
                     },
                     boxShadow: {
-                        sherpa: "0 1px 0 rgba(255,255,255,0.04), 0 10px 30px rgba(0,0,0,0.35)"
+                        sherpa: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)"
                     }
                 }
             }
@@ -40,81 +54,70 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        /* Custom scrollbar for dark theme */
+        /* Light theme scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0B1220; }
-        ::-webkit-scrollbar-thumb { background: #23314D; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #2E4066; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-sherpa-bg text-sherpa-text min-h-screen antialiased flex flex-col">
-    <!-- Navigation -->
-    <nav class="sticky top-0 z-50 bg-sherpa-panel border-b border-sherpa-border">
+<body class="bg-sherpa-page text-sherpa-text min-h-screen antialiased flex flex-col">
+    <!-- Navigation - Light header with subtle border -->
+    <nav class="sticky top-0 z-50 bg-white border-b border-sherpa-border">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="/" class="flex items-center gap-3">
-                        <!-- Yeti Mascot -->
-                        <svg class="w-10 h-10" viewBox="0 0 48 48" fill="none">
-                            <!-- Yeti body (white/light blue) -->
-                            <ellipse cx="24" cy="30" rx="14" ry="12" fill="#E6EDF7"/>
+                        <!-- Yeti Mascot - simplified for light theme -->
+                        <svg class="w-9 h-9" viewBox="0 0 48 48" fill="none">
+                            <!-- Yeti body -->
+                            <ellipse cx="24" cy="30" rx="14" ry="12" fill="#e2e8f0"/>
                             <!-- Yeti head -->
-                            <circle cx="24" cy="16" r="12" fill="#E6EDF7"/>
-                            <!-- Yeti face fur detail -->
-                            <circle cx="24" cy="18" r="8" fill="#B7C3D6" opacity="0.3"/>
+                            <circle cx="24" cy="16" r="12" fill="#e2e8f0"/>
                             <!-- Eyes -->
-                            <circle cx="20" cy="14" r="2.5" fill="#0B1220"/>
-                            <circle cx="28" cy="14" r="2.5" fill="#0B1220"/>
+                            <circle cx="20" cy="14" r="2.5" fill="#1e293b"/>
+                            <circle cx="28" cy="14" r="2.5" fill="#1e293b"/>
                             <!-- Eye shine -->
                             <circle cx="21" cy="13" r="0.8" fill="white"/>
                             <circle cx="29" cy="13" r="0.8" fill="white"/>
                             <!-- Nose -->
-                            <ellipse cx="24" cy="18" rx="2" ry="1.5" fill="#7D8AA5"/>
-                            <!-- Mouth/smile -->
-                            <path d="M21 21 Q24 24 27 21" stroke="#7D8AA5" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                            <!-- Horns/ears -->
-                            <ellipse cx="14" cy="10" rx="3" ry="4" fill="#B7C3D6"/>
-                            <ellipse cx="34" cy="10" rx="3" ry="4" fill="#B7C3D6"/>
-                            <!-- Arms -->
-                            <ellipse cx="10" cy="28" rx="4" ry="6" fill="#E6EDF7"/>
-                            <ellipse cx="38" cy="28" rx="4" ry="6" fill="#E6EDF7"/>
-                            <!-- Feet -->
-                            <ellipse cx="18" cy="40" rx="4" ry="3" fill="#B7C3D6"/>
-                            <ellipse cx="30" cy="40" rx="4" ry="3" fill="#B7C3D6"/>
-                            <!-- Snow/mountain hat -->
-                            <path d="M16 6 L24 0 L32 6" stroke="#2ED3C6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <ellipse cx="24" cy="18" rx="2" ry="1.5" fill="#64748b"/>
+                            <!-- Mouth -->
+                            <path d="M21 21 Q24 24 27 21" stroke="#64748b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                            <!-- Mountain peak accent -->
+                            <path d="M16 6 L24 0 L32 6" stroke="#2563eb" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <span class="text-xl font-bold text-sherpa-text">Sherpa <span class="text-sherpa-teal">1099</span></span>
+                        <span class="text-xl font-bold text-sherpa-text">Sherpa <span class="text-sherpa-blue">1099</span></span>
                     </a>
                     <div class="hidden md:flex ml-10 space-x-1">
-                        <a href="/" class="px-4 py-2 rounded-xl text-sm font-medium transition-colors {% if active_page == 'dashboard' %}bg-sherpa-blue/15 text-sherpa-blue{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-card{% endif %}">
-                            Dashboard
+                        <a href="/" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if active_page == 'home' %}bg-blue-50 text-sherpa-blue{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-gray-50{% endif %}">
+                            Home
                         </a>
-                        <a href="/imports" class="px-4 py-2 rounded-xl text-sm font-medium transition-colors {% if active_page == 'imports' %}bg-sherpa-blue/15 text-sherpa-blue{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-card{% endif %}">
-                            Import
-                        </a>
-                        <a href="/filers" class="px-4 py-2 rounded-xl text-sm font-medium transition-colors {% if active_page == 'filers' %}bg-sherpa-blue/15 text-sherpa-blue{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-card{% endif %}">
+                        <a href="/filers" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if active_page == 'filers' or active_page == 'dashboard' or active_page == 'filing_dashboard' %}bg-blue-50 text-sherpa-blue{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-gray-50{% endif %}">
                             Filers
                         </a>
-                        <a href="/download-template" class="px-4 py-2 rounded-xl text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-card transition-colors">
-                            Template
+                        <a href="/imports" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if active_page == 'imports' %}bg-blue-50 text-sherpa-blue{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-gray-50{% endif %}">
+                            Import
+                        </a>
+                        <a href="/ats-test" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if active_page == 'ats_test' %}bg-blue-50 text-sherpa-blue{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-gray-50{% endif %}">
+                            ATS Test
                         </a>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="px-3 py-1 rounded-lg bg-sherpa-card text-sm text-sherpa-muted border border-sherpa-border">
+                    <span class="px-3 py-1 rounded-lg bg-sherpa-panel text-sm text-sherpa-muted border border-sherpa-border">
                         TY {{ operating_year.year if operating_year else '2025' }}
                     </span>
                     {% if user %}
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-sherpa-muted">{{ user.display_name }}</span>
-                        <a href="/logout" class="px-3 py-1 rounded-lg text-sm text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-card transition-colors">
+                        <a href="/logout" class="px-3 py-1.5 rounded-lg text-sm text-sherpa-muted hover:text-sherpa-text hover:bg-gray-50 transition-colors">
                             Logout
                         </a>
                     </div>
                     {% else %}
-                    <span class="px-2 py-1 rounded text-xs font-medium bg-sherpa-amber/15 text-sherpa-amber">DEV</span>
+                    <span class="px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-800">DEV</span>
                     {% endif %}
                 </div>
             </div>
@@ -127,7 +130,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-sherpa-panel border-t border-sherpa-border mt-auto">
+    <footer class="bg-white border-t border-sherpa-border mt-auto">
         <div class="max-w-7xl mx-auto py-4 px-4 text-center text-sm text-sherpa-subtle">
             Sherpa 1099 &copy; 2025 | IRS IRIS e-Filing
         </div>

@@ -88,24 +88,19 @@ def get_dashboard_stats(operating_year_id: Optional[str] = None):
 # =============================================================================
 
 @router.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    """Dashboard page - shows filers list."""
+async def home(request: Request):
+    """Home landing page with work queue preview."""
     # Check authentication
     user = require_auth_redirect(request)
     if not user:
         return RedirectResponse(url="/login", status_code=302)
 
-    client = get_supabase_client()
     operating_year = get_operating_year()
-
-    # Get all filers alphabetically
-    filers = client.table('filers').select('*').eq('is_active', True).order('name').execute().data
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
-        "active_page": "dashboard",
+        "active_page": "home",
         "operating_year": operating_year,
-        "filers": filers,
         "user": user
     })
 
@@ -492,19 +487,8 @@ async def forms_list(request: Request):
 
 @router.get("/filing-dashboard", response_class=HTMLResponse)
 async def filing_dashboard_page(request: Request):
-    """Filing dashboard page - track e-filing status for all filers."""
-    user = require_auth_redirect(request)
-    if not user:
-        return RedirectResponse(url="/login", status_code=302)
-
-    operating_year = get_operating_year()
-
-    return templates.TemplateResponse("filing_dashboard.html", {
-        "request": request,
-        "active_page": "filing_dashboard",
-        "operating_year": operating_year,
-        "user": user
-    })
+    """Redirect to unified filers page."""
+    return RedirectResponse(url="/filers", status_code=302)
 
 
 # =============================================================================
