@@ -163,8 +163,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 #       ...
 # =============================================================================
 
-# Static files (if needed)
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+# Static files (mountains.svg, etc.)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include API routers
 app.include_router(operating_years.router, prefix="/api/operating-years", tags=["Operating Years"])
