@@ -378,3 +378,186 @@ def log_tin_match(
 
     response = client.table("tin_match_log").insert(log_entry).execute()
     return response.data[0] if response.data else None
+
+
+# =============================================================================
+# FILER FILING STATUS
+# =============================================================================
+
+def get_filing_status(filer_id: str, tax_year: int):
+    """Get filing status for a specific filer and tax year."""
+    client = get_supabase_client()
+    response = (
+        client.table("filer_filing_status")
+        .select("*")
+        .eq("filer_id", filer_id)
+        .eq("tax_year", tax_year)
+        .single()
+        .execute()
+    )
+    return response.data
+
+
+def get_filing_dashboard(
+    tenant_id: str,
+    tax_year: int,
+    status_filter: Optional[str] = None,
+    preparer_filter: Optional[str] = None
+):
+    """
+    Get filing dashboard data for all filers in a tenant/year.
+
+    Returns list of filers with their filing status, preparer, and form counts.
+    """
+    client = get_supabase_client()
+    query = (
+        client.table("filing_dashboard")
+        .select("*")
+        .eq("tenant_id", tenant_id)
+        .eq("tax_year", tax_year)
+        .order("filer_name")
+    )
+
+    if status_filter:
+        query = query.eq("status", status_filter)
+
+    if preparer_filter:
+        query = query.eq("prepared_by_user_id", preparer_filter)
+
+    response = query.execute()
+    return response.data
+
+
+def set_filer_preparer(
+    tenant_id: str,
+    filer_id: str,
+    tax_year: int,
+    user_id: str,
+    user_name: str
+):
+    """
+    Set the preparer for a filer (first-touch attribution).
+
+    Only sets preparer if not already assigned.
+    Creates the filing status row if it doesn't exist.
+    """
+    client = get_supabase_client()
+    response = client.rpc(
+        "set_filer_preparer",
+        {
+            "p_tenant_id": tenant_id,
+            "p_filer_id": filer_id,
+            "p_tax_year": tax_year,
+            "p_user_id": user_id,
+            "p_user_name": user_name,
+        }
+    ).execute()
+    return response.data
+
+
+def update_filing_status_on_submit(
+    tenant_id: str,
+    filer_id: str,
+    tax_year: int,
+    status: str,
+    submission_id: Optional[str] = None,
+    receipt_id: Optional[str] = None,
+    transmission_id: Optional[str] = None
+):
+    """
+    Update filing status when forms are submitted to IRS.
+
+    Called after successful IRS submission to record the receipt ID
+    and update status to SUBMITTED/PROCESSING.
+    """
+    client = get_supabase_client()
+    response = client.rpc(
+        "update_filer_filing_status_on_submit",
+        {
+            "p_tenant_id": tenant_id,
+            "p_filer_id": filer_id,
+            "p_tax_year": tax_year,
+            "p_status": status,
+            "p_submission_id": submission_id,
+            "p_receipt_id": receipt_id,
+            "p_transmission_id": transmission_id,
+        }
+    ).execute()
+    return response.data
+
+
+def update_filing_status_on_check(
+    tenant_id: str,
+    filer_id: str,
+    tax_year: int,
+    status: str,
+    errors: Optional[Dict[str, Any]] = None,
+    ack_xml: Optional[str] = None
+):
+    """
+    Update filing status after checking IRS status.
+
+    Called after status check to update status to ACCEPTED/REJECTED/etc.
+    """
+    client = get_supabase_client()
+    response = client.rpc(
+        "update_filer_filing_status_on_check",
+        {
+            "p_tenant_id": tenant_id,
+            "p_filer_id": filer_id,
+            "p_tax_year": tax_year,
+            "p_status": status,
+            "p_errors": errors,
+            "p_ack_xml": ack_xml,
+        }
+    ).execute()
+    return response.data
+
+
+def backfill_filing_status(tax_year: int):
+    """
+    Backfill filing status rows for all filers with forms in a given year.
+
+    Creates NOT_FILED status entries for any filers that don't have one yet.
+    Returns the number of rows inserted.
+    """
+    client = get_supabase_client()
+    response = client.rpc(
+        "backfill_filer_filing_status",
+        {"p_tax_year": tax_year}
+    ).execute()
+    return response.data
+
+
+def get_filing_status_summary(tenant_id: str, tax_year: int):
+    """
+    Get summary counts of filing statuses for a tenant/year.
+
+    Returns dict with counts per status: {NOT_FILED: 10, SUBMITTED: 5, ACCEPTED: 3, ...}
+    """
+    client = get_supabase_client()
+    response = (
+        client.table("filer_filing_status")
+        .select("status")
+        .eq("tenant_id", tenant_id)
+        .eq("tax_year", tax_year)
+        .execute()
+    )
+
+    # Count by status
+    summary = {
+        "NOT_FILED": 0,
+        "SUBMITTED": 0,
+        "PROCESSING": 0,
+        "ACCEPTED": 0,
+        "ACCEPTED_WITH_ERRORS": 0,
+        "REJECTED": 0,
+    }
+
+    for row in response.data or []:
+        status = row.get("status")
+        if status in summary:
+            summary[status] += 1
+
+    summary["total"] = sum(summary.values())
+    return summary

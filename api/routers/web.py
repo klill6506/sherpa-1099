@@ -487,6 +487,27 @@ async def forms_list(request: Request):
 # =============================================================================
 
 # =============================================================================
+# FILING DASHBOARD
+# =============================================================================
+
+@router.get("/filing-dashboard", response_class=HTMLResponse)
+async def filing_dashboard_page(request: Request):
+    """Filing dashboard page - track e-filing status for all filers."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
+    operating_year = get_operating_year()
+
+    return templates.TemplateResponse("filing_dashboard.html", {
+        "request": request,
+        "active_page": "filing_dashboard",
+        "operating_year": operating_year,
+        "user": user
+    })
+
+
+# =============================================================================
 # ATS CERTIFICATION TEST
 # =============================================================================
 

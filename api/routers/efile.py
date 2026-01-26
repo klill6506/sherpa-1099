@@ -29,6 +29,8 @@ from supabase_client import (
     update_form_1099,
     log_activity,
     get_operating_years,
+    update_filing_status_on_submit,
+    update_filing_status_on_check,
 )
 from encryption import decrypt_tin
 from iris_xml_generator import (
@@ -1153,6 +1155,36 @@ async def submit_efile(
             },
         )
 
+        # Update filer filing status (for production filings)
+        if not request.is_test:
+            # Map IRS status to filing status
+            filing_status = "SUBMITTED"
+            if result.status == SubmissionStatus.PROCESSING:
+                filing_status = "PROCESSING"
+            elif result.status == SubmissionStatus.ACCEPTED:
+                filing_status = "ACCEPTED"
+            elif result.status == SubmissionStatus.ACCEPTED_WITH_ERRORS:
+                filing_status = "ACCEPTED_WITH_ERRORS"
+            elif result.status == SubmissionStatus.REJECTED:
+                filing_status = "REJECTED"
+
+            try:
+                # Get tenant_id from filer
+                tenant_id = filer.get("tenant_id")
+                if tenant_id:
+                    update_filing_status_on_submit(
+                        tenant_id=tenant_id,
+                        filer_id=request.filer_id,
+                        tax_year=tax_year,
+                        status=filing_status,
+                        submission_id=None,  # We don't track submission_id table here
+                        receipt_id=result.receipt_id,
+                        transmission_id=result.unique_transmission_id,
+                    )
+            except Exception as e:
+                # Don't fail the submission if filing status update fails
+                logger.warning(f"Failed to update filing status: {e}")
+
         return EFileResponse(
             success=result.is_success,
             receipt_id=result.receipt_id,
@@ -1429,6 +1461,204 @@ async def get_current_transmitter_config():
         "contact_email": config.contact_email,
         "is_configured": is_configured,
     }
+
+
+# =============================================================================
+# FILING STATUS DASHBOARD
+# =============================================================================
+
+class FilingStatusResponse(BaseModel):
+    """Single filer's filing status."""
+    id: str
+    filer_id: str
+    filer_name: str
+    filer_tin: Optional[str] = None
+    tax_year: int
+    status: str
+    prepared_by_name: Optional[str] = None
+    prepared_by_user_id: Optional[str] = None
+    last_receipt_id: Optional[str] = None
+    last_transmission_id: Optional[str] = None
+    last_submitted_at: Optional[str] = None
+    last_status_checked_at: Optional[str] = None
+    last_errors: Optional[dict] = None
+    notes: Optional[str] = None
+    form_count: int = 0
+
+
+class FilingDashboardResponse(BaseModel):
+    """Filing dashboard data."""
+    items: List[FilingStatusResponse]
+    summary: dict
+
+
+class FilingStatusUpdateRequest(BaseModel):
+    """Request to update filing status (e.g., after status check)."""
+    filer_id: str
+    tax_year: int = 2025
+    status: str = Field(..., pattern="^(NOT_FILED|SUBMITTED|PROCESSING|ACCEPTED|ACCEPTED_WITH_ERRORS|REJECTED)$")
+    errors: Optional[dict] = None
+
+
+class SetPreparerRequest(BaseModel):
+    """Request to set/update preparer for a filer."""
+    filer_id: str
+    tax_year: int = 2025
+    prepared_by_name: str
+
+
+@router.get("/filing-dashboard")
+async def get_filing_dashboard_endpoint(
+    tax_year: int = Query(default=2025, ge=2020, le=2050),
+    status: Optional[str] = Query(default=None, description="Filter by status"),
+    preparer: Optional[str] = Query(default=None, description="Filter by preparer user ID"),
+):
+    """
+    Get filing dashboard for all filers.
+
+    Returns list of filers with their filing status, preparer, and form counts.
+    """
+    from supabase_client import get_filing_dashboard, get_filing_status_summary
+
+    # Use default tenant for now (The Tax Shelter)
+    from api.auth import DEFAULT_TENANT_ID
+    tenant_id = DEFAULT_TENANT_ID
+
+    try:
+        items = get_filing_dashboard(
+            tenant_id=tenant_id,
+            tax_year=tax_year,
+            status_filter=status,
+            preparer_filter=preparer,
+        )
+
+        summary = get_filing_status_summary(tenant_id, tax_year)
+
+        return FilingDashboardResponse(
+            items=[
+                FilingStatusResponse(
+                    id=item.get("id", ""),
+                    filer_id=item.get("filer_id", ""),
+                    filer_name=item.get("filer_name", ""),
+                    filer_tin=item.get("filer_tin"),
+                    tax_year=item.get("tax_year", tax_year),
+                    status=item.get("status", "NOT_FILED"),
+                    prepared_by_name=item.get("prepared_by_name"),
+                    prepared_by_user_id=item.get("prepared_by_user_id"),
+                    last_receipt_id=item.get("last_receipt_id"),
+                    last_transmission_id=item.get("last_transmission_id"),
+                    last_submitted_at=str(item.get("last_submitted_at")) if item.get("last_submitted_at") else None,
+                    last_status_checked_at=str(item.get("last_status_checked_at")) if item.get("last_status_checked_at") else None,
+                    last_errors=item.get("last_errors"),
+                    notes=item.get("notes"),
+                    form_count=item.get("form_count", 0),
+                )
+                for item in (items or [])
+            ],
+            summary=summary,
+        )
+
+    except Exception as e:
+        logger.exception("Error getting filing dashboard")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/filing-status/{filer_id}")
+async def get_filer_filing_status(
+    filer_id: str,
+    tax_year: int = Query(default=2025, ge=2020, le=2050),
+):
+    """Get filing status for a specific filer."""
+    from supabase_client import get_filing_status
+
+    try:
+        status = get_filing_status(filer_id, tax_year)
+        if not status:
+            # Return NOT_FILED if no status record exists
+            return {
+                "filer_id": filer_id,
+                "tax_year": tax_year,
+                "status": "NOT_FILED",
+                "prepared_by_name": None,
+                "last_receipt_id": None,
+            }
+        return status
+
+    except Exception as e:
+        logger.exception("Error getting filing status")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/filing-status/update")
+async def update_filer_filing_status(request: FilingStatusUpdateRequest):
+    """
+    Update filing status for a filer.
+
+    Called after checking IRS status to update the filer's filing status.
+    """
+    from api.auth import DEFAULT_TENANT_ID
+
+    try:
+        result = update_filing_status_on_check(
+            tenant_id=DEFAULT_TENANT_ID,
+            filer_id=request.filer_id,
+            tax_year=request.tax_year,
+            status=request.status,
+            errors=request.errors,
+        )
+        return {"success": True, "data": result}
+
+    except Exception as e:
+        logger.exception("Error updating filing status")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/filing-status/set-preparer")
+async def set_filer_preparer_endpoint(request: SetPreparerRequest):
+    """
+    Set the preparer for a filer.
+
+    Only sets if preparer is not already assigned (first-touch attribution).
+    """
+    from supabase_client import set_filer_preparer
+    from api.auth import DEFAULT_TENANT_ID
+
+    try:
+        # For now, we just use the name (no user_id linkage)
+        result = set_filer_preparer(
+            tenant_id=DEFAULT_TENANT_ID,
+            filer_id=request.filer_id,
+            tax_year=request.tax_year,
+            user_id=None,  # Could be passed from auth context
+            user_name=request.prepared_by_name,
+        )
+        return {"success": True, "data": result}
+
+    except Exception as e:
+        logger.exception("Error setting preparer")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/filing-status/backfill")
+async def backfill_filing_status_endpoint(tax_year: int = 2025):
+    """
+    Backfill filing status rows for all filers with forms in a given year.
+
+    Creates NOT_FILED status entries for any filers that don't have one yet.
+    """
+    from supabase_client import backfill_filing_status
+
+    try:
+        rows_inserted = backfill_filing_status(tax_year)
+        return {
+            "success": True,
+            "rows_inserted": rows_inserted,
+            "message": f"Created {rows_inserted} filing status rows for tax year {tax_year}",
+        }
+
+    except Exception as e:
+        logger.exception("Error backfilling filing status")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =============================================================================

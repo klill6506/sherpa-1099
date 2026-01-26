@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Filing Dashboard - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div x-data="filingDashboard()" x-init="loadData()" class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-sherpa-text">Filing Dashboard</h1>
+            <p class="text-sherpa-muted">Track e-filing status for Tax Year <span x-text="taxYear"></span></p>
+        </div>
+        <div class="flex gap-3">
+            <button @click="backfillStatus()"
+                    :disabled="backfilling"
+                    class="inline-flex items-center px-4 py-2 bg-sherpa-panel border border-sherpa-border rounded-xl text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-card transition-colors disabled:opacity-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span x-show="!backfilling">Sync Filers</span>
+                <span x-show="backfilling">Syncing...</span>
+            </button>
+            <a href="/ats-test" class="inline-flex items-center px-4 py-2 bg-sherpa-blue text-sherpa-bg rounded-xl text-sm font-semibold hover:bg-sherpa-blue/90 transition-colors shadow-sherpa">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                ATS Testing
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div class="rounded-xl bg-sherpa-card ring-1 ring-sherpa-border p-4">
+            <div class="text-2xl font-bold text-sherpa-text" x-text="summary.total || 0"></div>
+            <div class="text-xs text-sherpa-subtle">Total Filers</div>
+        </div>
+        <div class="rounded-xl bg-sherpa-card ring-1 ring-sherpa-border p-4">
+            <div class="text-2xl font-bold text-sherpa-subtle" x-text="summary.NOT_FILED || 0"></div>
+            <div class="text-xs text-sherpa-subtle">Not Filed</div>
+        </div>
+        <div class="rounded-xl bg-sherpa-card ring-1 ring-sherpa-border p-4">
+            <div class="text-2xl font-bold text-sherpa-amber" x-text="summary.SUBMITTED || 0"></div>
+            <div class="text-xs text-sherpa-subtle">Submitted</div>
+        </div>
+        <div class="rounded-xl bg-sherpa-card ring-1 ring-sherpa-border p-4">
+            <div class="text-2xl font-bold text-sherpa-blue" x-text="summary.PROCESSING || 0"></div>
+            <div class="text-xs text-sherpa-subtle">Processing</div>
+        </div>
+        <div class="rounded-xl bg-sherpa-card ring-1 ring-sherpa-border p-4">
+            <div class="text-2xl font-bold text-sherpa-teal" x-text="(summary.ACCEPTED || 0) + (summary.ACCEPTED_WITH_ERRORS || 0)"></div>
+            <div class="text-xs text-sherpa-subtle">Accepted</div>
+        </div>
+        <div class="rounded-xl bg-sherpa-card ring-1 ring-sherpa-border p-4">
+            <div class="text-2xl font-bold text-sherpa-red" x-text="summary.REJECTED || 0"></div>
+            <div class="text-xs text-sherpa-subtle">Rejected</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex gap-4 items-center">
+        <div class="flex-1">
+            <input type="text"
+                   x-model="searchTerm"
+                   placeholder="Search filers..."
+                   class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text placeholder-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+        </div>
+        <select x-model="statusFilter" @change="loadData()"
+                class="px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+            <option value="">All Statuses</option>
+            <option value="NOT_FILED">Not Filed</option>
+            <option value="SUBMITTED">Submitted</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="ACCEPTED">Accepted</option>
+            <option value="ACCEPTED_WITH_ERRORS">Accepted w/ Errors</option>
+            <option value="REJECTED">Rejected</option>
+        </select>
+    </div>
+
+    <!-- Loading State -->
+    <template x-if="loading">
+        <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-12 text-center">
+            <svg class="animate-spin h-8 w-8 mx-auto text-sherpa-blue" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-sherpa-muted">Loading filing status...</p>
+        </div>
+    </template>
+
+    <!-- Error State -->
+    <template x-if="error">
+        <div class="rounded-2xl bg-sherpa-red/15 border border-sherpa-red/30 p-6">
+            <p class="text-sherpa-red" x-text="error"></p>
+            <button @click="loadData()" class="mt-2 text-sm text-sherpa-blue hover:underline">Try again</button>
+        </div>
+    </template>
+
+    <!-- Filers Table -->
+    <template x-if="!loading && !error">
+        <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa overflow-hidden">
+            <template x-if="filteredItems.length === 0">
+                <div class="p-12 text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-sherpa-panel flex items-center justify-center">
+                        <svg class="w-8 h-8 text-sherpa-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <p class="text-sherpa-muted mb-2">No filers found</p>
+                    <p class="text-sherpa-subtle text-sm">Click "Sync Filers" to populate the dashboard.</p>
+                </div>
+            </template>
+
+            <template x-if="filteredItems.length > 0">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-sherpa-panel border-b border-sherpa-border">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Filer</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Preparer</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Forms</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Receipt ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Last Submitted</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-sherpa-subtle uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-sherpa-border">
+                            <template x-for="item in filteredItems" :key="item.id">
+                                <tr class="hover:bg-sherpa-panel/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-sherpa-blue/15 flex items-center justify-center">
+                                                <span class="text-sherpa-blue font-semibold text-xs" x-text="item.filer_name.substring(0,2).toUpperCase()"></span>
+                                            </div>
+                                            <div>
+                                                <a :href="'/filers/' + item.filer_id" class="text-sm font-medium text-sherpa-text hover:text-sherpa-blue" x-text="item.filer_name"></a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <template x-if="item.prepared_by_name">
+                                            <span class="text-sm text-sherpa-muted" x-text="item.prepared_by_name"></span>
+                                        </template>
+                                        <template x-if="!item.prepared_by_name">
+                                            <button @click="openPreparerModal(item)" class="text-xs text-sherpa-subtle hover:text-sherpa-blue">
+                                                + Assign
+                                            </button>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                              :class="{
+                                                  'bg-sherpa-subtle/20 text-sherpa-subtle': item.status === 'NOT_FILED',
+                                                  'bg-sherpa-amber/20 text-sherpa-amber': item.status === 'SUBMITTED',
+                                                  'bg-sherpa-blue/20 text-sherpa-blue': item.status === 'PROCESSING',
+                                                  'bg-sherpa-teal/20 text-sherpa-teal': item.status === 'ACCEPTED' || item.status === 'ACCEPTED_WITH_ERRORS',
+                                                  'bg-sherpa-red/20 text-sherpa-red': item.status === 'REJECTED'
+                                              }"
+                                              x-text="formatStatus(item.status)">
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-sherpa-muted" x-text="item.form_count"></td>
+                                    <td class="px-6 py-4">
+                                        <template x-if="item.last_receipt_id">
+                                            <span class="text-xs font-mono text-sherpa-subtle" x-text="item.last_receipt_id"></span>
+                                        </template>
+                                        <template x-if="!item.last_receipt_id">
+                                            <span class="text-xs text-sherpa-subtle">-</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <template x-if="item.last_submitted_at">
+                                            <span class="text-sm text-sherpa-muted" x-text="formatDate(item.last_submitted_at)"></span>
+                                        </template>
+                                        <template x-if="!item.last_submitted_at">
+                                            <span class="text-sm text-sherpa-subtle">-</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <template x-if="item.last_receipt_id && (item.status === 'SUBMITTED' || item.status === 'PROCESSING')">
+                                                <button @click="checkStatus(item)"
+                                                        :disabled="item.checking"
+                                                        class="px-3 py-1 text-xs font-medium text-sherpa-blue hover:bg-sherpa-blue/10 rounded-lg transition-colors disabled:opacity-50">
+                                                    <span x-show="!item.checking">Check Status</span>
+                                                    <span x-show="item.checking">Checking...</span>
+                                                </button>
+                                            </template>
+                                            <a :href="'/filers/' + item.filer_id"
+                                               class="px-3 py-1 text-xs font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-panel rounded-lg transition-colors">
+                                                View
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <!-- Preparer Assignment Modal -->
+    <template x-if="showPreparerModal">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showPreparerModal = false">
+            <div class="bg-sherpa-card rounded-2xl ring-1 ring-sherpa-border shadow-sherpa p-6 w-full max-w-md">
+                <h3 class="text-lg font-medium text-sherpa-text mb-4">Assign Preparer</h3>
+                <p class="text-sm text-sherpa-muted mb-4">Assign a preparer for <span class="font-medium text-sherpa-text" x-text="selectedFiler?.filer_name"></span></p>
+
+                <input type="text"
+                       x-model="preparerName"
+                       placeholder="Preparer name"
+                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text placeholder-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent mb-4">
+
+                <div class="flex justify-end gap-3">
+                    <button @click="showPreparerModal = false" class="px-4 py-2 text-sm font-medium text-sherpa-muted hover:text-sherpa-text">
+                        Cancel
+                    </button>
+                    <button @click="assignPreparer()"
+                            :disabled="!preparerName || assigningPreparer"
+                            class="px-4 py-2 bg-sherpa-blue text-sherpa-bg rounded-xl text-sm font-semibold hover:bg-sherpa-blue/90 transition-colors disabled:opacity-50">
+                        <span x-show="!assigningPreparer">Assign</span>
+                        <span x-show="assigningPreparer">Saving...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+function filingDashboard() {
+    return {
+        taxYear: 2025,
+        loading: true,
+        error: null,
+        items: [],
+        summary: {},
+        searchTerm: '',
+        statusFilter: '',
+        backfilling: false,
+
+        // Preparer modal
+        showPreparerModal: false,
+        selectedFiler: null,
+        preparerName: '',
+        assigningPreparer: false,
+
+        get filteredItems() {
+            if (!this.searchTerm) return this.items;
+            const term = this.searchTerm.toLowerCase();
+            return this.items.filter(item =>
+                item.filer_name.toLowerCase().includes(term) ||
+                (item.prepared_by_name && item.prepared_by_name.toLowerCase().includes(term))
+            );
+        },
+
+        async loadData() {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                let url = `/api/efile/filing-dashboard?tax_year=${this.taxYear}`;
+                if (this.statusFilter) {
+                    url += `&status=${this.statusFilter}`;
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load dashboard');
+
+                const data = await response.json();
+                this.items = data.items || [];
+                this.summary = data.summary || {};
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async backfillStatus() {
+            this.backfilling = true;
+            try {
+                const response = await fetch(`/api/efile/filing-status/backfill?tax_year=${this.taxYear}`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Failed to sync filers');
+
+                const result = await response.json();
+                if (result.rows_inserted > 0) {
+                    alert(`Synced ${result.rows_inserted} filers`);
+                }
+                await this.loadData();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                this.backfilling = false;
+            }
+        },
+
+        async checkStatus(item) {
+            item.checking = true;
+            try {
+                // First check IRS status
+                const statusResponse = await fetch('/api/efile/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ receipt_id: item.last_receipt_id })
+                });
+
+                if (!statusResponse.ok) throw new Error('Failed to check status');
+                const statusResult = await statusResponse.json();
+
+                // Map IRS status to our status
+                let newStatus = item.status;
+                if (statusResult.status === 'accepted') newStatus = 'ACCEPTED';
+                else if (statusResult.status === 'accepted_with_errors') newStatus = 'ACCEPTED_WITH_ERRORS';
+                else if (statusResult.status === 'rejected') newStatus = 'REJECTED';
+                else if (statusResult.status === 'processing') newStatus = 'PROCESSING';
+
+                // Update filing status
+                if (newStatus !== item.status) {
+                    await fetch('/api/efile/filing-status/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            filer_id: item.filer_id,
+                            tax_year: this.taxYear,
+                            status: newStatus,
+                            errors: statusResult.errors?.length > 0 ? { errors: statusResult.errors } : null
+                        })
+                    });
+
+                    // Reload to show updated status
+                    await this.loadData();
+                } else {
+                    alert(`Status: ${this.formatStatus(statusResult.status)}\n${statusResult.message || ''}`);
+                }
+            } catch (e) {
+                alert('Error checking status: ' + e.message);
+            } finally {
+                item.checking = false;
+            }
+        },
+
+        openPreparerModal(item) {
+            this.selectedFiler = item;
+            this.preparerName = '';
+            this.showPreparerModal = true;
+        },
+
+        async assignPreparer() {
+            if (!this.preparerName || !this.selectedFiler) return;
+
+            this.assigningPreparer = true;
+            try {
+                const response = await fetch('/api/efile/filing-status/set-preparer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filer_id: this.selectedFiler.filer_id,
+                        tax_year: this.taxYear,
+                        prepared_by_name: this.preparerName
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to assign preparer');
+
+                this.showPreparerModal = false;
+                await this.loadData();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                this.assigningPreparer = false;
+            }
+        },
+
+        formatStatus(status) {
+            const statusMap = {
+                'NOT_FILED': 'Not Filed',
+                'SUBMITTED': 'Submitted',
+                'PROCESSING': 'Processing',
+                'ACCEPTED': 'Accepted',
+                'ACCEPTED_WITH_ERRORS': 'Accepted*',
+                'REJECTED': 'Rejected'
+            };
+            return statusMap[status] || status;
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch {
+                return dateStr;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}
