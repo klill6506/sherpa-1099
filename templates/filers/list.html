@@ -21,7 +21,7 @@
                     <span x-show="!syncing">Sync Status</span>
                     <span x-show="syncing">Syncing...</span>
                 </button>
-                <a href="/imports/upload" class="inline-flex items-center px-4 py-2 bg-sherpa-blue hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm">
+                <a href="/imports/upload" class="inline-flex items-center px-4 py-2 bg-sherpa-green hover:bg-emerald-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                     </svg>
@@ -77,6 +77,7 @@
                 class="px-4 py-2.5 rounded-xl glass text-sherpa-text focus:ring-2 focus:ring-sherpa-blue focus:outline-none">
             <option value="">All Statuses</option>
             <option value="NOT_FILED">Not Filed</option>
+            <option value="PENDING">Pending</option>
             <option value="SUBMITTED">Submitted</option>
             <option value="PROCESSING">Processing</option>
             <option value="ACCEPTED">Accepted</option>
@@ -107,103 +108,8 @@
             </a>
         </div>
         {% else %}
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-white/40 border-b border-white/30">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Filer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Preparer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Forms</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Receipt ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Last Submitted</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-sherpa-muted uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-white/20">
-                    <template x-for="filer in filteredFilers" :key="filer.id">
-                        <tr class="hover:bg-white/40 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                        <span class="text-sherpa-blue font-semibold text-sm" x-text="filer.name.substring(0,2).toUpperCase()"></span>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <a :href="'/filers/' + filer.id" class="text-sm font-medium text-sherpa-text hover:text-sherpa-blue truncate block" x-text="filer.name"></a>
-                                        <span class="text-xs text-sherpa-subtle" x-text="filer.tin || 'No TIN'"></span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <template x-if="getFilingStatus(filer.id)?.prepared_by_name">
-                                    <span class="text-sm text-sherpa-muted" x-text="getFilingStatus(filer.id)?.prepared_by_name"></span>
-                                </template>
-                                <template x-if="!getFilingStatus(filer.id)?.prepared_by_name">
-                                    <button @click="openPreparerModal(filer)" class="text-xs text-sherpa-subtle hover:text-sherpa-blue">
-                                        + Assign
-                                    </button>
-                                </template>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                      :class="getStatusClasses(getFilingStatus(filer.id)?.status)"
-                                      x-text="formatStatus(getFilingStatus(filer.id)?.status)">
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-sherpa-muted" x-text="getFilingStatus(filer.id)?.form_count || '-'"></td>
-                            <td class="px-6 py-4">
-                                <template x-if="getFilingStatus(filer.id)?.last_receipt_id">
-                                    <span class="text-xs font-mono text-sherpa-subtle" x-text="getFilingStatus(filer.id)?.last_receipt_id"></span>
-                                </template>
-                                <template x-if="!getFilingStatus(filer.id)?.last_receipt_id">
-                                    <span class="text-xs text-sherpa-subtle">-</span>
-                                </template>
-                            </td>
-                            <td class="px-6 py-4">
-                                <template x-if="getFilingStatus(filer.id)?.last_submitted_at">
-                                    <span class="text-sm text-sherpa-muted" x-text="formatDate(getFilingStatus(filer.id)?.last_submitted_at)"></span>
-                                </template>
-                                <template x-if="!getFilingStatus(filer.id)?.last_submitted_at">
-                                    <span class="text-sm text-sherpa-subtle">-</span>
-                                </template>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex justify-end gap-2">
-                                    <!-- Transmit button for NOT_FILED -->
-                                    <template x-if="!getFilingStatus(filer.id)?.status || getFilingStatus(filer.id)?.status === 'NOT_FILED'">
-                                        <a :href="'/filers/' + filer.id + '/efile'"
-                                           class="px-3 py-1.5 text-xs font-medium bg-sherpa-green hover:bg-emerald-700 text-white rounded-lg transition-colors">
-                                            Transmit
-                                        </a>
-                                    </template>
-                                    <!-- Check Status for SUBMITTED/PROCESSING -->
-                                    <template x-if="getFilingStatus(filer.id)?.last_receipt_id && ['SUBMITTED', 'PROCESSING'].includes(getFilingStatus(filer.id)?.status)">
-                                        <button @click="checkStatus(filer)"
-                                                :disabled="filer.checking"
-                                                class="px-3 py-1.5 text-xs font-medium bg-sherpa-amber hover:bg-amber-600 text-white rounded-lg transition-colors disabled:opacity-50">
-                                            <span x-show="!filer.checking">Check Status</span>
-                                            <span x-show="filer.checking">Checking...</span>
-                                        </button>
-                                    </template>
-                                    <!-- View Errors for REJECTED -->
-                                    <template x-if="getFilingStatus(filer.id)?.status === 'REJECTED'">
-                                        <button @click="viewErrors(filer)"
-                                                class="px-3 py-1.5 text-xs font-medium bg-sherpa-red hover:bg-red-700 text-white rounded-lg transition-colors">
-                                            View Errors
-                                        </button>
-                                    </template>
-                                    <!-- Open button always -->
-                                    <a :href="'/filers/' + filer.id"
-                                       class="px-3 py-1.5 text-xs font-medium bg-sherpa-blue hover:bg-blue-700 text-white rounded-lg transition-colors">
-                                        Open
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
-        </div>
+        {% set compact_mode = false %}
+        {% include "filers/_filers_table.html" %}
         {% endif %}
     </div>
 
@@ -212,7 +118,7 @@
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" @click.self="showPreparerModal = false">
             <div class="glass rounded-2xl shadow-glass p-6 w-full max-w-md">
                 <h3 class="text-lg font-semibold text-sherpa-text mb-4">Assign Preparer</h3>
-                <p class="text-sm text-sherpa-muted mb-4">Assign a preparer for <span class="font-medium text-sherpa-text" x-text="selectedFiler?.name"></span></p>
+                <p class="text-sm text-sherpa-muted mb-4">Assign a preparer for <span class="font-medium text-sherpa-text" x-text="selectedFiler?.filer_name || selectedFiler?.name"></span></p>
 
                 <input type="text"
                        x-model="preparerName"
@@ -239,7 +145,7 @@
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" @click.self="showErrorsModal = false">
             <div class="glass rounded-2xl shadow-glass p-6 w-full max-w-lg">
                 <h3 class="text-lg font-semibold text-sherpa-text mb-4">Filing Errors</h3>
-                <p class="text-sm text-sherpa-muted mb-4"><span class="font-medium text-sherpa-text" x-text="selectedFiler?.name"></span></p>
+                <p class="text-sm text-sherpa-muted mb-4"><span class="font-medium text-sherpa-text" x-text="selectedFiler?.filer_name || selectedFiler?.name"></span></p>
 
                 <div class="bg-sherpa-red/10 border border-sherpa-red/20 rounded-xl p-4 mb-4 max-h-64 overflow-y-auto">
                     <template x-if="selectedErrors && selectedErrors.length > 0">
@@ -268,15 +174,17 @@
 function filersPage() {
     // Pass filers from server
     const serverFilers = {{ filers | tojson | safe }};
+    const params = new URLSearchParams(window.location.search);
+    const statusParam = params.get('status');
 
     return {
         taxYear: {{ operating_year.year if operating_year else 2025 }},
         filers: serverFilers,
         filingStatusMap: {},
         summary: { total: serverFilers.length },
-        searchTerm: '',
-        statusFilter: '',
-        preparerFilter: '',
+        searchTerm: params.get('search') || '',
+        statusFilter: statusParam ? statusParam.toUpperCase() : '',
+        preparerFilter: params.get('preparer') || '',
         syncing: false,
 
         // Preparer modal
@@ -305,6 +213,9 @@ function filersPage() {
             if (this.statusFilter) {
                 result = result.filter(f => {
                     const status = this.getFilingStatus(f.id)?.status || 'NOT_FILED';
+                    if (this.statusFilter === 'PENDING') {
+                        return status === 'SUBMITTED' || status === 'PROCESSING';
+                    }
                     return status === this.statusFilter;
                 });
             }
@@ -350,6 +261,23 @@ function filersPage() {
             return result;
         },
 
+        get tableRows() {
+            return this.filteredFilers.map(filer => {
+                const status = this.getFilingStatus(filer.id) || {};
+                return {
+                    filer_id: filer.id,
+                    filer_name: filer.name,
+                    filer_tin: filer.tin,
+                    prepared_by_name: status.prepared_by_name,
+                    status: status.status || 'NOT_FILED',
+                    last_submitted_at: status.last_submitted_at,
+                    last_receipt_id: status.last_receipt_id,
+                    last_transmission_id: status.last_transmission_id,
+                    last_errors: status.last_errors
+                };
+            });
+        },
+
         getFilingStatus(filerId) {
             return this.filingStatusMap[filerId] || null;
         },
@@ -357,7 +285,7 @@ function filersPage() {
         async loadFilingStatus() {
             try {
                 let url = `/api/efile/filing-dashboard?tax_year=${this.taxYear}`;
-                if (this.statusFilter) {
+                if (this.statusFilter && this.statusFilter !== 'PENDING') {
                     url += `&status=${this.statusFilter}`;
                 }
 
@@ -399,7 +327,7 @@ function filersPage() {
         },
 
         async checkStatus(filer) {
-            const status = this.getFilingStatus(filer.id);
+            const status = this.getFilingStatus(filer.filer_id);
             if (!status?.last_receipt_id) return;
 
             filer.checking = true;
@@ -426,7 +354,7 @@ function filersPage() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            filer_id: filer.id,
+                            filer_id: filer.filer_id,
                             tax_year: this.taxYear,
                             status: newStatus,
                             errors: statusResult.errors?.length > 0 ? { errors: statusResult.errors } : null
@@ -458,7 +386,7 @@ function filersPage() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        filer_id: this.selectedFiler.id,
+                        filer_id: this.selectedFiler.filer_id,
                         tax_year: this.taxYear,
                         prepared_by_name: this.preparerName
                     })
@@ -477,8 +405,7 @@ function filersPage() {
 
         viewErrors(filer) {
             this.selectedFiler = filer;
-            const status = this.getFilingStatus(filer.id);
-            this.selectedErrors = status?.last_errors?.errors || [];
+            this.selectedErrors = filer.last_errors?.errors || [];
             this.showErrorsModal = true;
         },
 

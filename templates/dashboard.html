@@ -11,51 +11,17 @@
         <p class="text-sm text-sherpa-subtle">Here's what needs attention.</p>
     </div>
 
-    <!-- Quick Action Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Add Filer -->
-        <a href="/filers/new" class="glass rounded-2xl shadow-glass p-6 hover:shadow-lg transition-all group text-center">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-sherpa-green/10 flex items-center justify-center group-hover:bg-sherpa-green/20 transition-colors">
-                <svg class="w-8 h-8 text-sherpa-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-            </div>
-            <h3 class="font-semibold text-sherpa-text group-hover:text-sherpa-green transition-colors">Add Filer</h3>
-            <p class="text-xs text-sherpa-subtle mt-1">Forms: 1099, 2025</p>
-        </a>
-
-        <!-- Import Data -->
-        <a href="/imports/upload" class="glass rounded-2xl shadow-glass p-6 hover:shadow-lg transition-all group text-center">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-sherpa-blue/10 flex items-center justify-center group-hover:bg-sherpa-blue/20 transition-colors">
-                <svg class="w-8 h-8 text-sherpa-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-            </div>
-            <h3 class="font-semibold text-sherpa-text group-hover:text-sherpa-blue transition-colors">Import Data</h3>
-            <p class="text-xs text-sherpa-subtle mt-1">Upload 1099 workbooks</p>
-        </a>
-
-        <!-- Continue Drafts -->
-        <a href="/filers" class="glass rounded-2xl shadow-glass p-6 hover:shadow-lg transition-all group text-center">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-sherpa-blue/10 flex items-center justify-center group-hover:bg-sherpa-blue/20 transition-colors">
-                <svg class="w-8 h-8 text-sherpa-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-            </div>
-            <h3 class="font-semibold text-sherpa-text group-hover:text-sherpa-blue transition-colors">Continue 1099 Drafts</h3>
-            <p class="text-xs text-sherpa-subtle mt-1">View all filers</p>
-        </a>
-    </div>
-
-    <!-- Two Column Layout -->
+    <!-- Work Queue + Status Overview -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Needs Attention (Left Column) -->
         <div class="glass rounded-2xl shadow-glass overflow-hidden">
-            <div class="px-6 py-4 border-b border-white/30">
-                <h2 class="text-lg font-semibold text-sherpa-text">Needs Attention</h2>
+            <div class="px-6 py-4 border-b border-white/30 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-sherpa-text">Work Queue</h2>
+                    <p class="text-xs text-sherpa-subtle">Top 10 needing attention</p>
+                </div>
+                <a href="/filers" class="text-sm font-medium text-sherpa-blue hover:text-sherpa-blue/80">View all filers</a>
             </div>
 
-            <!-- Loading State -->
             <template x-if="loading">
                 <div class="p-8 text-center">
                     <svg class="animate-spin h-6 w-6 mx-auto text-sherpa-blue" fill="none" viewBox="0 0 24 24">
@@ -65,7 +31,6 @@
                 </div>
             </template>
 
-            <!-- Empty State -->
             <template x-if="!loading && needsAttention.length === 0">
                 <div class="p-8 text-center">
                     <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-sherpa-blue/10 flex items-center justify-center">
@@ -77,104 +42,52 @@
                 </div>
             </template>
 
-            <!-- Attention Items -->
             <template x-if="!loading && needsAttention.length > 0">
-                <div class="divide-y divide-white/20">
-                    <template x-for="item in needsAttention" :key="item.id">
-                        <div class="px-6 py-4 flex items-center justify-between hover:bg-white/30 transition-colors">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center"
-                                     :class="item.status === 'REJECTED' ? 'bg-sherpa-red/10' : item.status === 'NOT_FILED' ? 'bg-gray-100' : (item.status === 'SUBMITTED' || item.status === 'PROCESSING') ? 'bg-sherpa-amber/10' : 'bg-sherpa-blue/10'">
-                                    <svg x-show="item.status === 'REJECTED'" class="w-5 h-5 text-sherpa-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                    </svg>
-                                    <svg x-show="item.status === 'NOT_FILED'" class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                    <svg x-show="item.status === 'PROCESSING' || item.status === 'SUBMITTED'" class="w-5 h-5 text-sherpa-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <div class="font-medium text-sherpa-text text-sm" x-text="item.filer_name"></div>
-                                    <div class="text-xs text-sherpa-subtle" x-text="formatStatus(item.status)"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm font-medium" :class="item.status === 'REJECTED' ? 'text-sherpa-red' : 'text-sherpa-muted'" x-text="item.form_count + ' forms'"></span>
-                                <a :href="'/filers/' + item.filer_id"
-                                   class="px-3 py-1.5 text-xs font-medium bg-sherpa-blue hover:bg-blue-600 text-white rounded-lg transition-colors">
-                                    Open
-                                </a>
-                            </div>
-                        </div>
-                    </template>
+                <div>
+                    {% set compact_mode = true %}
+                    {% include "filers/_filers_table.html" %}
                 </div>
             </template>
         </div>
 
-        <!-- Recent Activity / Status Overview (Right Column) -->
-        <div class="space-y-6">
-            <!-- Status Summary Cards -->
-            <div class="glass rounded-2xl shadow-glass p-6">
-                <h2 class="text-lg font-semibold text-sherpa-text mb-4">Filing Status Overview</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="glass-light rounded-xl p-4 text-center">
-                        <div class="text-2xl font-bold text-sherpa-blue" x-text="(summary.ACCEPTED || 0) + (summary.ACCEPTED_WITH_ERRORS || 0)"></div>
-                        <div class="text-xs text-sherpa-subtle flex items-center justify-center gap-1">
-                            <svg class="w-3 h-3 text-sherpa-blue" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Accepted
-                        </div>
+        <div class="glass rounded-2xl shadow-glass p-6">
+            <h2 class="text-lg font-semibold text-sherpa-text mb-4">Filing Status Overview</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="/filers?status=ACCEPTED" class="glass-light rounded-xl p-4 text-center hover:ring-2 hover:ring-sherpa-blue/20 transition">
+                    <div class="text-2xl font-bold text-sherpa-blue" x-text="(summary.ACCEPTED || 0) + (summary.ACCEPTED_WITH_ERRORS || 0)"></div>
+                    <div class="text-xs text-sherpa-subtle flex items-center justify-center gap-1">
+                        <svg class="w-3 h-3 text-sherpa-blue" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Accepted
                     </div>
-                    <div class="glass-light rounded-xl p-4 text-center">
-                        <div class="text-2xl font-bold text-sherpa-amber" x-text="(summary.SUBMITTED || 0) + (summary.PROCESSING || 0)"></div>
-                        <div class="text-xs text-sherpa-subtle flex items-center justify-center gap-1">
-                            <svg class="w-3 h-3 text-sherpa-amber" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-                            </svg>
-                            Pending
-                        </div>
+                </a>
+                <a href="/filers?status=PENDING" class="glass-light rounded-xl p-4 text-center hover:ring-2 hover:ring-sherpa-amber/20 transition">
+                    <div class="text-2xl font-bold text-sherpa-amber" x-text="(summary.SUBMITTED || 0) + (summary.PROCESSING || 0)"></div>
+                    <div class="text-xs text-sherpa-subtle flex items-center justify-center gap-1">
+                        <svg class="w-3 h-3 text-sherpa-amber" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        Pending
                     </div>
-                    <div class="glass-light rounded-xl p-4 text-center">
-                        <div class="text-2xl font-bold text-sherpa-subtle" x-text="summary.NOT_FILED || 0"></div>
-                        <div class="text-xs text-sherpa-subtle flex items-center justify-center gap-1">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
-                            </svg>
-                            Not Filed
-                        </div>
+                </a>
+                <a href="/filers?status=NOT_FILED" class="glass-light rounded-xl p-4 text-center hover:ring-2 hover:ring-gray-200 transition">
+                    <div class="text-2xl font-bold text-sherpa-subtle" x-text="summary.NOT_FILED || 0"></div>
+                    <div class="text-xs text-sherpa-subtle flex items-center justify-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                        Not Filed
                     </div>
-                    <div class="glass-light rounded-xl p-4 text-center" :class="(summary.REJECTED || 0) > 0 ? 'ring-2 ring-sherpa-red/30' : ''">
-                        <div class="text-2xl font-bold" :class="(summary.REJECTED || 0) > 0 ? 'text-sherpa-red' : 'text-sherpa-subtle'" x-text="summary.REJECTED || 0"></div>
-                        <div class="text-xs flex items-center justify-center gap-1" :class="(summary.REJECTED || 0) > 0 ? 'text-sherpa-red' : 'text-sherpa-subtle'">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                            </svg>
-                            Rejected
-                        </div>
+                </a>
+                <a href="/filers?status=REJECTED" class="glass-light rounded-xl p-4 text-center hover:ring-2 hover:ring-sherpa-red/20 transition" :class="(summary.REJECTED || 0) > 0 ? 'ring-2 ring-sherpa-red/30' : ''">
+                    <div class="text-2xl font-bold" :class="(summary.REJECTED || 0) > 0 ? 'text-sherpa-red' : 'text-sherpa-subtle'" x-text="summary.REJECTED || 0"></div>
+                    <div class="text-xs flex items-center justify-center gap-1" :class="(summary.REJECTED || 0) > 0 ? 'text-sherpa-red' : 'text-sherpa-subtle'">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        Rejected
                     </div>
-                </div>
-            </div>
-
-            <!-- View All Filers -->
-            <div class="glass rounded-2xl shadow-glass p-6">
-                <a href="/filers" class="flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-sherpa-blue/10 flex items-center justify-center group-hover:bg-sherpa-blue/20 transition-colors">
-                            <svg class="w-5 h-5 text-sherpa-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <span class="text-sm font-semibold text-sherpa-text group-hover:text-sherpa-blue transition-colors">View All Filers</span>
-                            <p class="text-xs text-sherpa-subtle" x-text="summary.total + ' total filers'"></p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-sherpa-subtle group-hover:text-sherpa-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
                 </a>
             </div>
         </div>
@@ -193,8 +106,12 @@ function homePage() {
             // Rejected first, then Not Filed, then Processing (max 10)
             const rejected = this.workQueue.filter(i => i.status === 'REJECTED');
             const notFiled = this.workQueue.filter(i => i.status === 'NOT_FILED');
-            const processing = this.workQueue.filter(i => i.status === 'SUBMITTED' || i.status === 'PROCESSING');
+            const processing = this.workQueue.filter(i => i.status === 'PROCESSING');
             return [...rejected, ...notFiled, ...processing].slice(0, 10);
+        },
+
+        get tableRows() {
+            return this.needsAttention;
         },
 
         async loadWorkQueue() {
@@ -216,16 +133,38 @@ function homePage() {
             }
         },
 
+        getStatusClasses(status) {
+            const classes = {
+                'NOT_FILED': 'bg-gray-100 text-gray-600',
+                'SUBMITTED': 'bg-amber-100 text-amber-800',
+                'PROCESSING': 'bg-amber-100 text-amber-800',
+                'ACCEPTED': 'bg-blue-100 text-blue-800',
+                'ACCEPTED_WITH_ERRORS': 'bg-blue-100 text-blue-800',
+                'REJECTED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-600';
+        },
+
         formatStatus(status) {
             const map = {
-                'NOT_FILED': 'Ready to file',
+                'NOT_FILED': 'Not Filed',
                 'SUBMITTED': 'Submitted',
                 'PROCESSING': 'Processing',
                 'ACCEPTED': 'Accepted',
                 'ACCEPTED_WITH_ERRORS': 'Accepted*',
-                'REJECTED': 'Rejected - Needs Fix'
+                'REJECTED': 'Rejected'
             };
             return map[status] || status || 'Unknown';
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch {
+                return dateStr;
+            }
         }
     };
 }
