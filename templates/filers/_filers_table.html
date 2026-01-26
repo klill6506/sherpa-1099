@@ -1,0 +1,101 @@
+<div class="overflow-x-auto">
+    <table class="w-full">
+        <thead class="bg-white/40 border-b border-white/30">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Filer</th>
+                {% if not compact_mode %}
+                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Preparer</th>
+                {% endif %}
+                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Last Submitted</th>
+                {% if not compact_mode %}
+                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Receipt ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-sherpa-muted uppercase tracking-wider">Transmission ID</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-sherpa-muted uppercase tracking-wider">Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-white/20">
+            <template x-for="row in tableRows" :key="row.filer_id">
+                <tr class="hover:bg-white/40 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                <span class="text-sherpa-blue font-semibold text-sm" x-text="row.filer_name.substring(0,2).toUpperCase()"></span>
+                            </div>
+                            <div class="min-w-0">
+                                <a :href="'/filers/' + row.filer_id" class="text-sm font-medium text-sherpa-text hover:text-sherpa-blue truncate block" x-text="row.filer_name"></a>
+                                {% if not compact_mode %}
+                                <span class="text-xs text-sherpa-subtle" x-text="row.filer_tin || 'No TIN'"></span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    {% if not compact_mode %}
+                    <td class="px-6 py-4">
+                        <template x-if="row.prepared_by_name">
+                            <span class="text-sm text-sherpa-muted" x-text="row.prepared_by_name"></span>
+                        </template>
+                        <template x-if="!row.prepared_by_name">
+                            <button @click="openPreparerModal(row)" class="text-xs text-sherpa-subtle hover:text-sherpa-blue">
+                                + Assign
+                            </button>
+                        </template>
+                    </td>
+                    {% endif %}
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                              :class="getStatusClasses(row.status)"
+                              x-text="formatStatus(row.status)">
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-sherpa-muted" x-text="formatDate(row.last_submitted_at)"></span>
+                    </td>
+                    {% if not compact_mode %}
+                    <td class="px-6 py-4">
+                        <template x-if="row.last_receipt_id">
+                            <span class="text-xs font-mono text-sherpa-subtle" x-text="row.last_receipt_id"></span>
+                        </template>
+                        <template x-if="!row.last_receipt_id">
+                            <span class="text-xs text-sherpa-subtle">-</span>
+                        </template>
+                    </td>
+                    <td class="px-6 py-4">
+                        <template x-if="row.last_transmission_id">
+                            <span class="text-xs font-mono text-sherpa-subtle" x-text="row.last_transmission_id"></span>
+                        </template>
+                        <template x-if="!row.last_transmission_id">
+                            <span class="text-xs text-sherpa-subtle">-</span>
+                        </template>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <template x-if="!row.status || row.status === 'NOT_FILED'">
+                                <a :href="'/filers/' + row.filer_id + '/efile'"
+                                   class="px-3 py-1.5 text-xs font-medium bg-sherpa-green hover:bg-emerald-700 text-white rounded-lg transition-colors">
+                                    Transmit
+                                </a>
+                            </template>
+                            <template x-if="row.last_receipt_id && ['SUBMITTED', 'PROCESSING'].includes(row.status)">
+                                <button @click="checkStatus(row)"
+                                        :disabled="row.checking"
+                                        class="px-3 py-1.5 text-xs font-medium border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors disabled:opacity-50">
+                                    <span x-show="!row.checking">Check Status</span>
+                                    <span x-show="row.checking">Checking...</span>
+                                </button>
+                            </template>
+                            <template x-if="row.status === 'REJECTED'">
+                                <button @click="viewErrors(row)"
+                                        class="px-3 py-1.5 text-xs font-medium border border-sherpa-red text-sherpa-red hover:bg-sherpa-red/10 rounded-lg transition-colors">
+                                    View Errors
+                                </button>
+                            </template>
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+            </template>
+        </tbody>
+    </table>
+</div>
