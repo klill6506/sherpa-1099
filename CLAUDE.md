@@ -25,43 +25,57 @@ Or double-click: `run_api.bat`
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-17
-**Working on:** ATS certification testing - debugging status check "Not Found" issue
+**Last session:** 2026-01-26
+**Working on:** Major UI redesign - winter theme with frosted glass styling
 
 ### What's Working:
-- ATS test submission succeeds (HTTP 200, status=pending, Transmission ID returned)
-- XML generation and validation working
-- Status check endpoint working (calls IRS, gets response)
+- ATS certification testing complete (CF/SF test accepted)
+- IRS e-filing submissions working
+- Filing status tracking per filer (filer_filing_status table)
+- Preparer assignment tracking
 
-### Current Issue:
-- Status check returns "Not Found" for all submitted Transmission IDs
-- IRS doesn't return a Receipt ID in the submit response (we expected one)
-- Need to see raw IRS submit response to understand what they actually return
+### UI Redesign Completed:
+Implemented new winter-themed UI matching Sherpa design mockup:
 
-### Debug Setup (ready to use):
-1. Submit ATS test at: https://sherpa-1099.onrender.com/ats-test
-2. Then check raw IRS response at: https://sherpa-1099.onrender.com/api/efile/ats-test/last-submit-response
-3. This will show exactly what IRS returns (status, headers, body XML)
+**Design Features:**
+- Winter gradient background with mountain/forest silhouettes
+- Frosted glass cards using `.glass` and `.glass-light` CSS classes
+- Updated Yeti mascot in header
+- Semantic colors: Blue=good, Green=start, Amber=pending, Red=errors
 
-### Your Transmission IDs (all show "Not Found"):
-- `50b48319-5db1-421f-82d0-dbb4cf594548:IRIS:DG5BW::T`
-- `5197d8f6-a49e-4ae4-b280-0c493cea0401:IRIS:DG5BW::T`
-- `50053890-2741-4aa3-a219-041d1160345e:IRIS:DG5BW::T`
+**Home Page (dashboard.html):**
+- Welcome header with user name
+- 3 quick action cards with icons (Add Filer, Import Data, Continue Drafts)
+- Two-column layout:
+  - Left: "Needs Attention" list with Open buttons
+  - Right: Filing Status Overview + Quick Links
 
-### Key Question to Resolve:
-Does IRS return a Receipt ID immediately on submit, or only later in the status/ack response?
-The IRS sample files suggest Receipt ID only appears AFTER processing (not at submit time).
+**Filers Page (filers/list.html):**
+- Unified filers + filing status in one page
+- Columns: Filer, Preparer, Status, Forms, Receipt ID, Last Submitted, Actions
+- Action buttons: Transmit (green), Check Status (amber), View Errors (red), Open (blue)
+- Status filters and search
 
-### Recent Code Changes:
-- Added `NOT_FOUND` status enum and handling
-- Smart input detection for Receipt ID vs Transmission ID in status checker
-- Added `/api/efile/ats-test/last-submit-response` debug endpoint to capture raw IRS response
-- Status messages now explain each status type
+**Route Changes:**
+- `/` = Home landing page with work queue preview
+- `/filers` = Canonical filers list with filing status
+- `/filing-dashboard` = Redirects to `/filers`
+
+### PDF Positioning:
+- Recipient text moved down 12 points total (offset changed from 24 to 36)
+- File: `src/pdf_generator.py` line 217
+
+### Recent Database Changes:
+- Added `filer_filing_status` table (migration 007)
+- Tracks: preparer, status, receipt_id, transmission_id, errors per filer/year
+- View: `filing_dashboard` joins filer info with status
 
 ### Files Modified This Session:
-- `src/iris_client.py` - Added NOT_FOUND status, debug response storage
-- `api/routers/efile.py` - Added debug endpoint, status messages
-- `templates/ats_test.html` - UI improvements for status checking
+- `templates/base.html` - Winter theme, frosted glass, mountain background
+- `templates/dashboard.html` - Redesigned home page with mockup layout
+- `templates/filers/list.html` - Frosted glass styling, unified filers + status
+- `api/routers/web.py` - Route changes (home, filing-dashboard redirect)
+- `src/pdf_generator.py` - Recipient text position adjustment
 
 ## Key Files
 | File | Purpose |
