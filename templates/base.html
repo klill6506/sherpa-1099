@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,46 +10,43 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        // Sherpa Winter Theme
+                        // Sherpa Theme Colors
                         sherpa: {
-                            // Backgrounds
-                            page: "#e8f4fc",      // Soft winter blue
-                            card: "rgba(255, 255, 255, 0.85)",  // Frosted glass
-                            panel: "rgba(255, 255, 255, 0.6)",  // More transparent
-                            solid: "#ffffff",      // Solid white when needed
+                            // Semantic Colors (same in both modes)
+                            blue: "#3b82f6",
+                            green: "#10b981",
+                            amber: "#f59e0b",
+                            red: "#ef4444",
+                            teal: "#2ED3C6",
 
-                            // Borders
-                            border: "rgba(255, 255, 255, 0.5)",
-                            "border-solid": "#d1e3f0",
+                            // Light mode colors
+                            "light-bg": "#e8f4fc",
+                            "light-card": "rgba(255, 255, 255, 0.85)",
+                            "light-panel": "rgba(255, 255, 255, 0.6)",
+                            "light-border": "rgba(255, 255, 255, 0.5)",
+                            "light-text": "#1e3a5f",
+                            "light-muted": "#4a6b8a",
+                            "light-subtle": "#7a9ab8",
 
-                            // Text
-                            text: "#1e3a5f",       // Deep blue text
-                            muted: "#4a6b8a",      // Muted blue
-                            subtle: "#7a9ab8",     // Subtle blue
-
-                            // Semantic Colors
-                            blue: "#3b82f6",       // Primary blue
-                            green: "#10b981",      // Emerald green
-                            amber: "#f59e0b",      // Amber
-                            red: "#ef4444",        // Red for errors
-
-                            // Light variants for pills/badges
-                            "blue-light": "rgba(59, 130, 246, 0.15)",
-                            "green-light": "rgba(16, 185, 129, 0.15)",
-                            "amber-light": "rgba(245, 158, 11, 0.15)",
-                            "red-light": "rgba(239, 68, 68, 0.15)",
+                            // Dark mode colors
+                            "dark-bg": "#0B1220",
+                            "dark-card": "#111C2F",
+                            "dark-panel": "#0F1B2D",
+                            "dark-border": "#23314D",
+                            "dark-text": "#E6EDF7",
+                            "dark-muted": "#B7C3D6",
+                            "dark-subtle": "#7D8AA5",
                         }
                     },
                     boxShadow: {
                         'glass': '0 8px 32px rgba(31, 38, 135, 0.1)',
                         'glass-sm': '0 4px 16px rgba(31, 38, 135, 0.08)',
+                        'sherpa': '0 1px 0 rgba(255,255,255,0.04), 0 10px 30px rgba(0,0,0,0.35)',
                     },
-                    backdropBlur: {
-                        'glass': '10px',
-                    }
                 }
             }
         }
@@ -61,15 +58,14 @@
     <style>
         [x-cloak] { display: none !important; }
 
-        /* Winter mountain background */
-        body {
+        /* ========== LIGHT MODE (Default) ========== */
+        html:not(.dark) body {
             background: linear-gradient(180deg, #c9e4f7 0%, #d6ecf8 30%, #e8f4fc 60%, #f0f9ff 100%);
             background-attachment: fixed;
-            min-height: 100vh;
         }
 
-        /* Mountain silhouette at bottom */
-        body::before {
+        /* Mountain silhouette - Light */
+        html:not(.dark) body::before {
             content: '';
             position: fixed;
             bottom: 0;
@@ -87,46 +83,97 @@
             z-index: 0;
         }
 
-        /* Tree/forest silhouette */
-        body::after {
+        /* Tree silhouette - Light */
+        html:not(.dark) body::after {
             content: '';
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             height: 15vh;
-            background:
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200'%3E%3Cpath fill='%23a8c8dc' opacity='0.4' d='M0,200 L0,120 L30,120 L50,80 L70,120 L90,100 L110,140 L130,100 L150,130 L170,90 L190,130 L210,110 L230,140 L250,100 L270,130 L290,95 L310,135 L330,105 L350,140 L370,100 L390,125 L410,85 L430,130 L450,110 L470,145 L490,105 L510,135 L530,95 L550,130 L570,100 L590,140 L610,110 L630,135 L650,90 L670,125 L690,105 L710,140 L730,100 L750,130 L770,85 L790,125 L810,105 L830,145 L850,100 L870,130 L890,95 L910,135 L930,110 L950,140 L970,100 L990,130 L1010,90 L1030,125 L1050,105 L1070,140 L1090,100 L1110,130 L1130,95 L1150,135 L1170,110 L1190,140 L1200,120 L1200,200 Z'/%3E%3C/svg%3E") repeat-x bottom;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200'%3E%3Cpath fill='%23a8c8dc' opacity='0.4' d='M0,200 L0,120 L30,120 L50,80 L70,120 L90,100 L110,140 L130,100 L150,130 L170,90 L190,130 L210,110 L230,140 L250,100 L270,130 L290,95 L310,135 L330,105 L350,140 L370,100 L390,125 L410,85 L430,130 L450,110 L470,145 L490,105 L510,135 L530,95 L550,130 L570,100 L590,140 L610,110 L630,135 L650,90 L670,125 L690,105 L710,140 L730,100 L750,130 L770,85 L790,125 L810,105 L830,145 L850,100 L870,130 L890,95 L910,135 L930,110 L950,140 L970,100 L990,130 L1010,90 L1030,125 L1050,105 L1070,140 L1090,100 L1110,130 L1130,95 L1150,135 L1170,110 L1190,140 L1200,120 L1200,200 Z'/%3E%3C/svg%3E") repeat-x bottom;
             background-size: 1200px 200px;
             pointer-events: none;
             z-index: 0;
         }
 
-        /* Frosted glass effect */
-        .glass {
+        /* Frosted glass - Light */
+        html:not(.dark) .glass {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
-        .glass-light {
+        html:not(.dark) .glass-light {
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.4);
         }
 
-        /* Light theme scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.3); }
-        ::-webkit-scrollbar-thumb { background: rgba(100,150,200,0.3); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(100,150,200,0.5); }
+        /* Light scrollbar */
+        html:not(.dark) ::-webkit-scrollbar { width: 8px; height: 8px; }
+        html:not(.dark) ::-webkit-scrollbar-track { background: rgba(255,255,255,0.3); }
+        html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(100,150,200,0.3); border-radius: 4px; }
+        html:not(.dark) ::-webkit-scrollbar-thumb:hover { background: rgba(100,150,200,0.5); }
+
+        /* ========== DARK MODE ========== */
+        html.dark body {
+            background: #0B1220;
+        }
+
+        html.dark body::before,
+        html.dark body::after {
+            display: none;
+        }
+
+        /* Cards - Dark */
+        html.dark .glass {
+            background: #111C2F;
+            backdrop-filter: none;
+            border: 1px solid #23314D;
+        }
+
+        html.dark .glass-light {
+            background: #0F1B2D;
+            backdrop-filter: none;
+            border: 1px solid #23314D;
+        }
+
+        /* Dark scrollbar */
+        html.dark ::-webkit-scrollbar { width: 8px; height: 8px; }
+        html.dark ::-webkit-scrollbar-track { background: #0B1220; }
+        html.dark ::-webkit-scrollbar-thumb { background: #23314D; border-radius: 4px; }
+        html.dark ::-webkit-scrollbar-thumb:hover { background: #2E4066; }
+
+        /* ========== Theme-aware utility classes ========== */
+        .theme-text { color: #1e3a5f; }
+        .dark .theme-text { color: #E6EDF7; }
+
+        .theme-muted { color: #4a6b8a; }
+        .dark .theme-muted { color: #B7C3D6; }
+
+        .theme-subtle { color: #7a9ab8; }
+        .dark .theme-subtle { color: #7D8AA5; }
+
+        .theme-bg { background-color: #e8f4fc; }
+        .dark .theme-bg { background-color: #0B1220; }
+
+        .theme-card { background-color: rgba(255, 255, 255, 0.85); }
+        .dark .theme-card { background-color: #111C2F; }
+
+        .theme-border { border-color: rgba(255, 255, 255, 0.5); }
+        .dark .theme-border { border-color: #23314D; }
+
+        /* Hover states */
+        .theme-hover:hover { background-color: rgba(255, 255, 255, 0.5); }
+        .dark .theme-hover:hover { background-color: #111C2F; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="text-sherpa-text min-h-screen antialiased flex flex-col relative">
-    <!-- Navigation - Frosted glass header -->
+<body class="theme-text min-h-screen antialiased flex flex-col relative">
+    <!-- Navigation -->
     <nav class="sticky top-0 z-50 glass shadow-glass-sm">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16">
@@ -134,56 +181,62 @@
                     <a href="/" class="flex items-center gap-3">
                         <!-- Yeti Mascot -->
                         <svg class="w-10 h-10" viewBox="0 0 48 48" fill="none">
-                            <!-- Yeti body -->
-                            <ellipse cx="24" cy="32" rx="12" ry="10" fill="#e8f4fc"/>
-                            <!-- Yeti head -->
-                            <circle cx="24" cy="18" r="14" fill="#e8f4fc"/>
-                            <!-- Face highlight -->
-                            <circle cx="24" cy="16" r="10" fill="white" opacity="0.5"/>
-                            <!-- Eyes -->
-                            <circle cx="19" cy="16" r="3" fill="#1e3a5f"/>
-                            <circle cx="29" cy="16" r="3" fill="#1e3a5f"/>
-                            <!-- Eye shine -->
+                            <ellipse cx="24" cy="32" rx="12" ry="10" class="fill-sherpa-light-subtle dark:fill-sherpa-dark-muted"/>
+                            <circle cx="24" cy="18" r="14" class="fill-sherpa-light-subtle dark:fill-sherpa-dark-muted"/>
+                            <circle cx="24" cy="16" r="10" fill="white" opacity="0.3"/>
+                            <circle cx="19" cy="16" r="3" class="fill-sherpa-light-text dark:fill-sherpa-dark-bg"/>
+                            <circle cx="29" cy="16" r="3" class="fill-sherpa-light-text dark:fill-sherpa-dark-bg"/>
                             <circle cx="20" cy="15" r="1" fill="white"/>
                             <circle cx="30" cy="15" r="1" fill="white"/>
-                            <!-- Nose -->
-                            <ellipse cx="24" cy="21" rx="2.5" ry="2" fill="#7a9ab8"/>
-                            <!-- Smile -->
-                            <path d="M20 25 Q24 29 28 25" stroke="#4a6b8a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                            <!-- Horns/ears -->
-                            <circle cx="12" cy="12" r="3" fill="#d1e3f0"/>
-                            <circle cx="36" cy="12" r="3" fill="#d1e3f0"/>
+                            <ellipse cx="24" cy="21" rx="2.5" ry="2" class="fill-sherpa-light-muted dark:fill-sherpa-dark-subtle"/>
+                            <path d="M20 25 Q24 29 28 25" class="stroke-sherpa-light-muted dark:stroke-sherpa-dark-subtle" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                            <circle cx="12" cy="12" r="3" class="fill-sherpa-light-border dark:fill-sherpa-dark-border"/>
+                            <circle cx="36" cy="12" r="3" class="fill-sherpa-light-border dark:fill-sherpa-dark-border"/>
                         </svg>
-                        <span class="text-xl font-bold">Sherpa <span class="text-sherpa-blue">1099</span></span>
+                        <span class="text-xl font-bold theme-text">Sherpa <span class="text-sherpa-blue dark:text-sherpa-teal">1099</span></span>
                     </a>
                     <div class="hidden md:flex ml-8 space-x-1">
-                        <a href="/" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'home' %}bg-sherpa-blue text-white shadow-sm{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-white/50{% endif %}">
+                        <a href="/" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'home' %}bg-sherpa-blue text-white shadow-sm{% else %}theme-muted theme-hover{% endif %}">
                             Home
                         </a>
-                        <a href="/filers" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'filers' or active_page == 'dashboard' or active_page == 'filing_dashboard' %}bg-sherpa-blue text-white shadow-sm{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-white/50{% endif %}">
+                        <a href="/filers" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'filers' or active_page == 'dashboard' %}bg-sherpa-blue text-white shadow-sm{% else %}theme-muted theme-hover{% endif %}">
                             Filers
                         </a>
-                        <a href="/imports" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'imports' %}bg-sherpa-blue text-white shadow-sm{% else %}text-sherpa-muted hover:text-sherpa-text hover:bg-white/50{% endif %}">
+                        <a href="/imports" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'imports' %}bg-sherpa-blue text-white shadow-sm{% else %}theme-muted theme-hover{% endif %}">
                             Import
                         </a>
-                        <a href="/download-template" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-sherpa-muted hover:text-sherpa-text hover:bg-white/50">
+                        <a href="/download-template" class="px-4 py-2 rounded-xl text-sm font-medium transition-all theme-muted theme-hover">
                             Template
                         </a>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
+                    <!-- Dark/Light Mode Toggle -->
+                    <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)"
+                            class="p-2 rounded-xl theme-hover transition-all"
+                            :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                        <!-- Sun icon (shown in dark mode) -->
+                        <svg x-show="darkMode" class="w-5 h-5 text-sherpa-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <!-- Moon icon (shown in light mode) -->
+                        <svg x-show="!darkMode" class="w-5 h-5 theme-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </button>
+
                     <span class="px-3 py-1.5 rounded-xl bg-sherpa-green text-white text-sm font-medium shadow-sm">
                         TY {{ operating_year.year if operating_year else '2025' }}
                     </span>
                     {% if user %}
                     <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium text-sherpa-text">{{ user.display_name }}</span>
-                        <a href="/logout" class="px-3 py-1.5 rounded-xl text-sm text-sherpa-muted hover:text-sherpa-text hover:bg-white/50 transition-all">
+                        <span class="text-sm font-medium theme-text">{{ user.display_name }}</span>
+                        <a href="/logout" class="px-3 py-1.5 rounded-xl text-sm theme-muted theme-hover transition-all">
                             Logout
                         </a>
                     </div>
                     {% else %}
-                    <span class="px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-800">DEV</span>
+                    <span class="px-2 py-1 rounded text-xs font-medium bg-sherpa-amber/15 text-sherpa-amber">DEV</span>
                     {% endif %}
                 </div>
             </div>
@@ -197,7 +250,7 @@
 
     <!-- Footer -->
     <footer class="glass-light mt-auto relative z-10">
-        <div class="max-w-7xl mx-auto py-4 px-4 text-center text-sm text-sherpa-muted">
+        <div class="max-w-7xl mx-auto py-4 px-4 text-center text-sm theme-muted">
             Sherpa 1099 &copy; 2025 | IRS IRIS e-Filing
         </div>
     </footer>
