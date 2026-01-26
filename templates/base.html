@@ -60,39 +60,34 @@
 
         /* ========== LIGHT MODE (Default) ========== */
         html:not(.dark) body {
-            background: linear-gradient(180deg, #c9e4f7 0%, #d6ecf8 30%, #e8f4fc 60%, #f0f9ff 100%);
+            background: linear-gradient(180deg, #b8daf0 0%, #c9e4f7 20%, #daeefb 50%, #e8f4fc 80%, #f0f9ff 100%);
             background-attachment: fixed;
         }
 
-        /* Mountain silhouette - Light */
+        /* Blue mountains - back layer */
         html:not(.dark) body::before {
             content: '';
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 40vh;
-            background: linear-gradient(180deg,
-                transparent 0%,
-                rgba(180, 210, 230, 0.3) 30%,
-                rgba(160, 195, 220, 0.4) 50%,
-                rgba(140, 180, 210, 0.5) 70%,
-                rgba(120, 165, 200, 0.6) 100%
-            );
+            height: 50vh;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 400' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='mtn1' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236BA3D6'/%3E%3Cstop offset='100%25' stop-color='%238FC1E8'/%3E%3C/linearGradient%3E%3ClinearGradient id='mtn2' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2387B8E0'/%3E%3Cstop offset='100%25' stop-color='%23A5D0F0'/%3E%3C/linearGradient%3E%3ClinearGradient id='mtn3' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23A0CBE8'/%3E%3Cstop offset='100%25' stop-color='%23C5E2F5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23mtn1)' d='M0,400 L0,200 L150,120 L300,180 L400,80 L550,160 L650,60 L800,150 L950,50 L1100,140 L1200,70 L1350,160 L1440,100 L1440,400 Z'/%3E%3Cpath fill='url(%23mtn2)' d='M0,400 L0,250 L100,180 L250,230 L350,140 L500,210 L600,120 L750,200 L900,110 L1050,190 L1150,130 L1300,200 L1440,150 L1440,400 Z'/%3E%3Cpath fill='url(%23mtn3)' d='M0,400 L0,300 L80,250 L200,290 L300,220 L450,280 L550,200 L700,270 L850,190 L1000,260 L1100,210 L1250,270 L1440,230 L1440,400 Z'/%3E%3C/svg%3E") no-repeat bottom center;
+            background-size: cover;
             pointer-events: none;
             z-index: 0;
         }
 
-        /* Tree silhouette - Light */
+        /* Snow caps on mountains */
         html:not(.dark) body::after {
             content: '';
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 15vh;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200'%3E%3Cpath fill='%23a8c8dc' opacity='0.4' d='M0,200 L0,120 L30,120 L50,80 L70,120 L90,100 L110,140 L130,100 L150,130 L170,90 L190,130 L210,110 L230,140 L250,100 L270,130 L290,95 L310,135 L330,105 L350,140 L370,100 L390,125 L410,85 L430,130 L450,110 L470,145 L490,105 L510,135 L530,95 L550,130 L570,100 L590,140 L610,110 L630,135 L650,90 L670,125 L690,105 L710,140 L730,100 L750,130 L770,85 L790,125 L810,105 L830,145 L850,100 L870,130 L890,95 L910,135 L930,110 L950,140 L970,100 L990,130 L1010,90 L1030,125 L1050,105 L1070,140 L1090,100 L1110,130 L1130,95 L1150,135 L1170,110 L1190,140 L1200,120 L1200,200 Z'/%3E%3C/svg%3E") repeat-x bottom;
-            background-size: 1200px 200px;
+            height: 50vh;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 400' preserveAspectRatio='none'%3E%3Cpath fill='white' opacity='0.6' d='M400,80 L380,95 L400,90 L420,95 Z M650,60 L625,80 L650,72 L675,80 Z M950,50 L920,75 L950,65 L980,75 Z M1200,70 L1175,90 L1200,82 L1225,90 Z'/%3E%3Cpath fill='white' opacity='0.5' d='M350,140 L330,155 L350,148 L370,155 Z M600,120 L578,138 L600,130 L622,138 Z M900,110 L875,130 L900,120 L925,130 Z M1150,130 L1128,148 L1150,140 L1172,148 Z'/%3E%3C/svg%3E") no-repeat bottom center;
+            background-size: cover;
             pointer-events: none;
             z-index: 0;
         }
@@ -179,19 +174,41 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="/" class="flex items-center gap-3">
-                        <!-- Yeti Mascot -->
-                        <svg class="w-10 h-10" viewBox="0 0 48 48" fill="none">
-                            <ellipse cx="24" cy="32" rx="12" ry="10" class="fill-sherpa-light-subtle dark:fill-sherpa-dark-muted"/>
-                            <circle cx="24" cy="18" r="14" class="fill-sherpa-light-subtle dark:fill-sherpa-dark-muted"/>
-                            <circle cx="24" cy="16" r="10" fill="white" opacity="0.3"/>
-                            <circle cx="19" cy="16" r="3" class="fill-sherpa-light-text dark:fill-sherpa-dark-bg"/>
-                            <circle cx="29" cy="16" r="3" class="fill-sherpa-light-text dark:fill-sherpa-dark-bg"/>
-                            <circle cx="20" cy="15" r="1" fill="white"/>
-                            <circle cx="30" cy="15" r="1" fill="white"/>
-                            <ellipse cx="24" cy="21" rx="2.5" ry="2" class="fill-sherpa-light-muted dark:fill-sherpa-dark-subtle"/>
-                            <path d="M20 25 Q24 29 28 25" class="stroke-sherpa-light-muted dark:stroke-sherpa-dark-subtle" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                            <circle cx="12" cy="12" r="3" class="fill-sherpa-light-border dark:fill-sherpa-dark-border"/>
-                            <circle cx="36" cy="12" r="3" class="fill-sherpa-light-border dark:fill-sherpa-dark-border"/>
+                        <!-- Yeti Mascot - Friendly rounded style with sunglasses -->
+                        <svg class="w-12 h-12" viewBox="0 0 64 64" fill="none">
+                            <!-- Body -->
+                            <ellipse cx="32" cy="52" rx="18" ry="10" fill="#E8F4FC"/>
+                            <!-- Arms -->
+                            <ellipse cx="12" cy="44" rx="6" ry="10" fill="#E8F4FC"/>
+                            <ellipse cx="52" cy="44" rx="6" ry="10" fill="#E8F4FC"/>
+                            <!-- Head - large round -->
+                            <circle cx="32" cy="28" r="22" fill="#E8F4FC"/>
+                            <!-- Ears -->
+                            <circle cx="10" cy="20" r="5" fill="#D6EBF7"/>
+                            <circle cx="54" cy="20" r="5" fill="#D6EBF7"/>
+                            <!-- Inner ear -->
+                            <circle cx="10" cy="20" r="2.5" fill="#C5E2F5"/>
+                            <circle cx="54" cy="20" r="2.5" fill="#C5E2F5"/>
+                            <!-- Face highlight -->
+                            <circle cx="32" cy="26" r="16" fill="white" opacity="0.4"/>
+                            <!-- Sunglasses frame -->
+                            <path d="M16 24 Q18 20 24 20 Q30 20 32 24 Q34 20 40 20 Q46 20 48 24" stroke="#1e3a5f" stroke-width="2" fill="none" stroke-linecap="round"/>
+                            <!-- Left lens -->
+                            <ellipse cx="22" cy="24" rx="7" ry="5" fill="#1e3a5f"/>
+                            <!-- Right lens -->
+                            <ellipse cx="42" cy="24" rx="7" ry="5" fill="#1e3a5f"/>
+                            <!-- Lens shine -->
+                            <ellipse cx="19" cy="22" rx="2" ry="1.5" fill="#4a6b8a"/>
+                            <ellipse cx="39" cy="22" rx="2" ry="1.5" fill="#4a6b8a"/>
+                            <!-- Bridge -->
+                            <path d="M29 24 Q32 26 35 24" stroke="#1e3a5f" stroke-width="2" fill="none"/>
+                            <!-- Nose -->
+                            <ellipse cx="32" cy="32" rx="3" ry="2.5" fill="#7CB3D8"/>
+                            <!-- Smile -->
+                            <path d="M26 38 Q32 44 38 38" stroke="#5A9BC7" stroke-width="2" fill="none" stroke-linecap="round"/>
+                            <!-- Feet -->
+                            <ellipse cx="24" cy="60" rx="6" ry="3" fill="#D6EBF7"/>
+                            <ellipse cx="40" cy="60" rx="6" ry="3" fill="#D6EBF7"/>
                         </svg>
                         <span class="text-xl font-bold theme-text">Sherpa <span class="text-sherpa-blue dark:text-sherpa-teal">1099</span></span>
                     </a>
