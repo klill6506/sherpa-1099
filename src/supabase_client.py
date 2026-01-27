@@ -590,3 +590,149 @@ def get_filing_status_summary(tenant_id: str, tax_year: int):
 
     summary["total"] = sum(summary.values())
     return summary
+
+
+# =============================================================================
+# ATS SUBMISSIONS
+# =============================================================================
+
+def save_ats_submission(
+    receipt_id: str,
+    transmission_id: str,
+    form_type: str,
+    tax_year: int,
+    submission_count: int,
+    recipient_count: int,
+    status: str,
+    irs_message: str = None,
+    cfsf_enabled: bool = False,
+    cfsf_state: str = None,
+    submission_type: str = "original",
+    original_submission_id: str = None,
+    record_map: dict = None,
+) -> dict:
+    """
+    Save an ATS submission record for later reference (especially corrections).
+
+    For ATS tests:
+    - 5 issuers x 2 recipients = 10 records
+    - record_map stores the mapping: recipient_idx -> {submission_seq, record_seq}
+    - This allows corrections to build proper UniqueRecordId
+
+    Returns the created record.
+    """
+    client = get_supabase_client()
+
+    data = {
+        "receipt_id": receipt_id,
+        "transmission_id": transmission_id,
+        "form_type": form_type,
+        "tax_year": tax_year,
+        "submission_count": submission_count,
+        "recipient_count": recipient_count,
+        "status": status,
+        "irs_message": irs_message,
+        "cfsf_enabled": cfsf_enabled,
+        "cfsf_state": cfsf_state,
+        "submission_type": submission_type,
+        "original_submission_id": original_submission_id,
+        "record_map": record_map,
+    }
+
+    response = client.table("ats_submissions").insert(data).execute()
+    return response.data[0] if response.data else None
+
+
+def get_ats_submissions(
+    form_type: str = None,
+    tax_year: int = None,
+    status: str = None,
+    submission_type: str = None,
+    limit: int = 20,
+) -> list:
+    """
+    Get ATS submissions with optional filters.
+
+    Returns list ordered by submitted_at desc (most recent first).
+    """
+    client = get_supabase_client()
+
+    query = client.table("ats_submissions").select("*")
+
+    if form_type:
+        query = query.eq("form_type", form_type)
+    if tax_year:
+        query = query.eq("tax_year", tax_year)
+    if status:
+        query = query.eq("status", status)
+    if submission_type:
+        query = query.eq("submission_type", submission_type)
+
+    query = query.order("submitted_at", desc=True).limit(limit)
+
+    response = query.execute()
+    return response.data or []
+
+
+def get_ats_submission(submission_id: str) -> dict:
+    """Get a single ATS submission by ID."""
+    client = get_supabase_client()
+    response = (
+        client.table("ats_submissions")
+        .select("*")
+        .eq("id", submission_id)
+        .single()
+        .execute()
+    )
+    return response.data
+
+
+def get_accepted_ats_originals(form_type: str = None, tax_year: int = None) -> list:
+    """
+    Get only accepted original ATS submissions (for correction reference).
+
+    These are the submissions that can have corrections filed against them.
+    """
+    client = get_supabase_client()
+
+    query = (
+        client.table("ats_submissions")
+        .select("*")
+        .eq("submission_type", "original")
+        .eq("status", "accepted")
+    )
+
+    if form_type:
+        query = query.eq("form_type", form_type)
+    if tax_year:
+        query = query.eq("tax_year", tax_year)
+
+    query = query.order("submitted_at", desc=True)
+
+    response = query.execute()
+    return response.data or []
+
+
+def update_ats_submission_status(
+    submission_id: str,
+    status: str,
+    irs_message: str = None,
+) -> dict:
+    """Update the status of an ATS submission after checking with IRS."""
+    client = get_supabase_client()
+
+    data = {
+        "status": status,
+        "status_checked_at": "now()",
+        "updated_at": "now()",
+    }
+    if irs_message:
+        data["irs_message"] = irs_message
+
+    response = (
+        client.table("ats_submissions")
+        .update(data)
+        .eq("id", submission_id)
+        .execute()
+    )
+    return response.data[0] if response.data else None

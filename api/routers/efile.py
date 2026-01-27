@@ -31,6 +31,12 @@ from supabase_client import (
     get_operating_years,
     update_filing_status_on_submit,
     update_filing_status_on_check,
+    # ATS submission tracking
+    save_ats_submission,
+    get_ats_submissions,
+    get_ats_submission,
+    get_accepted_ats_originals,
+    update_ats_submission_status,
 )
 from encryption import decrypt_tin
 from iris_xml_generator import (
@@ -2315,6 +2321,42 @@ async def ats_test_submit(request: ATSTestRequest):
             },
         )
 
+        # Save to ats_submissions table for correction reference
+        # Build record_map: maps recipient index (1-10) to submission/record sequence
+        # ATS format: 5 issuers x 2 recipients
+        # Recipient 1,2 -> Issuer 1 (submission 1), record 1,2
+        # Recipient 3,4 -> Issuer 2 (submission 2), record 3,4
+        # etc.
+        record_map = {}
+        for i in range(1, total_recipients + 1):
+            issuer_idx = (i - 1) // 2  # 0-4
+            submission_seq = issuer_idx + 1  # 1-5
+            record_seq = i  # 1-10 (global record sequence)
+            record_map[str(i)] = {
+                "submission_seq": submission_seq,
+                "record_seq": record_seq,
+            }
+
+        if result.receipt_id:
+            try:
+                save_ats_submission(
+                    receipt_id=result.receipt_id,
+                    transmission_id=result.unique_transmission_id,
+                    form_type=request.form_type,
+                    tax_year=request.tax_year,
+                    submission_count=len(batches),
+                    recipient_count=total_recipients,
+                    status="submitted",  # Will be updated when we check status
+                    irs_message=result.message,
+                    cfsf_enabled=request.cfsf_enabled and request.form_type in ("1099NEC", "1099MISC"),
+                    cfsf_state=request.cfsf_state if request.cfsf_enabled else None,
+                    submission_type="original",
+                    record_map=record_map,
+                )
+                logger.info(f"Saved ATS submission to database: {result.receipt_id}")
+            except Exception as save_err:
+                logger.warning(f"Failed to save ATS submission to database: {save_err}")
+
         # Build response message, noting CF/SF if enabled
         response_message = result.message
         if request.cfsf_enabled and request.form_type in ("1099NEC", "1099MISC"):
@@ -2356,6 +2398,125 @@ async def get_last_submit_response_endpoint():
     """
     from src.iris_client import get_last_submit_response
     return get_last_submit_response()
+
+
+# =============================================================================
+# ATS SUBMISSION HISTORY
+# =============================================================================
+
+class ATSSubmissionRecord(BaseModel):
+    """ATS submission record for history tracking."""
+    id: str
+    receipt_id: str
+    transmission_id: str
+    form_type: str
+    tax_year: int
+    submission_count: int
+    recipient_count: int
+    status: str
+    irs_message: Optional[str] = None
+    cfsf_enabled: bool = False
+    cfsf_state: Optional[str] = None
+    submission_type: str  # original or correction
+    original_submission_id: Optional[str] = None
+    record_map: Optional[dict] = None
+    submitted_at: Optional[str] = None
+    status_checked_at: Optional[str] = None
+
+
+@router.get("/ats-test/submissions", response_model=List[ATSSubmissionRecord])
+async def list_ats_submissions(
+    form_type: Optional[str] = Query(None, description="Filter by form type"),
+    tax_year: Optional[int] = Query(None, description="Filter by tax year"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    submission_type: Optional[str] = Query(None, description="Filter by type: original or correction"),
+    limit: int = Query(20, ge=1, le=100, description="Max results"),
+):
+    """
+    List ATS submission history.
+
+    Returns all stored ATS submissions, ordered by most recent first.
+    Use filters to narrow results.
+    """
+    try:
+        submissions = get_ats_submissions(
+            form_type=form_type,
+            tax_year=tax_year,
+            status=status,
+            submission_type=submission_type,
+            limit=limit,
+        )
+        return submissions
+    except Exception as e:
+        logger.exception("Error listing ATS submissions")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ats-test/submissions/originals", response_model=List[ATSSubmissionRecord])
+async def list_accepted_originals(
+    form_type: Optional[str] = Query(None, description="Filter by form type"),
+    tax_year: Optional[int] = Query(None, description="Filter by tax year"),
+):
+    """
+    List only ACCEPTED original ATS submissions.
+
+    These are the submissions that can have corrections filed against them.
+    Use this endpoint to populate the correction form's original selection dropdown.
+    """
+    try:
+        submissions = get_accepted_ats_originals(
+            form_type=form_type,
+            tax_year=tax_year,
+        )
+        return submissions
+    except Exception as e:
+        logger.exception("Error listing accepted ATS originals")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ats-test/submissions/{submission_id}", response_model=ATSSubmissionRecord)
+async def get_ats_submission_detail(submission_id: str):
+    """Get details of a specific ATS submission."""
+    try:
+        submission = get_ats_submission(submission_id)
+        if not submission:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        return submission
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error getting ATS submission")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/ats-test/submissions/{submission_id}/status")
+async def update_submission_status(
+    submission_id: str,
+    status: str = Query(..., description="New status: submitted, accepted, rejected, partially_accepted"),
+    irs_message: Optional[str] = Query(None, description="IRS message/reason"),
+):
+    """
+    Manually update the status of an ATS submission.
+
+    Use this after checking status with IRS to mark submissions as accepted/rejected.
+    """
+    valid_statuses = ["submitted", "accepted", "rejected", "partially_accepted"]
+    if status not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status. Must be one of: {valid_statuses}"
+        )
+
+    try:
+        result = update_ats_submission_status(submission_id, status, irs_message)
+        if not result:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        return {"success": True, "submission_id": submission_id, "status": status}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error updating ATS submission status")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =============================================================================
@@ -2751,6 +2912,39 @@ async def ats_correction_submit(request: ATSCorrectionRequest):
                 "status": result.status.value,
             },
         )
+
+        # Save correction to ats_submissions table
+        if result.receipt_id:
+            try:
+                # Find the original submission ID by receipt_id
+                originals = get_accepted_ats_originals(
+                    form_type=request.form_type,
+                    tax_year=request.tax_year,
+                )
+                original_submission_id = None
+                for orig in originals:
+                    if orig.get("receipt_id") == request.original_receipt_id:
+                        original_submission_id = orig.get("id")
+                        break
+
+                save_ats_submission(
+                    receipt_id=result.receipt_id,
+                    transmission_id=result.unique_transmission_id,
+                    form_type=request.form_type,
+                    tax_year=request.tax_year,
+                    submission_count=len(batches),
+                    recipient_count=total_recipients,
+                    status="submitted",
+                    irs_message=result.message,
+                    cfsf_enabled=False,
+                    cfsf_state=None,
+                    submission_type="correction",
+                    original_submission_id=original_submission_id,
+                    record_map=None,  # Corrections don't need record_map
+                )
+                logger.info(f"Saved ATS correction to database: {result.receipt_id}")
+            except Exception as save_err:
+                logger.warning(f"Failed to save ATS correction to database: {save_err}")
 
         return ATSCorrectionResponse(
             success=result.is_success,

@@ -334,31 +334,127 @@
         </div>
     </template>
 
+    <!-- Previous ATS Submissions -->
+    <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-medium text-sherpa-text">Previous Submissions</h2>
+            <button @click="loadSubmissions()"
+                    :disabled="loadingSubmissions"
+                    class="text-sm text-sherpa-blue hover:text-sherpa-blue/80">
+                <span x-show="!loadingSubmissions">Refresh</span>
+                <span x-show="loadingSubmissions">Loading...</span>
+            </button>
+        </div>
+
+        <template x-if="submissions.length === 0 && !loadingSubmissions">
+            <div class="text-center py-8 text-sherpa-muted">
+                <svg class="w-12 h-12 mx-auto mb-3 text-sherpa-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p>No submissions yet. Submit an ATS test above.</p>
+            </div>
+        </template>
+
+        <template x-if="submissions.length > 0">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-sherpa-border">
+                            <th class="text-left py-2 px-2 text-sherpa-muted font-medium">Date</th>
+                            <th class="text-left py-2 px-2 text-sherpa-muted font-medium">Type</th>
+                            <th class="text-left py-2 px-2 text-sherpa-muted font-medium">Form</th>
+                            <th class="text-left py-2 px-2 text-sherpa-muted font-medium">Receipt ID</th>
+                            <th class="text-left py-2 px-2 text-sherpa-muted font-medium">Status</th>
+                            <th class="text-right py-2 px-2 text-sherpa-muted font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="sub in submissions" :key="sub.id">
+                            <tr class="border-b border-sherpa-border/50 hover:bg-sherpa-panel/50">
+                                <td class="py-2 px-2 text-sherpa-text text-xs" x-text="formatDate(sub.submitted_at)"></td>
+                                <td class="py-2 px-2">
+                                    <span class="px-2 py-0.5 rounded-full text-xs"
+                                          :class="sub.submission_type === 'original' ? 'bg-sherpa-blue/20 text-sherpa-blue' : 'bg-sherpa-amber/20 text-sherpa-amber'"
+                                          x-text="sub.submission_type === 'original' ? 'Original' : 'Correction'"></span>
+                                </td>
+                                <td class="py-2 px-2 text-sherpa-text" x-text="sub.form_type"></td>
+                                <td class="py-2 px-2 font-mono text-xs text-sherpa-muted truncate max-w-[200px]" x-text="sub.receipt_id"></td>
+                                <td class="py-2 px-2">
+                                    <span class="px-2 py-0.5 rounded-full text-xs"
+                                          :class="{
+                                              'bg-sherpa-teal/20 text-sherpa-teal': sub.status === 'accepted',
+                                              'bg-sherpa-amber/20 text-sherpa-amber': sub.status === 'submitted' || sub.status === 'processing',
+                                              'bg-red-500/20 text-red-400': sub.status === 'rejected'
+                                          }"
+                                          x-text="sub.status"></span>
+                                </td>
+                                <td class="py-2 px-2 text-right">
+                                    <button @click="checkSubmissionStatus(sub)"
+                                            class="text-xs text-sherpa-blue hover:underline mr-2">Check</button>
+                                    <button @click="markAsAccepted(sub)"
+                                            x-show="sub.status === 'submitted'"
+                                            class="text-xs text-sherpa-teal hover:underline">Mark Accepted</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </template>
+    </div>
+
     <!-- ATS Correction Test Section -->
     <div class="rounded-2xl bg-sherpa-card ring-1 ring-sherpa-border shadow-sherpa p-6">
         <h2 class="text-lg font-medium text-sherpa-text mb-4">ATS Correction Test</h2>
         <p class="text-sm text-sherpa-muted mb-4">
-            Submit a corrected 1099 to test correction filing capability. You need an accepted original submission first.
+            Submit a corrected 1099 to test correction filing capability. You must have an accepted original submission first.
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-                <label class="block text-sm font-medium text-sherpa-muted mb-1">Original Receipt ID</label>
-                <input type="text"
-                       x-model="correctionReceiptId"
-                       placeholder="2025-68698468914-b0b2da138"
-                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm font-mono placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
-                <p class="text-xs text-sherpa-subtle mt-1">From your accepted original submission</p>
+        <!-- Warning if no accepted originals -->
+        <template x-if="acceptedOriginals.length === 0">
+            <div class="p-4 rounded-xl bg-sherpa-amber/10 border border-sherpa-amber/30 mb-4">
+                <div class="flex items-center gap-2 text-sherpa-amber font-medium text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    No Accepted Originals Found
+                </div>
+                <p class="text-xs text-sherpa-muted mt-1">
+                    Submit an original ATS test above first, then mark it as "accepted" after IRS confirms.
+                    Corrections can only reference accepted original submissions.
+                </p>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-sherpa-muted mb-1">Original UTID</label>
-                <input type="text"
-                       x-model="correctionUtid"
-                       placeholder="49c5c09b-xxxx-xxxx-xxxx-xxxxxxxxxxxx::A"
-                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm font-mono placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
-                <p class="text-xs text-sherpa-subtle mt-1">Unique Transmission ID (ends with ::A for ATS)</p>
+        </template>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-sherpa-muted mb-1">Select Original Submission</label>
+                <select x-model="selectedOriginalId"
+                        @change="onOriginalSelected()"
+                        :disabled="acceptedOriginals.length === 0"
+                        class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm focus:ring-2 focus:ring-sherpa-blue focus:border-transparent disabled:opacity-50">
+                    <option value="">-- Select an accepted original --</option>
+                    <template x-for="orig in acceptedOriginals" :key="orig.id">
+                        <option :value="orig.id" x-text="formatOriginalOption(orig)"></option>
+                    </template>
+                </select>
+                <p class="text-xs text-sherpa-subtle mt-1">Choose from your accepted original submissions</p>
             </div>
         </div>
+
+        <!-- Show selected original details -->
+        <template x-if="selectedOriginal">
+            <div class="p-3 rounded-xl bg-sherpa-panel/50 border border-sherpa-border mb-4">
+                <div class="text-xs text-sherpa-muted space-y-1">
+                    <p><strong>Receipt ID:</strong> <span class="font-mono text-sherpa-teal" x-text="selectedOriginal.receipt_id"></span></p>
+                    <p><strong>Transmission ID:</strong> <span class="font-mono" x-text="selectedOriginal.transmission_id"></span></p>
+                    <p><strong>Submitted:</strong> <span x-text="formatDate(selectedOriginal.submitted_at)"></span></p>
+                    <template x-if="selectedOriginal.cfsf_enabled">
+                        <p><strong>CF/SF:</strong> <span x-text="selectedOriginal.cfsf_state"></span></p>
+                    </template>
+                </div>
+            </div>
+        </template>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -366,7 +462,8 @@
                 <input type="text"
                        x-model="correctionRecipients"
                        placeholder="1"
-                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                       :disabled="!selectedOriginalId"
+                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent disabled:opacity-50">
                 <p class="text-xs text-sherpa-subtle mt-1">Comma-separated recipient numbers (1-10), e.g., "1" or "1,2"</p>
             </div>
             <div>
@@ -375,20 +472,21 @@
                        x-model.number="correctionAmountAdj"
                        placeholder="50.00"
                        step="0.01"
-                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent">
+                       :disabled="!selectedOriginalId"
+                       class="w-full px-4 py-2 rounded-xl bg-sherpa-panel border border-sherpa-border text-sherpa-text text-sm placeholder:text-sherpa-subtle focus:ring-2 focus:ring-sherpa-blue focus:border-transparent disabled:opacity-50">
                 <p class="text-xs text-sherpa-subtle mt-1">Amount to add to original (e.g., 50.00 changes $1100 to $1150)</p>
             </div>
         </div>
 
         <div class="flex flex-wrap gap-3">
             <button @click="previewCorrectionXml()"
-                    :disabled="!correctionReceiptId || !correctionUtid || previewingCorrection"
+                    :disabled="!selectedOriginalId || previewingCorrection"
                     class="px-4 py-2 rounded-xl border border-sherpa-border text-sm font-medium text-sherpa-muted hover:text-sherpa-text hover:bg-sherpa-panel disabled:opacity-50 disabled:cursor-not-allowed">
                 <span x-show="!previewingCorrection">Preview Correction XML</span>
                 <span x-show="previewingCorrection">Generating...</span>
             </button>
             <button @click="submitCorrection()"
-                    :disabled="!correctionReceiptId || !correctionUtid || submittingCorrection"
+                    :disabled="!selectedOriginalId || submittingCorrection"
                     class="px-6 py-2 rounded-xl bg-sherpa-amber text-sherpa-bg text-sm font-semibold hover:bg-sherpa-amber/90 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span x-show="!submittingCorrection">Submit Correction to IRS</span>
                 <span x-show="submittingCorrection">Submitting...</span>
@@ -561,9 +659,13 @@ function atsTestForm() {
         // CF/SF test options
         cfsfEnabled: false,
         cfsfState: 'AZ',  // Default to Arizona (TX is not a CF/SF participating state)
-        // Correction test
-        correctionReceiptId: '',
-        correctionUtid: '',
+        // Submissions history
+        submissions: [],
+        loadingSubmissions: false,
+        acceptedOriginals: [],
+        // Correction test (using stored submissions)
+        selectedOriginalId: '',
+        selectedOriginal: null,
         correctionRecipients: '1',
         correctionAmountAdj: 50.00,
         previewingCorrection: false,
@@ -577,6 +679,78 @@ function atsTestForm() {
                 this.transmitterConfig = await response.json();
             } catch (error) {
                 console.error('Error loading transmitter config:', error);
+            }
+            // Load previous submissions
+            await this.loadSubmissions();
+        },
+
+        async loadSubmissions() {
+            this.loadingSubmissions = true;
+            try {
+                // Load all submissions
+                const response = await fetch('/api/efile/ats-test/submissions?limit=50');
+                this.submissions = await response.json();
+
+                // Load accepted originals for correction dropdown
+                const originalsResponse = await fetch('/api/efile/ats-test/submissions/originals');
+                this.acceptedOriginals = await originalsResponse.json();
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+            } finally {
+                this.loadingSubmissions = false;
+            }
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        },
+
+        formatOriginalOption(orig) {
+            const date = this.formatDate(orig.submitted_at);
+            const cfsf = orig.cfsf_enabled ? ` [CF/SF: ${orig.cfsf_state}]` : '';
+            return `${orig.form_type} - ${date} - ${orig.receipt_id}${cfsf}`;
+        },
+
+        onOriginalSelected() {
+            if (!this.selectedOriginalId) {
+                this.selectedOriginal = null;
+                return;
+            }
+            this.selectedOriginal = this.acceptedOriginals.find(o => o.id === this.selectedOriginalId);
+        },
+
+        async checkSubmissionStatus(sub) {
+            try {
+                const response = await fetch('/api/efile/check-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ receipt_id: sub.receipt_id })
+                });
+                const result = await response.json();
+                alert(`Status: ${result.status}\nMessage: ${result.message || 'No message'}`);
+
+                // Refresh submissions list
+                await this.loadSubmissions();
+            } catch (error) {
+                alert('Error checking status: ' + error.message);
+            }
+        },
+
+        async markAsAccepted(sub) {
+            if (!confirm(`Mark this submission as accepted?\n\nReceipt ID: ${sub.receipt_id}`)) return;
+
+            try {
+                const response = await fetch(`/api/efile/ats-test/submissions/${sub.id}/status?status=accepted`, {
+                    method: 'PATCH'
+                });
+                if (!response.ok) throw new Error('Failed to update status');
+
+                alert('Submission marked as accepted!');
+                await this.loadSubmissions();
+            } catch (error) {
+                alert('Error updating status: ' + error.message);
             }
         },
 
@@ -712,7 +886,7 @@ function atsTestForm() {
         },
 
         async previewCorrectionXml() {
-            if (!this.correctionReceiptId || !this.correctionUtid) return;
+            if (!this.selectedOriginal) return;
 
             this.previewingCorrection = true;
             try {
@@ -720,10 +894,10 @@ function atsTestForm() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        form_type: this.formType,
-                        tax_year: this.taxYear,
-                        original_receipt_id: this.correctionReceiptId,
-                        original_utid: this.correctionUtid,
+                        form_type: this.selectedOriginal.form_type,
+                        tax_year: this.selectedOriginal.tax_year,
+                        original_receipt_id: this.selectedOriginal.receipt_id,
+                        original_utid: this.selectedOriginal.transmission_id,
                         recipients_to_correct: this.parseRecipients(),
                         amount_adjustment: this.correctionAmountAdj
                     })
@@ -738,9 +912,10 @@ function atsTestForm() {
         },
 
         async submitCorrection() {
-            if (!this.correctionReceiptId || !this.correctionUtid) return;
+            if (!this.selectedOriginal) return;
 
-            if (!confirm('Submit ATS correction test to IRS?\n\nThis will submit corrected forms referencing your original accepted submission.')) {
+            const confirmMsg = `Submit ATS correction test to IRS?\n\nOriginal Receipt ID: ${this.selectedOriginal.receipt_id}\nRecipients: ${this.correctionRecipients}\nAmount Adjustment: $${this.correctionAmountAdj}`;
+            if (!confirm(confirmMsg)) {
                 return;
             }
 
@@ -751,15 +926,20 @@ function atsTestForm() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        form_type: this.formType,
-                        tax_year: this.taxYear,
-                        original_receipt_id: this.correctionReceiptId,
-                        original_utid: this.correctionUtid,
+                        form_type: this.selectedOriginal.form_type,
+                        tax_year: this.selectedOriginal.tax_year,
+                        original_receipt_id: this.selectedOriginal.receipt_id,
+                        original_utid: this.selectedOriginal.transmission_id,
                         recipients_to_correct: this.parseRecipients(),
                         amount_adjustment: this.correctionAmountAdj
                     })
                 });
                 this.correctionResult = await response.json();
+
+                // Reload submissions to show the new correction
+                if (this.correctionResult.success || this.correctionResult.status === 'pending' || this.correctionResult.status === 'processing') {
+                    await this.loadSubmissions();
+                }
             } catch (error) {
                 this.correctionResult = {
                     success: false,
