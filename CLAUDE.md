@@ -15,18 +15,22 @@ Converts client 1099 workbooks into IRS-compliant format and submits via IRIS e-
 - Generates IRS-compliant XML for IRIS submission
 - Handles 1099-NEC, MISC, DIV, INT, B, R, 1098
 
-## Quick Start
+## Development & Deployment
+
+**Production only** - No local development. Push to GitHub and Render auto-deploys.
+
 ```powershell
 cd "T:\sherpa-1099"
-.\.venv\Scripts\activate
-python -m uvicorn api.main:app --port 8002 --host 0.0.0.0
+git add <files>
+git commit -m "message"
+git push origin main
 ```
-Or double-click: `run_api.bat`
+Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
 **Last session:** 2026-01-27
-**Working on:** Bug fixes for filer management + UI polish
+**Working on:** Bug fixes for filer management
 
 ### What's Working:
 - ATS certification testing complete (CF/SF test accepted)
@@ -35,57 +39,34 @@ Or double-click: `run_api.bat`
 - Preparer assignment tracking
 - Dark/Light mode toggle with localStorage persistence
 - Winter-themed UI with mountain background (light mode)
+- Add Filer form working
+- Name Line 2 import working
 
-### Bug Fixes This Session:
+### Bug Fixes This Session (2026-01-27):
 
-**1. Name 2 Import Error (FIXED)**
-- Problem: Import tried to save `name_line_2` but filers table didn't have the column
-- Fix: Added migration 008 to add `name_line_2` column to filers table
-- Files: `database/008_add_filer_name_line_2.sql`
+**1. Add Filer "Failed to Fetch" - FIXED**
+- Problem: `_normalize_filer_data()` had logic bug - field mapping code was unreachable
+- Fix: Rewrote function with proper mapping dict pattern
+- File: `api/routers/filers.py`
 
-**2. Add Filer "Failed to Fetch" (FIXED)**
-- Problem: Form field names didn't match API schema
-  - Form sends: `name_line2`, `contact_phone`, `contact_email`, `is_active`
-  - API expected: `name_line_2`, `phone`, `email`
-- Fix: Added field name normalization in API router + updated Pydantic schemas
-- Files: `api/schemas.py`, `api/routers/filers.py`, `templates/filers/form.html`
+**2. Filers List vs Dashboard Mismatch - FIXED**
+- Problem: Filers list page showed ALL filers, dashboard only showed active
+- Fix: Added `.eq('is_active', True)` filter to filers list query
+- File: `api/routers/web.py`
 
-**3. Dashboard Not Showing All Filers (FIXED)**
-- Problem: `filing_dashboard` view used INNER JOIN, excluding filers without status rows
-- Fix: Changed to LEFT JOIN, added COALESCE for default 'NOT_FILED' status
-- Files: `database/migrations/009_fix_filing_dashboard_view.sql`, `database/migrations/010_fix_filing_dashboard_v2.sql`
+**3. Name Line 2 Import - FIXED**
+- Problem: `name_line_2` column didn't exist in filers table
+- Fix: Migration 008 adds the column (already run in Supabase)
+- File: `database/008_add_filer_name_line_2.sql`
 
-### UI Redesign Completed:
+**4. Dashboard Not Showing All Filers - FIXED (previous session)**
+- Problem: `filing_dashboard` view used INNER JOIN
+- Fix: Changed to LEFT JOIN with COALESCE for 'NOT_FILED' default
+- File: `database/migrations/010_fix_filing_dashboard_v2.sql`
 
-**Design Features:**
-- Winter gradient background with external SVG mountains (`static/mountains.svg`)
-- Readability scrim overlay for text clarity
-- Dark mode: Charcoal gray theme (#2d3142 background)
-- Frosted glass cards using `.glass` and `.glass-light` CSS classes
-- Updated Yeti mascot with sunglasses in header
-- Semantic colors: Blue=good, Green=start, Amber=pending, Red=errors
-
-**Home Page (dashboard.html):**
-- All filers table with action buttons (Transmit, Check Status, View Errors, Open)
-- Summary cards showing filing status counts
-- Search and status filter
-
-**Filers Page (filers/list.html):**
-- Same data as home page (unified view)
-
-### Database Migrations to Run:
-If starting fresh or issues persist, run these in order:
+### Database Migrations (Already Run):
 1. `database/008_add_filer_name_line_2.sql` - Adds name_line_2 to filers
-2. `database/migrations/010_fix_filing_dashboard_v2.sql` - Fixes the view
-
-### Files Modified This Session:
-- `templates/base.html` - Dark/light mode, mountain background, charcoal theme
-- `templates/filers/form.html` - Fixed field name mappings
-- `api/schemas.py` - Added name_line_2, field aliases, extra='ignore'
-- `api/routers/filers.py` - Added _normalize_filer_data() helper
-- `api/main.py` - Enabled static file serving for mountains.svg
-- `src/supabase_client.py` - Made tenant_id filter optional
-- `static/mountains.svg` - New external mountain graphic
+2. `database/migrations/010_fix_filing_dashboard_v2.sql` - Fixes the dashboard view
 
 ## Key Files
 | File | Purpose |
