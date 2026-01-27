@@ -413,10 +413,13 @@ def get_filing_dashboard(
     query = (
         client.table("filing_dashboard")
         .select("*")
-        .eq("tenant_id", tenant_id)
         .eq("tax_year", tax_year)
         .order("filer_name")
     )
+
+    # Only filter by tenant if provided and not empty
+    if tenant_id:
+        query = query.eq("tenant_id", tenant_id)
 
     if status_filter:
         query = query.eq("status", status_filter)
