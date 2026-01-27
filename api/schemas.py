@@ -61,22 +61,17 @@ class FilerBase(BaseModel):
 
 
 class FilerCreate(FilerBase):
+    model_config = ConfigDict(extra='ignore')  # Ignore extra fields from form
+
     # Allow form to send alternative field names
     name_line2: Optional[str] = Field(None, max_length=255)  # Form uses name_line2
     contact_phone: Optional[str] = Field(None, max_length=20)  # Form uses contact_phone
     contact_email: Optional[str] = Field(None, max_length=255)  # Form uses contact_email
 
-    def model_post_init(self, __context):
-        # Map alternative field names to canonical names
-        if self.name_line2 and not self.name_line_2:
-            object.__setattr__(self, 'name_line_2', self.name_line2)
-        if self.contact_phone and not self.phone:
-            object.__setattr__(self, 'phone', self.contact_phone)
-        if self.contact_email and not self.email:
-            object.__setattr__(self, 'email', self.contact_email)
-
 
 class FilerUpdate(BaseModel):
+    model_config = ConfigDict(extra='ignore')  # Ignore extra fields from form
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     name_line_2: Optional[str] = Field(None, max_length=255)
     name_line2: Optional[str] = Field(None, max_length=255)  # Form uses name_line2
@@ -96,15 +91,6 @@ class FilerUpdate(BaseModel):
     contact_email: Optional[str] = Field(None, max_length=255)  # Form uses contact_email
     notes: Optional[str] = None
     is_active: Optional[bool] = None
-
-    def model_post_init(self, __context):
-        # Map alternative field names to canonical names
-        if self.name_line2 and not self.name_line_2:
-            object.__setattr__(self, 'name_line_2', self.name_line2)
-        if self.contact_phone and not self.phone:
-            object.__setattr__(self, 'phone', self.contact_phone)
-        if self.contact_email and not self.email:
-            object.__setattr__(self, 'email', self.contact_email)
 
 
 class Filer(BaseModel):
