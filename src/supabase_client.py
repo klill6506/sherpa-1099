@@ -408,6 +408,7 @@ def get_filing_dashboard(
     Get filing dashboard data for all filers in a tenant/year.
 
     Returns list of filers with their filing status, preparer, and form counts.
+    Note: tenant_id filter disabled for single-tenant deployment.
     """
     client = get_supabase_client()
     query = (
@@ -417,9 +418,9 @@ def get_filing_dashboard(
         .order("filer_name")
     )
 
-    # Only filter by tenant if provided and not empty
-    if tenant_id:
-        query = query.eq("tenant_id", tenant_id)
+    # tenant_id filter disabled - single-tenant deployment
+    # if tenant_id:
+    #     query = query.eq("tenant_id", tenant_id)
 
     if status_filter:
         query = query.eq("status", status_filter)
