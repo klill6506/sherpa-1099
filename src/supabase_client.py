@@ -538,12 +538,14 @@ def get_filing_status_summary(tenant_id: str, tax_year: int):
     Get summary counts of filing statuses for a tenant/year.
 
     Returns dict with counts per status: {NOT_FILED: 10, SUBMITTED: 5, ACCEPTED: 3, ...}
+    Note: Uses filing_dashboard view to include all active filers.
+    Note: tenant_id filter disabled for single-tenant deployment.
     """
     client = get_supabase_client()
+    # Query from filing_dashboard view to include all filers (even those without status rows)
     response = (
-        client.table("filer_filing_status")
+        client.table("filing_dashboard")
         .select("status")
-        .eq("tenant_id", tenant_id)
         .eq("tax_year", tax_year)
         .execute()
     )
@@ -559,7 +561,7 @@ def get_filing_status_summary(tenant_id: str, tax_year: int):
     }
 
     for row in response.data or []:
-        status = row.get("status")
+        status = row.get("status") or "NOT_FILED"
         if status in summary:
             summary[status] += 1
 
