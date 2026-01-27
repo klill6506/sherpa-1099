@@ -43,6 +43,7 @@ class OperatingYear(OperatingYearBase):
 
 class FilerBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
+    name_line_2: Optional[str] = Field(None, max_length=255)
     dba_name: Optional[str] = Field(None, max_length=255)
     tin: str = Field(..., min_length=9, max_length=11)
     tin_type: str = Field(default="EIN", pattern="^(EIN|SSN)$")
@@ -56,14 +57,29 @@ class FilerBase(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[str] = Field(None, max_length=255)
     notes: Optional[str] = None
+    is_active: bool = Field(default=True)
 
 
 class FilerCreate(FilerBase):
-    pass
+    # Allow form to send alternative field names
+    name_line2: Optional[str] = Field(None, max_length=255)  # Form uses name_line2
+    contact_phone: Optional[str] = Field(None, max_length=20)  # Form uses contact_phone
+    contact_email: Optional[str] = Field(None, max_length=255)  # Form uses contact_email
+
+    def model_post_init(self, __context):
+        # Map alternative field names to canonical names
+        if self.name_line2 and not self.name_line_2:
+            object.__setattr__(self, 'name_line_2', self.name_line2)
+        if self.contact_phone and not self.phone:
+            object.__setattr__(self, 'phone', self.contact_phone)
+        if self.contact_email and not self.email:
+            object.__setattr__(self, 'email', self.contact_email)
 
 
 class FilerUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
+    name_line_2: Optional[str] = Field(None, max_length=255)
+    name_line2: Optional[str] = Field(None, max_length=255)  # Form uses name_line2
     dba_name: Optional[str] = Field(None, max_length=255)
     tin: Optional[str] = Field(None, min_length=9, max_length=11)
     tin_type: Optional[str] = Field(None, pattern="^(EIN|SSN)$")
@@ -75,15 +91,41 @@ class FilerUpdate(BaseModel):
     country: Optional[str] = Field(None, max_length=2)
     contact_name: Optional[str] = Field(None, max_length=255)
     phone: Optional[str] = Field(None, max_length=20)
+    contact_phone: Optional[str] = Field(None, max_length=20)  # Form uses contact_phone
     email: Optional[str] = Field(None, max_length=255)
+    contact_email: Optional[str] = Field(None, max_length=255)  # Form uses contact_email
     notes: Optional[str] = None
     is_active: Optional[bool] = None
 
+    def model_post_init(self, __context):
+        # Map alternative field names to canonical names
+        if self.name_line2 and not self.name_line_2:
+            object.__setattr__(self, 'name_line_2', self.name_line2)
+        if self.contact_phone and not self.phone:
+            object.__setattr__(self, 'phone', self.contact_phone)
+        if self.contact_email and not self.email:
+            object.__setattr__(self, 'email', self.contact_email)
 
-class Filer(FilerBase):
+
+class Filer(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
+    name: str
+    name_line_2: Optional[str] = None
+    dba_name: Optional[str] = None
+    tin: str
+    tin_type: str
+    address1: str
+    address2: Optional[str] = None
+    city: str
+    state: str
+    zip: str
+    country: str = "US"
+    contact_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    notes: Optional[str] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime

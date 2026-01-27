@@ -47,11 +47,35 @@ async def get_filer_by_id(filer_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _normalize_filer_data(data: dict) -> dict:
+    """Normalize form field names to database column names."""
+    result = {}
+    for k, v in data.items():
+        if v is None:
+            continue
+        # Map form field names to DB column names
+        if k == 'name_line2':
+            result['name_line_2'] = v
+        elif k == 'contact_phone':
+            result['phone'] = v
+        elif k == 'contact_email':
+            result['email'] = v
+        elif k in ('name_line2', 'contact_phone', 'contact_email'):
+            # Skip these, already mapped
+            continue
+        else:
+            result[k] = v
+    return result
+
+
 @router.post("/", response_model=Filer, status_code=201)
 async def create_new_filer(filer_data: FilerCreate):
     """Create a new filer."""
     try:
-        filer = create_filer(filer_data.model_dump())
+        # Normalize field names from form to database
+        data = _normalize_filer_data(filer_data.model_dump())
+
+        filer = create_filer(data)
         if not filer:
             raise HTTPException(status_code=400, detail="Failed to create filer")
 
@@ -75,8 +99,8 @@ async def create_new_filer(filer_data: FilerCreate):
 async def update_existing_filer(filer_id: str, filer_data: FilerUpdate):
     """Update an existing filer."""
     try:
-        # Only include non-None values
-        update_data = {k: v for k, v in filer_data.model_dump().items() if v is not None}
+        # Normalize field names and filter out None values
+        update_data = _normalize_filer_data(filer_data.model_dump())
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
 

@@ -135,7 +135,7 @@ function filerForm() {
     return {
         form: {
             name: '{{ filer.name if filer else "" }}',
-            name_line2: '{{ filer.name_line2 if filer and filer.name_line2 else "" }}',
+            name_line2: '{{ filer.name_line_2 if filer and filer.name_line_2 else "" }}',
             tin: '{{ filer.tin if filer else "" }}',
             address1: '{{ filer.address1 if filer else "" }}',
             address2: '{{ filer.address2 if filer and filer.address2 else "" }}',
@@ -143,8 +143,8 @@ function filerForm() {
             state: '{{ filer.state if filer else "" }}',
             zip: '{{ filer.zip if filer else "" }}',
             contact_name: '{{ filer.contact_name if filer and filer.contact_name else "" }}',
-            contact_phone: '{{ filer.contact_phone if filer and filer.contact_phone else "" }}',
-            contact_email: '{{ filer.contact_email if filer and filer.contact_email else "" }}',
+            contact_phone: '{{ filer.phone if filer and filer.phone else "" }}',
+            contact_email: '{{ filer.email if filer and filer.email else "" }}',
             is_active: {{ 'true' if (not filer or filer.is_active) else 'false' }}
         },
         isSubmitting: false,
