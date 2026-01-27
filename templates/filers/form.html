@@ -178,12 +178,18 @@ function filerForm() {
         },
 
         async deleteFiler() {
-            if (!confirm('Are you sure you want to delete this filer? This action cannot be undone.')) {
+            const filerName = this.form.name || 'this filer';
+            if (!confirm(`Are you sure you want to PERMANENTLY delete "${filerName}"?\n\nThis will also delete all recipients and forms associated with this filer.\n\nThis action CANNOT be undone!`)) {
+                return;
+            }
+
+            // Double confirmation for safety
+            if (!confirm('This is your final warning. All data will be permanently lost. Continue?')) {
                 return;
             }
 
             try {
-                const response = await fetch('/api/filers/{{ filer.id if filer else "" }}', {
+                const response = await fetch('/api/filers/{{ filer.id if filer else "" }}/permanent', {
                     method: 'DELETE'
                 });
 

@@ -16,6 +16,7 @@ from supabase_client import (
     create_filer,
     update_filer,
     delete_filer,
+    hard_delete_filer,
     log_activity,
 )
 from api.schemas import Filer, FilerCreate, FilerUpdate, MessageResponse
@@ -150,6 +151,39 @@ async def deactivate_filer(filer_id: str):
         )
 
         return MessageResponse(message="Filer deactivated successfully")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{filer_id}/permanent", response_model=MessageResponse)
+async def permanently_delete_filer(filer_id: str):
+    """
+    Permanently delete a filer and all associated data.
+
+    This is irreversible! Deletes all forms, recipients, and filing status records.
+    """
+    try:
+        # Get filer info for logging before deletion
+        filer = get_filer(filer_id)
+        if not filer:
+            raise HTTPException(status_code=404, detail="Filer not found")
+
+        filer_name = filer.get("name", "Unknown")
+
+        success = hard_delete_filer(filer_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete filer")
+
+        log_activity(
+            action="filer_permanently_deleted",
+            entity_type="filer",
+            entity_id=filer_id,
+            details={"name": filer_name},
+        )
+
+        return MessageResponse(message=f"Filer '{filer_name}' permanently deleted")
     except HTTPException:
         raise
     except Exception as e:

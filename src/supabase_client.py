@@ -165,6 +165,29 @@ def delete_filer(filer_id: str):
     return response.data[0] if response.data else None
 
 
+def hard_delete_filer(filer_id: str):
+    """
+    Permanently delete a filer and all associated data.
+
+    Deletes in order: forms_1099, recipients, filer_filing_status, then filer.
+    Returns True if successful.
+    """
+    client = get_supabase_client()
+
+    # Delete forms first (they reference recipients)
+    client.table("forms_1099").delete().eq("filer_id", filer_id).execute()
+
+    # Delete recipients
+    client.table("recipients").delete().eq("filer_id", filer_id).execute()
+
+    # Delete filing status records
+    client.table("filer_filing_status").delete().eq("filer_id", filer_id).execute()
+
+    # Finally delete the filer
+    response = client.table("filers").delete().eq("id", filer_id).execute()
+    return len(response.data) > 0 if response.data else False
+
+
 # =============================================================================
 # RECIPIENTS
 # =============================================================================
