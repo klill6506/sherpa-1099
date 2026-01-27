@@ -30,7 +30,7 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
 **Last session:** 2026-01-27
-**Working on:** Bug fixes for filer management
+**Working on:** ATS correction filing fix
 
 ### What's Working:
 - ATS certification testing complete (CF/SF test accepted)
@@ -41,8 +41,45 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 - Winter-themed UI with mountain background (light mode)
 - Add Filer form working
 - Name Line 2 import working
+- **ATS submission history tracking (NEW)**
+- **Proper correction filing with stored original references (NEW)**
 
-### Bug Fixes This Session (2026-01-27):
+### ATS Correction Fix (2026-01-27):
+
+IRS rejected previous correction because it wasn't properly referencing original test files.
+
+**Solution implemented:**
+1. **New `ats_submissions` table** - Stores original and correction submissions
+   - Tracks receipt_id, transmission_id, record_map
+   - Links corrections to their originals via `original_submission_id`
+   - File: `database/migrations/011_ats_submissions.sql`
+
+2. **New API endpoints:**
+   - `GET /api/efile/ats-test/submissions` - List all submissions
+   - `GET /api/efile/ats-test/submissions/originals` - List accepted originals
+   - `PATCH /api/efile/ats-test/submissions/{id}/status` - Update status
+   - Auto-saves on submit for both original and correction
+
+3. **Updated ATS test page:**
+   - Shows submission history table
+   - Correction section uses dropdown of accepted originals
+   - Can mark submissions as "accepted" after IRS confirmation
+   - No more manual entry of receipt IDs
+
+**Workflow for ATS Correction Test:**
+1. Submit original ATS test (saves automatically)
+2. Check status with IRS
+3. When IRS accepts, click "Mark Accepted" in submissions table
+4. Go to Correction section, select the accepted original from dropdown
+5. Submit correction - it will reference the stored original data
+
+### Database Migrations to Run:
+**RUN THIS IN SUPABASE:**
+```sql
+-- Copy contents of database/migrations/011_ats_submissions.sql
+```
+
+### Previous Bug Fixes (2026-01-27):
 
 **1. Add Filer "Failed to Fetch" - FIXED**
 - Problem: `_normalize_filer_data()` had logic bug - field mapping code was unreachable
@@ -54,19 +91,10 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 - Fix: Added `.eq('is_active', True)` filter to filers list query
 - File: `api/routers/web.py`
 
-**3. Name Line 2 Import - FIXED**
-- Problem: `name_line_2` column didn't exist in filers table
-- Fix: Migration 008 adds the column (already run in Supabase)
-- File: `database/008_add_filer_name_line_2.sql`
-
-**4. Dashboard Not Showing All Filers - FIXED (previous session)**
-- Problem: `filing_dashboard` view used INNER JOIN
-- Fix: Changed to LEFT JOIN with COALESCE for 'NOT_FILED' default
-- File: `database/migrations/010_fix_filing_dashboard_v2.sql`
-
-### Database Migrations (Already Run):
-1. `database/008_add_filer_name_line_2.sql` - Adds name_line_2 to filers
-2. `database/migrations/010_fix_filing_dashboard_v2.sql` - Fixes the dashboard view
+**3. Delete Filer Feature - ADDED**
+- Can now permanently delete filers from Edit page
+- Double confirmation required
+- File: `api/routers/filers.py`, `templates/filers/form.html`
 
 ## Key Files
 | File | Purpose |
