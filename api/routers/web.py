@@ -218,7 +218,7 @@ async def filers_list(request: Request):
     client = get_supabase_client()
     operating_year = get_operating_year()
 
-    filers = client.table('filers').select('*').order('name').execute().data
+    filers = client.table('filers').select('*').eq('is_active', True).order('name').execute().data
 
     return templates.TemplateResponse("filers/list.html", {
         "request": request,

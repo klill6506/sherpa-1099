@@ -49,21 +49,23 @@ async def get_filer_by_id(filer_id: str):
 
 def _normalize_filer_data(data: dict) -> dict:
     """Normalize form field names to database column names."""
+    # Fields to map from form names to DB names
+    field_mappings = {
+        'name_line2': 'name_line_2',
+        'contact_phone': 'phone',
+        'contact_email': 'email',
+    }
+    # Fields to skip (form aliases that shouldn't be passed to DB)
+    skip_fields = set(field_mappings.keys())
+
     result = {}
     for k, v in data.items():
         if v is None:
             continue
         # Map form field names to DB column names
-        if k == 'name_line2':
-            result['name_line_2'] = v
-        elif k == 'contact_phone':
-            result['phone'] = v
-        elif k == 'contact_email':
-            result['email'] = v
-        elif k in ('name_line2', 'contact_phone', 'contact_email'):
-            # Skip these, already mapped
-            continue
-        else:
+        if k in field_mappings:
+            result[field_mappings[k]] = v
+        elif k not in skip_fields:
             result[k] = v
     return result
 
