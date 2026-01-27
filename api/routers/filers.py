@@ -60,7 +60,8 @@ def _normalize_filer_data(data: dict) -> dict:
 
     result = {}
     for k, v in data.items():
-        if v is None:
+        # Skip None and empty strings
+        if v is None or v == '':
             continue
         # Map form field names to DB column names
         if k in field_mappings:
@@ -77,9 +78,14 @@ async def create_new_filer(filer_data: FilerCreate):
         # Normalize field names from form to database
         data = _normalize_filer_data(filer_data.model_dump())
 
+        # Debug: log what we're sending to the database
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Creating filer with data: {data}")
+
         filer = create_filer(data)
         if not filer:
-            raise HTTPException(status_code=400, detail="Failed to create filer")
+            raise HTTPException(status_code=400, detail="Failed to create filer - no data returned")
 
         # Log activity
         log_activity(
@@ -94,6 +100,9 @@ async def create_new_filer(filer_data: FilerCreate):
     except HTTPException:
         raise
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception(f"Error creating filer: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
