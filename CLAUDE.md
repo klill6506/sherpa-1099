@@ -25,57 +25,67 @@ Or double-click: `run_api.bat`
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-26
-**Working on:** Major UI redesign - winter theme with frosted glass styling
+**Last session:** 2026-01-27
+**Working on:** Bug fixes for filer management + UI polish
 
 ### What's Working:
 - ATS certification testing complete (CF/SF test accepted)
 - IRS e-filing submissions working
 - Filing status tracking per filer (filer_filing_status table)
 - Preparer assignment tracking
+- Dark/Light mode toggle with localStorage persistence
+- Winter-themed UI with mountain background (light mode)
+
+### Bug Fixes This Session:
+
+**1. Name 2 Import Error (FIXED)**
+- Problem: Import tried to save `name_line_2` but filers table didn't have the column
+- Fix: Added migration 008 to add `name_line_2` column to filers table
+- Files: `database/008_add_filer_name_line_2.sql`
+
+**2. Add Filer "Failed to Fetch" (FIXED)**
+- Problem: Form field names didn't match API schema
+  - Form sends: `name_line2`, `contact_phone`, `contact_email`, `is_active`
+  - API expected: `name_line_2`, `phone`, `email`
+- Fix: Added field name normalization in API router + updated Pydantic schemas
+- Files: `api/schemas.py`, `api/routers/filers.py`, `templates/filers/form.html`
+
+**3. Dashboard Not Showing All Filers (FIXED)**
+- Problem: `filing_dashboard` view used INNER JOIN, excluding filers without status rows
+- Fix: Changed to LEFT JOIN, added COALESCE for default 'NOT_FILED' status
+- Files: `database/migrations/009_fix_filing_dashboard_view.sql`, `database/migrations/010_fix_filing_dashboard_v2.sql`
 
 ### UI Redesign Completed:
-Implemented new winter-themed UI matching Sherpa design mockup:
 
 **Design Features:**
-- Winter gradient background with mountain/forest silhouettes
+- Winter gradient background with external SVG mountains (`static/mountains.svg`)
+- Readability scrim overlay for text clarity
+- Dark mode: Charcoal gray theme (#2d3142 background)
 - Frosted glass cards using `.glass` and `.glass-light` CSS classes
-- Updated Yeti mascot in header
+- Updated Yeti mascot with sunglasses in header
 - Semantic colors: Blue=good, Green=start, Amber=pending, Red=errors
 
 **Home Page (dashboard.html):**
-- Welcome header with user name
-- 3 quick action cards with icons (Add Filer, Import Data, Continue Drafts)
-- Two-column layout:
-  - Left: "Needs Attention" list with Open buttons
-  - Right: Filing Status Overview + Quick Links
+- All filers table with action buttons (Transmit, Check Status, View Errors, Open)
+- Summary cards showing filing status counts
+- Search and status filter
 
 **Filers Page (filers/list.html):**
-- Unified filers + filing status in one page
-- Columns: Filer, Preparer, Status, Forms, Receipt ID, Last Submitted, Actions
-- Action buttons: Transmit (green), Check Status (amber), View Errors (red), Open (blue)
-- Status filters and search
+- Same data as home page (unified view)
 
-**Route Changes:**
-- `/` = Home landing page with work queue preview
-- `/filers` = Canonical filers list with filing status
-- `/filing-dashboard` = Redirects to `/filers`
-
-### PDF Positioning:
-- Recipient text moved down 12 points total (offset changed from 24 to 36)
-- File: `src/pdf_generator.py` line 217
-
-### Recent Database Changes:
-- Added `filer_filing_status` table (migration 007)
-- Tracks: preparer, status, receipt_id, transmission_id, errors per filer/year
-- View: `filing_dashboard` joins filer info with status
+### Database Migrations to Run:
+If starting fresh or issues persist, run these in order:
+1. `database/008_add_filer_name_line_2.sql` - Adds name_line_2 to filers
+2. `database/migrations/010_fix_filing_dashboard_v2.sql` - Fixes the view
 
 ### Files Modified This Session:
-- `templates/base.html` - Winter theme, frosted glass, mountain background
-- `templates/dashboard.html` - Redesigned home page with mockup layout
-- `templates/filers/list.html` - Frosted glass styling, unified filers + status
-- `api/routers/web.py` - Route changes (home, filing-dashboard redirect)
-- `src/pdf_generator.py` - Recipient text position adjustment
+- `templates/base.html` - Dark/light mode, mountain background, charcoal theme
+- `templates/filers/form.html` - Fixed field name mappings
+- `api/schemas.py` - Added name_line_2, field aliases, extra='ignore'
+- `api/routers/filers.py` - Added _normalize_filer_data() helper
+- `api/main.py` - Enabled static file serving for mountains.svg
+- `src/supabase_client.py` - Made tenant_id filter optional
+- `static/mountains.svg` - New external mountain graphic
 
 ## Key Files
 | File | Purpose |
