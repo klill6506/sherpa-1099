@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -122,6 +123,25 @@ app.add_middleware(
 )
 
 
+class ProxyHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Handle X-Forwarded-Proto header from reverse proxy (Render).
+
+    This ensures request.url.scheme is correct when behind HTTPS proxy.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        # Trust X-Forwarded-Proto header from proxy
+        forwarded_proto = request.headers.get("x-forwarded-proto")
+        if forwarded_proto:
+            # Modify the scope to use the forwarded scheme
+            request.scope["scheme"] = forwarded_proto
+        return await call_next(request)
+
+
+app.add_middleware(ProxyHeadersMiddleware)
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all responses."""
 
@@ -132,8 +152,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-        # Enable HSTS once HTTPS is confirmed working in production
-        # response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        # HSTS - tell browsers to always use HTTPS
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
 
