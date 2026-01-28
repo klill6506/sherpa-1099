@@ -403,12 +403,12 @@
                                           }"
                                           x-text="sub.status"></span>
                                 </td>
-                                <td class="py-2 px-2 text-right">
+                                <td class="py-2 px-2 text-right space-x-2">
                                     <button @click="checkSubmissionStatus(sub)"
-                                            class="text-xs text-sherpa-blue hover:underline mr-2">Check</button>
+                                            class="px-2 py-1 text-xs bg-sherpa-blue/20 text-sherpa-blue rounded hover:bg-sherpa-blue/30">Check</button>
                                     <button @click="markAsAccepted(sub)"
                                             x-show="sub.status === 'submitted'"
-                                            class="text-xs text-sherpa-teal hover:underline">Mark Accepted</button>
+                                            class="px-2 py-1 text-xs bg-sherpa-teal text-white rounded hover:bg-sherpa-teal/90 font-medium">Mark Accepted</button>
                                 </td>
                             </tr>
                         </template>
