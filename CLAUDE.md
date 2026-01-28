@@ -29,11 +29,12 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-27
-**Working on:** ATS correction filing fix
+**Last session:** 2026-01-28
+**Working on:** ATS certification - CF/SF must be in same testing cycle
 
 ### What's Working:
-- ATS certification testing complete (CF/SF test accepted)
+- ATS submission history tracking
+- Proper correction filing with stored original references
 - IRS e-filing submissions working
 - Filing status tracking per filer (filer_filing_status table)
 - Preparer assignment tracking
@@ -41,43 +42,35 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 - Winter-themed UI with mountain background (light mode)
 - Add Filer form working
 - Name Line 2 import working
-- **ATS submission history tracking (NEW)**
-- **Proper correction filing with stored original references (NEW)**
 
-### ATS Correction Fix (2026-01-27):
+### ATS Certification Fix (2026-01-28):
 
-IRS rejected previous correction because it wasn't properly referencing original test files.
+**IRS Rejection Reason:** CF/SF test was done separately, not in the same testing cycle as original + correction.
 
-**Solution implemented:**
-1. **New `ats_submissions` table** - Stores original and correction submissions
-   - Tracks receipt_id, transmission_id, record_map
-   - Links corrections to their originals via `original_submission_id`
-   - File: `database/migrations/011_ats_submissions.sql`
+**IRS Requirements (all in ONE testing cycle):**
+1. Original transmission with 5 submissions (2 records each = 10 total)
+2. **One submission MUST include CF/SF** (Combined Federal/State Filing)
+3. Correction transmission referencing the accepted original
 
-2. **New API endpoints:**
-   - `GET /api/efile/ats-test/submissions` - List all submissions
-   - `GET /api/efile/ats-test/submissions/originals` - List accepted originals
-   - `PATCH /api/efile/ats-test/submissions/{id}/status` - Update status
-   - Auto-saves on submit for both original and correction
+**Fix Applied:**
+- CF/SF is now **enabled by default** in the ATS test page
+- Default state changed from AZ to GA (per IRS ATS examples)
+- Updated UI to clarify that CF/SF is REQUIRED for certification
+- Issuer #5 (Epsilon) automatically includes state filing data
 
-3. **Updated ATS test page:**
-   - Shows submission history table
-   - Correction section uses dropdown of accepted originals
-   - Can mark submissions as "accepted" after IRS confirmation
-   - No more manual entry of receipt IDs
+**Workflow for Complete ATS Certification:**
+1. Go to ATS Test page
+2. Ensure "Include CF/SF Test" is checked (should be checked by default)
+3. Select state (GA is default, works with IRS examples)
+4. Submit Original ATS Test → Note the Receipt ID
+5. Wait for IRS to process → Check status
+6. When IRS accepts, click "Mark Accepted" in the Previous Submissions table
+7. Go to Correction section → Select the accepted original from dropdown
+8. Submit Correction → Wait for IRS acceptance
+9. Email IRS with BOTH Receipt IDs (original with CF/SF + correction)
 
-**Workflow for ATS Correction Test:**
-1. Submit original ATS test (saves automatically)
-2. Check status with IRS
-3. When IRS accepts, click "Mark Accepted" in submissions table
-4. Go to Correction section, select the accepted original from dropdown
-5. Submit correction - it will reference the stored original data
-
-### Database Migrations to Run:
-**RUN THIS IN SUPABASE:**
-```sql
--- Copy contents of database/migrations/011_ats_submissions.sql
-```
+### Database Migrations:
+Already run: `database/migrations/011_ats_submissions.sql`
 
 ### Previous Bug Fixes (2026-01-27):
 

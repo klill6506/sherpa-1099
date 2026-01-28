@@ -24,12 +24,22 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-lg font-medium text-sherpa-amber mb-2">About ATS Testing</h3>
+                <h3 class="text-lg font-medium text-sherpa-amber mb-2">IRS ATS Certification Requirements</h3>
                 <p class="text-sherpa-muted text-sm mb-3">
-                    IRS requires 1 transmission with 5 submissions (issuers) and 2 payees each = 10 total records
-                    for IRIS A2A certification. This page generates test data with TINs starting with 000.
+                    IRS requires ALL of the following in <strong>one testing cycle</strong>:
                 </p>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <ol class="list-decimal list-inside text-sherpa-muted text-sm mb-3 space-y-1">
+                    <li><strong>Original transmission</strong> with 5 submissions (2 records each = 10 total)</li>
+                    <li><strong>One submission must include CF/SF</strong> (Combined Federal/State Filing)</li>
+                    <li><strong>Correction transmission</strong> referencing the accepted original</li>
+                </ol>
+                <div class="p-3 rounded-lg bg-sherpa-blue/10 border border-sherpa-blue/30 mb-3">
+                    <p class="text-sherpa-blue text-sm font-medium">Workflow:</p>
+                    <p class="text-sherpa-muted text-xs mt-1">
+                        1. Submit Original (with CF/SF enabled) → 2. Wait for IRS "Accepted" → 3. Mark as Accepted below → 4. Submit Correction
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                     <div class="bg-sherpa-panel/50 rounded-lg p-3">
                         <div class="text-sherpa-subtle">Issuers</div>
                         <div class="text-xl font-bold text-sherpa-amber">5</div>
@@ -41,6 +51,10 @@
                     <div class="bg-sherpa-panel/50 rounded-lg p-3">
                         <div class="text-sherpa-subtle">Total Records</div>
                         <div class="text-xl font-bold text-sherpa-amber">10</div>
+                    </div>
+                    <div class="bg-sherpa-panel/50 rounded-lg p-3">
+                        <div class="text-sherpa-subtle">CF/SF Issuer</div>
+                        <div class="text-xl font-bold text-sherpa-purple">#5</div>
                     </div>
                     <div class="bg-sherpa-panel/50 rounded-lg p-3">
                         <div class="text-sherpa-subtle">Test Mode</div>
@@ -110,11 +124,12 @@
                     </div>
                     <div class="flex-1">
                         <label for="cfsfEnabled" class="text-sm font-medium text-sherpa-text cursor-pointer">
-                            Enable CF/SF Test (Combined Federal/State Filing)
+                            Include CF/SF Test (Combined Federal/State Filing)
+                            <span class="text-sherpa-teal ml-1">(Required for ATS certification)</span>
                         </label>
                         <p class="text-xs text-sherpa-muted mt-1">
-                            Per Pub 5719, the CF/SF test can be included as one of the five submissions.
-                            When enabled, Issuer #5 (Epsilon) will include state filing data.
+                            <strong>REQUIRED:</strong> IRS requires CF/SF to be included in the same testing cycle.
+                            Issuer #5 (Epsilon) will include state filing data. Keep this enabled!
                         </p>
                         <template x-if="cfsfEnabled">
                             <div class="mt-3 flex items-center gap-3">
@@ -656,9 +671,10 @@ function atsTestForm() {
         manualStatusResult: null,
         checkingStatus: false,
         statusResult: null,
-        // CF/SF test options
-        cfsfEnabled: false,
-        cfsfState: 'AZ',  // Default to Arizona (TX is not a CF/SF participating state)
+        // CF/SF test options - ENABLED BY DEFAULT per IRS ATS requirements
+        // IRS requires CF/SF to be included in the same testing cycle as original + correction
+        cfsfEnabled: true,
+        cfsfState: 'GA',  // Default to Georgia (per IRS ATS examples)
         // Submissions history
         submissions: [],
         loadingSubmissions: false,
