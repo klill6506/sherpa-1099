@@ -750,14 +750,41 @@ class IRISClient:
 
     def _extract_error_message(self, response: requests.Response) -> str:
         """Extract error message from error response."""
+        # Log the full response for debugging
+        logger.error(f"IRS error response status: {response.status_code}")
+        logger.error(f"IRS error response headers: {dict(response.headers)}")
+        logger.error(f"IRS error response body: {response.text[:2000]}")
+
         try:
             root = ET.fromstring(response.content)
             ns = {"irs": "urn:us:gov:treasury:irs:ir"}
-            msg_elem = root.find(".//irs:ErrorMessageTxt", ns)
-            if msg_elem is not None and msg_elem.text:
-                return msg_elem.text
-        except:
-            pass
+
+            # Try multiple possible error element paths
+            for xpath in [
+                ".//irs:ErrorMessageTxt",
+                ".//irs:ErrorTxt",
+                ".//irs:Message",
+                ".//irs:StatusTxt",
+                ".//{urn:us:gov:treasury:irs:ir}ErrorMessageTxt",
+                ".//ErrorMessageTxt",
+            ]:
+                try:
+                    msg_elem = root.find(xpath, ns)
+                    if msg_elem is not None and msg_elem.text:
+                        return msg_elem.text
+                except:
+                    continue
+
+            # If no specific error found, return first text content
+            all_text = " ".join(root.itertext())[:500]
+            if all_text.strip():
+                return f"IRS Response: {all_text.strip()}"
+        except Exception as e:
+            logger.error(f"Could not parse IRS error XML: {e}")
+            # Return raw text if not XML
+            if response.text:
+                return f"IRS Response: {response.text[:500]}"
+
         return f"HTTP {response.status_code}"
 
     def get_status(
