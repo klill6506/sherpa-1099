@@ -29,45 +29,52 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-28
-**Working on:** ATS certification - CF/SF must be in same testing cycle
+**Last session:** 2026-01-29
+**Working on:** Production e-filing - need to add IRIS_ENVIRONMENT=PROD
+
+### 🎉 ATS CERTIFICATION PASSED! (2026-01-29)
+IRS approved Sherpa 1099 for production IRIS e-filing.
+
+### ⚠️ ACTION NEEDED TO FILE IN PRODUCTION
+Add this environment variable in Render Dashboard → Environment:
+```
+IRIS_ENVIRONMENT=PROD
+```
+Without this, the system defaults to ATS (test endpoint) which rejects production submissions.
 
 ### What's Working:
-- ATS submission history tracking
-- Proper correction filing with stored original references
-- IRS e-filing submissions working
-- Filing status tracking per filer (filer_filing_status table)
-- Preparer assignment tracking
-- Dark/Light mode toggle with localStorage persistence
-- Winter-themed UI with mountain background (light mode)
-- Add Filer form working
-- Name Line 2 import working
+- ✅ ATS certification complete
+- ✅ ATS submission history tracking
+- ✅ Proper correction filing with stored original references
+- ✅ Filing status tracking per filer
+- ✅ Submit endpoint now respects `include_drafts` flag
+- ✅ Improved IRS error message extraction
+- ✅ Production mode default on e-file page
+- ✅ Dark/Light mode toggle
+- ✅ Add Filer form working
+- ✅ Name Line 2 import working
 
-### ATS Certification Fix (2026-01-28):
+### Production Filing Fix (2026-01-29):
 
-**IRS Rejection Reason:** CF/SF test was done separately, not in the same testing cycle as original + correction.
+**Problem:** Submissions failed with "INV_TEST_CODE Test Code is invalid or empty P"
 
-**IRS Requirements (all in ONE testing cycle):**
-1. Original transmission with 5 submissions (2 records each = 10 total)
-2. **One submission MUST include CF/SF** (Combined Federal/State Filing)
-3. Correction transmission referencing the accepted original
+**Root Cause:** `IRIS_ENVIRONMENT` was not set, defaulting to "ATS". This meant:
+- Hitting ATS endpoint (`la.www4.irs.gov`) instead of production (`la.irs.gov`)
+- ATS only accepts TestCd="T", but we were sending TestCd="P" for production
 
-**Fix Applied:**
-- CF/SF is now **enabled by default** in the ATS test page
-- Default state changed from AZ to GA (per IRS ATS examples)
-- Updated UI to clarify that CF/SF is REQUIRED for certification
-- Issuer #5 (Epsilon) automatically includes state filing data
+**Fix:** Add `IRIS_ENVIRONMENT=PROD` to Render environment variables.
 
-**Workflow for Complete ATS Certification:**
-1. Go to ATS Test page
-2. Ensure "Include CF/SF Test" is checked (should be checked by default)
-3. Select state (GA is default, works with IRS examples)
-4. Submit Original ATS Test → Note the Receipt ID
-5. Wait for IRS to process → Check status
-6. When IRS accepts, click "Mark Accepted" in the Previous Submissions table
-7. Go to Correction section → Select the accepted original from dropdown
-8. Submit Correction → Wait for IRS acceptance
-9. Email IRS with BOTH Receipt IDs (original with CF/SF + correction)
+**Other fixes applied today:**
+1. Submit endpoint now respects `include_drafts: true` (was ignoring it, causing 400 errors)
+2. Improved IRS error extraction to show actual error messages
+3. E-file page now defaults to Production Mode (not ATS Test Mode)
+
+### Workflow for Production Filing:
+1. Ensure `IRIS_ENVIRONMENT=PROD` is set in Render
+2. Go to filer's e-file page
+3. Select form type (1099-NEC, etc.)
+4. Click Validate
+5. Click Submit to IRS (Production Mode should be default)
 
 ### Database Migrations:
 Already run: `database/migrations/011_ats_submissions.sql`
