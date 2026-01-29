@@ -1148,23 +1148,24 @@ async def submit_efile(
             try:
                 update_form_1099(form_id, {
                     "status": "submitted",
-                    "submission_id": result.receipt_id,
+                    "irs_record_id": result.receipt_id,  # TEXT field for IRS receipt
                     "irs_status": result.status.value,
                 })
             except Exception as e:
                 logger.error(f"Failed to update form {form_id}: {e}")
 
-        # Log activity
+        # Log activity (entity_id must be UUID, so use filer_id; put receipt in details)
         log_activity(
             action="forms_submitted_to_irs",
             entity_type="efile_submission",
-            entity_id=result.receipt_id,
+            entity_id=request.filer_id,  # Use filer_id (UUID) instead of receipt_id (string)
             filer_id=request.filer_id,
             operating_year_id=request.operating_year_id,
             details={
                 "form_type": request.form_type,
                 "form_count": len(form_data_list),
                 "transmission_id": result.unique_transmission_id,
+                "receipt_id": result.receipt_id,  # Store receipt here instead
                 "is_test": request.is_test,
             },
         )
