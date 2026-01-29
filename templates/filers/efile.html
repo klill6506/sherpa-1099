@@ -65,7 +65,7 @@
                     <label class="flex items-center cursor-pointer">
                         <input type="checkbox" x-model="isTest" class="sr-only peer">
                         <div class="relative w-11 h-6 bg-sherpa-subtle/30 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sherpa-blue/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sherpa-amber"></div>
-                        <span class="ml-3 text-sm font-medium text-sherpa-muted" x-text="isTest ? 'ATS Test Mode (recommended)' : 'Production Mode'"></span>
+                        <span class="ml-3 text-sm font-medium text-sherpa-muted" x-text="isTest ? 'ATS Test Mode' : 'Production Mode'"></span>
                     </label>
                     <template x-if="isTest">
                         <span class="px-2 py-1 rounded text-xs font-medium bg-sherpa-amber/15 text-sherpa-amber">TEST</span>
@@ -204,7 +204,7 @@
 function efileForm() {
     return {
         formType: null,
-        isTest: true,
+        isTest: false,  // Default to Production mode - we're certified!
         validating: false,
         validationResult: null,
         submitting: false,
