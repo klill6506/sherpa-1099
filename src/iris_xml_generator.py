@@ -1048,19 +1048,20 @@ class IRISXMLGenerator:
         """
         Generate a Unique Transmission ID (UTID) per IRS Pub 5718/5719 requirements.
 
-        Format: {UUID}:IRIS:{TCC}::{EnvironmentIndicator}
+        Format: {UUID}:IRIS:{TCC}::{ChannelIndicator}
         - UUID: Random UUID (with dashes)
         - IRIS: Literal string
         - TCC: Transmitter Control Code (must match TransmitterControlCd in manifest)
-        - EnvironmentIndicator: A for ATS (test), U for Production
-          NOTE: IRS uses A/U, NOT T/P as previously assumed!
+        - ChannelIndicator: MUST be "A" for A2A (Application-to-Application) channel
+          NOTE: IRS requires "A" for all A2A submissions regardless of test/prod!
+          The TestCd element (T/P) indicates test vs production, not the UTID suffix.
 
         The TCC portion of UTID MUST match TransmitterControlCd or transmission will reject.
         """
-        # IRS schema requires: A = ATS (test), U = Production (not T/P!)
-        env_indicator = "A" if self.is_test else "U"
+        # IRS A2A channel requires "A" suffix (not U, T, or P)
+        # Test vs Production is indicated by TestCd element, not UTID suffix
         tcc = self.transmitter.tcc[:5].upper() if self.transmitter.tcc else "XXXXX"
-        return f"{uuid.uuid4()}:IRIS:{tcc}::{env_indicator}"
+        return f"{uuid.uuid4()}:IRIS:{tcc}::A"
 
     def generate_transmission(
         self,

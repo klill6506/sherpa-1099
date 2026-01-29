@@ -1012,6 +1012,9 @@ async def submit_efile(
     3. Returns receipt ID for status tracking
     4. Updates form records with submission info
     """
+    # Log submission parameters
+    logger.info(f"E-file request received: is_test={request.is_test}, form_type={request.form_type}, filer_id={request.filer_id}")
+
     try:
         # Get filer
         filer = get_filer(request.filer_id)
