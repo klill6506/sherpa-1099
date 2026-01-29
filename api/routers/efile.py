@@ -1200,13 +1200,35 @@ async def submit_efile(
                 # Don't fail the submission if filing status update fails
                 logger.warning(f"Failed to update filing status: {e}")
 
+        # Save to submissions history (for tracking and corrections)
+        try:
+            save_ats_submission(
+                receipt_id=result.receipt_id,
+                transmission_id=result.unique_transmission_id,
+                form_type=request.form_type,
+                tax_year=tax_year,
+                submission_count=1,  # One batch
+                recipient_count=len(form_data_list),
+                status=result.status.value,
+                irs_message=result.message,
+                cfsf_enabled=has_cfsf,
+                cfsf_state=None,  # Could track CFSF state if needed
+                submission_type="original",
+            )
+            logger.info(f"Saved submission history: receipt={result.receipt_id}")
+        except Exception as e:
+            logger.warning(f"Failed to save submission history: {e}")
+
+        # Use our count if IRS didn't return one (common for initial submission)
+        actual_record_count = result.record_count if result.record_count > 0 else len(form_data_list)
+
         return EFileResponse(
             success=result.is_success,
             receipt_id=result.receipt_id,
             transmission_id=result.unique_transmission_id,
             status=result.status.value,
             message=result.message,
-            record_count=result.record_count,
+            record_count=actual_record_count,
             errors=[
                 {
                     "record_id": e.record_id,

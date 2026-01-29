@@ -30,44 +30,36 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
 **Last session:** 2026-01-29
-**Working on:** Production e-filing - need to add IRIS_ENVIRONMENT=PROD
+**Working on:** Production filing is WORKING!
 
-### 🎉 ATS CERTIFICATION PASSED! (2026-01-29)
-IRS approved Sherpa 1099 for production IRIS e-filing.
-
-### ⚠️ ACTION NEEDED TO FILE IN PRODUCTION
-Add this environment variable in Render Dashboard → Environment:
-```
-IRIS_ENVIRONMENT=PROD
-```
-Without this, the system defaults to ATS (test endpoint) which rejects production submissions.
+### 🎉 PRODUCTION E-FILING WORKING! (2026-01-29)
+IRS approved Sherpa 1099 for production IRIS e-filing. First successful production submission completed!
 
 ### What's Working:
+- ✅ **Production e-filing to IRS** - Successfully submitted 1099-NEC forms
 - ✅ ATS certification complete
-- ✅ ATS submission history tracking
+- ✅ Submission history tracking (both ATS and production)
 - ✅ Proper correction filing with stored original references
-- ✅ Filing status tracking per filer
-- ✅ Submit endpoint now respects `include_drafts` flag
+- ✅ Filing status tracking per filer (dashboard shows Processing/Accepted/etc.)
+- ✅ Submit endpoint respects `include_drafts` flag
 - ✅ Improved IRS error message extraction
 - ✅ Production mode default on e-file page
 - ✅ Dark/Light mode toggle
 - ✅ Add Filer form working
 - ✅ Name Line 2 import working
 
-### Production Filing Fix (2026-01-29):
+### Environment Variables (Render):
+Required for production filing:
+- `IRIS_ENVIRONMENT=PROD` - **MUST be set** (removed the individual endpoint overrides)
+- The code auto-selects correct endpoints based on this setting
 
-**Problem:** Submissions failed with "INV_TEST_CODE Test Code is invalid or empty P"
+### Fixes Applied (2026-01-29):
 
-**Root Cause:** `IRIS_ENVIRONMENT` was not set, defaulting to "ATS". This meant:
-- Hitting ATS endpoint (`la.www4.irs.gov`) instead of production (`la.irs.gov`)
-- ATS only accepts TestCd="T", but we were sending TestCd="P" for production
-
-**Fix:** Add `IRIS_ENVIRONMENT=PROD` to Render environment variables.
-
-**Other fixes applied today:**
-1. Submit endpoint now respects `include_drafts: true` (was ignoring it, causing 400 errors)
-2. Improved IRS error extraction to show actual error messages
-3. E-file page now defaults to Production Mode (not ATS Test Mode)
+1. **Endpoint configuration** - Removed hardcoded ATS endpoint overrides from Render
+2. **UUID type errors** - Changed `submission_id` (UUID) to `irs_record_id` (TEXT) for IRS receipt
+3. **Activity log** - Fixed entity_id UUID issue by using filer_id instead of receipt string
+4. **Records count** - Fixed "Records: 0" display by using our count when IRS doesn't return one
+5. **Submission history** - Production submissions now saved to `ats_submissions` table
 
 ### Workflow for Production Filing:
 1. Ensure `IRIS_ENVIRONMENT=PROD` is set in Render
