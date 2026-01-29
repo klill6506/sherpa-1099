@@ -364,10 +364,46 @@ function homePage() {
             }
         },
 
-        viewErrors(item) {
+        async viewErrors(item) {
             this.selectedFiler = item;
-            this.selectedErrors = item.last_errors?.errors || [];
+            this.selectedErrors = [];
             this.showErrorsModal = true;
+
+            // If we have cached errors, show them
+            if (item.last_errors?.errors?.length > 0) {
+                this.selectedErrors = item.last_errors.errors.map(e =>
+                    typeof e === 'string' ? e : `${e.code || ''}: ${e.message || JSON.stringify(e)}`
+                );
+                return;
+            }
+
+            // Otherwise fetch fresh from IRS acknowledgment
+            if (item.last_receipt_id) {
+                try {
+                    const response = await fetch('/api/efile/acknowledgment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ receipt_id: item.last_receipt_id })
+                    });
+
+                    if (response.ok) {
+                        const ack = await response.json();
+                        if (ack.errors?.length > 0) {
+                            this.selectedErrors = ack.errors.map(e =>
+                                `${e.code || ''}: ${e.message || ''} ${e.field ? '(Field: ' + e.field + ')' : ''}`
+                            );
+                        } else if (ack.message) {
+                            this.selectedErrors = [ack.message];
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch acknowledgment:', e);
+                }
+            }
+
+            if (this.selectedErrors.length === 0) {
+                this.selectedErrors = ['No detailed error information available. The submission was rejected by the IRS.'];
+            }
         },
 
         async checkAllStatuses() {
