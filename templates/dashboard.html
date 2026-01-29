@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Filters and Actions -->
     <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <div class="flex-1 w-full sm:w-auto">
             <input type="text"
@@ -73,6 +73,28 @@
             <option value="ACCEPTED">Accepted</option>
             <option value="REJECTED">Rejected</option>
         </select>
+        <!-- Check All Statuses Button -->
+        <button @click="checkAllStatuses()"
+                :disabled="checkingAll || pendingCount === 0"
+                class="px-4 py-2.5 rounded-xl bg-sherpa-amber hover:bg-amber-600 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <template x-if="!checkingAll">
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Check All Statuses (<span x-text="pendingCount"></span>)
+                </span>
+            </template>
+            <template x-if="checkingAll">
+                <span class="flex items-center gap-2">
+                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Checking <span x-text="checkProgress"></span>/<span x-text="pendingCount"></span>...
+                </span>
+            </template>
+        </button>
     </div>
 
     <!-- All Filers Table -->
@@ -230,6 +252,16 @@ function homePage() {
         selectedFiler: null,
         selectedErrors: [],
 
+        // Batch status check
+        checkingAll: false,
+        checkProgress: 0,
+
+        get pendingCount() {
+            return this.allFilers.filter(f =>
+                f.last_receipt_id && ['SUBMITTED', 'PROCESSING'].includes(f.status)
+            ).length;
+        },
+
         get filteredFilers() {
             let result = this.allFilers;
 
@@ -336,6 +368,76 @@ function homePage() {
             this.selectedFiler = item;
             this.selectedErrors = item.last_errors?.errors || [];
             this.showErrorsModal = true;
+        },
+
+        async checkAllStatuses() {
+            const pendingFilers = this.allFilers.filter(f =>
+                f.last_receipt_id && ['SUBMITTED', 'PROCESSING'].includes(f.status)
+            );
+
+            if (pendingFilers.length === 0) {
+                alert('No pending submissions to check.');
+                return;
+            }
+
+            this.checkingAll = true;
+            this.checkProgress = 0;
+
+            let updated = 0;
+            let errors = [];
+
+            for (const item of pendingFilers) {
+                this.checkProgress++;
+                try {
+                    const statusResponse = await fetch('/api/efile/status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ receipt_id: item.last_receipt_id })
+                    });
+
+                    if (!statusResponse.ok) {
+                        errors.push(`${item.filer_name}: Failed to check`);
+                        continue;
+                    }
+
+                    const statusResult = await statusResponse.json();
+
+                    // Map IRS status
+                    let newStatus = item.status;
+                    if (statusResult.status === 'accepted') newStatus = 'ACCEPTED';
+                    else if (statusResult.status === 'accepted_with_errors') newStatus = 'ACCEPTED_WITH_ERRORS';
+                    else if (statusResult.status === 'rejected') newStatus = 'REJECTED';
+                    else if (statusResult.status === 'processing') newStatus = 'PROCESSING';
+
+                    // Update if changed
+                    if (newStatus !== item.status) {
+                        await fetch('/api/efile/filing-status/update', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                filer_id: item.filer_id,
+                                tax_year: this.taxYear,
+                                status: newStatus,
+                                errors: statusResult.errors?.length > 0 ? { errors: statusResult.errors } : null
+                            })
+                        });
+                        updated++;
+                    }
+                } catch (e) {
+                    errors.push(`${item.filer_name}: ${e.message}`);
+                }
+            }
+
+            this.checkingAll = false;
+
+            // Reload to show updates
+            await this.loadFilingStatus();
+
+            // Show summary
+            let message = `Checked ${pendingFilers.length} submission(s).`;
+            if (updated > 0) message += `\n${updated} status(es) updated.`;
+            if (errors.length > 0) message += `\n\nErrors:\n${errors.join('\n')}`;
+            alert(message);
         },
 
         getStatusClasses(status) {
