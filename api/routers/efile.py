@@ -1184,18 +1184,19 @@ async def submit_efile(
                 filing_status = "REJECTED"
 
             try:
-                # Get tenant_id from filer
-                tenant_id = filer.get("tenant_id")
-                if tenant_id:
-                    update_filing_status_on_submit(
-                        tenant_id=tenant_id,
-                        filer_id=request.filer_id,
-                        tax_year=tax_year,
-                        status=filing_status,
-                        submission_id=None,  # We don't track submission_id table here
-                        receipt_id=result.receipt_id,
-                        transmission_id=result.unique_transmission_id,
-                    )
+                # Get tenant_id from filer (use default if not set)
+                tenant_id = filer.get("tenant_id") or "a0000000-0000-0000-0000-000000000001"
+                logger.info(f"Updating filing status: filer={request.filer_id}, status={filing_status}, receipt={result.receipt_id}")
+                update_filing_status_on_submit(
+                    tenant_id=tenant_id,
+                    filer_id=request.filer_id,
+                    tax_year=tax_year,
+                    status=filing_status,
+                    submission_id=None,  # We don't track submission_id table here
+                    receipt_id=result.receipt_id,
+                    transmission_id=result.unique_transmission_id,
+                )
+                logger.info(f"Filing status updated successfully")
             except Exception as e:
                 # Don't fail the submission if filing status update fails
                 logger.warning(f"Failed to update filing status: {e}")

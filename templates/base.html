@@ -97,19 +97,20 @@
             display: none;
         }
 
-        /* Frosted glass - Light */
+        /* Solid cards - Light mode (no transparency for readability) */
         html:not(.dark) .glass {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: #ffffff;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         html:not(.dark) .glass-light {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: #f8fafc;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: 1px solid #e2e8f0;
         }
 
         /* Light scrollbar */
@@ -220,7 +221,7 @@
                             Home
                         </a>
                         <a href="/filers" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'filers' or active_page == 'dashboard' %}bg-sherpa-blue text-white shadow-sm{% else %}theme-muted theme-hover{% endif %}">
-                            Filers
+                            E-File Status
                         </a>
                         <a href="/imports" class="px-4 py-2 rounded-xl text-sm font-medium transition-all {% if active_page == 'imports' %}bg-sherpa-blue text-white shadow-sm{% else %}theme-muted theme-hover{% endif %}">
                             Import
