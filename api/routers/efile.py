@@ -1032,13 +1032,15 @@ async def submit_efile(
 
         if request.form_ids:
             forms = [f for f in forms if f.get("id") in request.form_ids]
+        elif request.include_drafts:
+            pass  # Include all forms (for testing/initial filing)
         else:
             forms = [f for f in forms if f.get("status") == "validated"]
 
         if not forms:
             raise HTTPException(
                 status_code=400,
-                detail=f"No validated {form_type_filter} forms found to e-file"
+                detail=f"No {form_type_filter} forms found to e-file. Make sure forms are imported and validated."
             )
 
         # Build submission
