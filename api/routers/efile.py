@@ -1055,7 +1055,9 @@ async def submit_efile(
 
             recipient = build_recipient_from_record(recipient_record)
             record_id = str(i)
-            form_id_map[record_id] = form.get("id")
+            db_form_id = form.get("id")
+            form_id_map[record_id] = db_form_id
+            logger.info(f"Mapping record_id={record_id} to form_id={db_form_id}")
 
             if request.form_type == "1099NEC":
                 form_data = build_nec_form(form, recipient, record_id, tax_year)
@@ -1142,11 +1144,15 @@ async def submit_efile(
 
         # Update form records with submission info
         for record_id, form_id in form_id_map.items():
-            update_form_1099(form_id, {
-                "status": "submitted",
-                "submission_id": result.receipt_id,
-                "irs_status": result.status.value,
-            })
+            logger.info(f"Updating form record_id={record_id}, form_id={form_id}, receipt_id={result.receipt_id}")
+            try:
+                update_form_1099(form_id, {
+                    "status": "submitted",
+                    "submission_id": result.receipt_id,
+                    "irs_status": result.status.value,
+                })
+            except Exception as e:
+                logger.error(f"Failed to update form {form_id}: {e}")
 
         # Log activity
         log_activity(
