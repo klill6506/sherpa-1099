@@ -222,6 +222,9 @@ class IRISClient:
         else:
             self._base_url = PROD_BASE_URL
 
+        # Log the configuration being used
+        logger.info(f"IRISClient initialized: environment={config.environment}, base_url={self._base_url}")
+
     def _get_headers(
         self,
         token: Optional[AccessToken] = None,
@@ -275,7 +278,7 @@ class IRISClient:
         headers = self._get_headers(content_type=content_type)
 
         try:
-            logger.info(f"Making {method} request to {endpoint}")
+            logger.info(f"Making {method} request to {url} (env={self.config.environment})")
             response = self._session.request(
                 method=method,
                 url=url,
