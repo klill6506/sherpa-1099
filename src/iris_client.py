@@ -876,7 +876,7 @@ class IRISClient:
                 tcc = parts[2]  # TCC is the 3rd part
 
         if not tcc:
-            tcc = os.environ.get("TRANSMITTER_TCC", "DG5BW")
+            tcc = os.environ.get("TRANSMITTER_TCC", "DG5BV")
 
         # Required: TransmitterControlCd
         self._add_elem(root, "TransmitterControlCd", tcc, ns)

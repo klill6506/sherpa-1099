@@ -177,7 +177,7 @@ def get_transmitter_config() -> TransmitterInfo:
     return TransmitterInfo(
         tin=os.environ.get("TRANSMITTER_TIN", "000000000"),
         tin_type=os.environ.get("TRANSMITTER_TIN_TYPE", "EIN"),
-        tcc=os.environ.get("TRANSMITTER_TCC", "DG5BW"),  # Your TCC
+        tcc=os.environ.get("TRANSMITTER_TCC", "DG5BV"),  # Your TCC (V=Production, W=ATS)
         name=os.environ.get("TRANSMITTER_CONTACT_NAME", ""),
         business_name=os.environ.get("TRANSMITTER_BUSINESS_NAME", ""),
         business_name_2=os.environ.get("TRANSMITTER_BUSINESS_NAME_2"),
