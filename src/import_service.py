@@ -614,6 +614,20 @@ class ImportService:
                 filer_data['tin'] = tin_normalized
                 filer_data['tin_type'] = tin_type or 'EIN'  # Filers are usually companies
 
+            # Normalize filer names (IRS-compliant: remove periods, commas)
+            if filer_data.get('name'):
+                name_normalized, _ = normalize_name(filer_data['name'])
+                filer_data['name'] = name_normalized
+
+            if filer_data.get('name_line_2'):
+                name2_normalized, _ = normalize_name(filer_data['name_line_2'])
+                filer_data['name_line_2'] = name2_normalized
+
+            # Normalize filer address (IRS-compliant: remove periods, commas)
+            if filer_data.get('address1'):
+                addr_normalized, _ = normalize_address(filer_data['address1'])
+                filer_data['address1'] = addr_normalized
+
             # Normalize state and zip
             if filer_data.get('state'):
                 state_normalized, _ = normalize_state(filer_data['state'])
@@ -1012,6 +1026,13 @@ class ImportService:
                     name, errs = normalize_name(get_raw(row_data, 'recipient_name'))
                     row_errors.extend(errs)
 
+                    # Name Line 2 (optional)
+                    name_line_2_raw = get_raw(row_data, 'recipient_name_line2')
+                    name_line_2 = None
+                    if name_line_2_raw and not pd.isna(name_line_2_raw):
+                        name_line_2, errs = normalize_name(name_line_2_raw)
+                        row_errors.extend(errs)
+
                     tin, tin_type, errs = normalize_tin(get_raw(row_data, 'recipient_tin'))
                     row_errors.extend(errs)
 
@@ -1096,14 +1117,17 @@ class ImportService:
                     if existing_recip:
                         recipient_id = existing_recip[0]['id']
                         # Update recipient info
-                        self.client.table('recipients').update({
+                        update_data = {
                             'name': name,
                             'address1': address1,
                             'address2': address2,
                             'city': city,
                             'state': state,
                             'zip': zip_code,
-                        }).eq('id', recipient_id).execute()
+                        }
+                        if name_line_2:
+                            update_data['name_line_2'] = name_line_2
+                        self.client.table('recipients').update(update_data).eq('id', recipient_id).execute()
                     else:
                         recip_data = {
                             'filer_id': filer_id,
@@ -1116,6 +1140,8 @@ class ImportService:
                             'state': state,
                             'zip': zip_code,
                         }
+                        if name_line_2:
+                            recip_data['name_line_2'] = name_line_2
                         recip_result = self.client.table('recipients').insert(recip_data).execute()
                         recipient_id = recip_result.data[0]['id']
                         result['recipients_created'] += 1
@@ -1365,10 +1391,17 @@ class ImportService:
                 source_col = reverse_map.get(field)
                 return raw.get(source_col) if source_col else None
 
-            # Name
+            # Name (Line 1)
             val, errs = normalize_name(get_raw('recipient_name'))
             normalized['recipient_name'] = val
             all_errors.extend(errs)
+
+            # Name Line 2 (optional, also needs IRS sanitization)
+            name2_raw = get_raw('recipient_name_line2')
+            if name2_raw and not pd.isna(name2_raw):
+                val, errs = normalize_name(name2_raw)
+                normalized['recipient_name_line2'] = val
+                all_errors.extend([{**e, 'field': 'recipient_name_line2'} for e in errs])
 
             # TIN
             val, tin_type, errs = normalize_tin(get_raw('recipient_tin'))
