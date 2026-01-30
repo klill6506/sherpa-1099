@@ -334,6 +334,52 @@ class IRISXMLGenerator:
         """Convert boolean to IRS indicator (0 or 1)."""
         return "1" if value else "0"
 
+    def _sanitize_business_name(self, name: Optional[str]) -> str:
+        """
+        Sanitize business name for IRS BusinessNameLine1Type.
+
+        IRS pattern: (([A-Za-z0-9#\\-\\(\\)]|&|') ?)*([A-Za-z0-9#\\-\\(\\)]|&|')
+        Allowed: A-Z a-z 0-9 # - ( ) & ' and space
+        NOT allowed: periods, commas, colons, semicolons, etc.
+        """
+        if not name:
+            return ""
+        # Remove periods (common in Inc., LLC., Dr., etc.)
+        result = name.replace(".", "")
+        # Remove commas
+        result = result.replace(",", "")
+        # Remove other disallowed characters but keep allowed ones
+        allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#-()&' ")
+        result = "".join(c for c in result if c in allowed)
+        # Collapse multiple spaces
+        while "  " in result:
+            result = result.replace("  ", " ")
+        return result.strip()
+
+    def _sanitize_address(self, address: Optional[str]) -> str:
+        """
+        Sanitize address for IRS StreetAddressType.
+
+        IRS pattern: [A-Za-z0-9]( ?[A-Za-z0-9\\-/])*
+        Allowed: A-Z a-z 0-9 - / and space
+        NOT allowed: periods, commas, #, etc.
+        """
+        if not address:
+            return ""
+        # Remove periods (common in Dr., St., Ave., etc.)
+        result = address.replace(".", "")
+        # Remove commas
+        result = result.replace(",", "")
+        # Replace # with No (common for apartment/suite numbers)
+        result = result.replace("#", "No ")
+        # Remove other disallowed characters but keep allowed ones
+        allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/ ")
+        result = "".join(c for c in result if c in allowed)
+        # Collapse multiple spaces
+        while "  " in result:
+            result = result.replace("  ", " ")
+        return result.strip()
+
     def _get_tin_type_code(self, tin_type: str) -> str:
         """Convert TIN type to IRS schema code.
 
@@ -383,9 +429,12 @@ class IRISXMLGenerator:
         """Add US address group to parent element."""
         addr_grp = self._add_element(parent, "MailingAddressGrp")
         us_addr = self._add_element(addr_grp, "USAddress")
-        self._add_element(us_addr, "AddressLine1Txt", address1[:35] if address1 else "")
+        # Sanitize addresses to remove periods, commas, etc.
+        clean_addr1 = self._sanitize_address(address1)
+        self._add_element(us_addr, "AddressLine1Txt", clean_addr1[:35] if clean_addr1 else "")
         if address2:
-            self._add_element(us_addr, "AddressLine2Txt", address2[:35])
+            clean_addr2 = self._sanitize_address(address2)
+            self._add_element(us_addr, "AddressLine2Txt", clean_addr2[:35])
         self._add_element(us_addr, "CityNm", city[:40] if city else "")
         self._add_element(us_addr, "StateAbbreviationCd", state[:2].upper() if state else "")
         self._add_element(us_addr, "ZIPCd", zip_code.replace("-", "")[:9] if zip_code else "")
@@ -396,9 +445,12 @@ class IRISXMLGenerator:
         """Add foreign address group to parent element."""
         addr_grp = self._add_element(parent, "MailingAddressGrp")
         foreign_addr = self._add_element(addr_grp, "ForeignAddress")
-        self._add_element(foreign_addr, "AddressLine1Txt", address1[:35] if address1 else "")
+        # Sanitize addresses to remove periods, commas, etc.
+        clean_addr1 = self._sanitize_address(address1)
+        self._add_element(foreign_addr, "AddressLine1Txt", clean_addr1[:35] if clean_addr1 else "")
         if address2:
-            self._add_element(foreign_addr, "AddressLine2Txt", address2[:35])
+            clean_addr2 = self._sanitize_address(address2)
+            self._add_element(foreign_addr, "AddressLine2Txt", clean_addr2[:35])
         self._add_element(foreign_addr, "CityNm", city[:40] if city else "")
         self._add_element(foreign_addr, "ProvinceOrStateNm", province[:35] if province else "")
         self._add_element(foreign_addr, "ForeignPostalCd", postal_code[:16] if postal_code else "")
@@ -421,9 +473,12 @@ class IRISXMLGenerator:
         # Company group
         company_grp = self._add_element(grp, "CompanyGrp")
         bus_name = self._add_element(company_grp, "BusinessName")
-        self._add_element(bus_name, "BusinessNameLine1Txt", t.business_name[:75] if t.business_name else "")
+        # Sanitize business names to remove periods, commas, etc.
+        clean_name1 = self._sanitize_business_name(t.business_name)
+        self._add_element(bus_name, "BusinessNameLine1Txt", clean_name1[:75] if clean_name1 else "")
         if t.business_name_2:
-            self._add_element(bus_name, "BusinessNameLine2Txt", t.business_name_2[:75])
+            clean_name2 = self._sanitize_business_name(t.business_name_2)
+            self._add_element(bus_name, "BusinessNameLine2Txt", clean_name2[:75])
 
         if t.country == "US" or not t.is_foreign:
             self._add_us_address(company_grp, t.address1, t.address2, t.city, t.state, t.zip_code)
@@ -454,9 +509,12 @@ class IRISXMLGenerator:
         self._add_element(grp, "ForeignEntityInd", self._bool_to_indicator(v.is_foreign))
 
         bus_name = self._add_element(grp, "BusinessName")
-        self._add_element(bus_name, "BusinessNameLine1Txt", v.business_name[:75] if v.business_name else "")
+        # Sanitize business names to remove periods, commas, etc.
+        clean_name1 = self._sanitize_business_name(v.business_name)
+        self._add_element(bus_name, "BusinessNameLine1Txt", clean_name1[:75] if clean_name1 else "")
         if v.business_name_2:
-            self._add_element(bus_name, "BusinessNameLine2Txt", v.business_name_2[:75])
+            clean_name2 = self._sanitize_business_name(v.business_name_2)
+            self._add_element(bus_name, "BusinessNameLine2Txt", clean_name2[:75])
 
         if v.country == "US" or not v.is_foreign:
             self._add_us_address(grp, v.address1, v.address2, v.city, v.state, v.zip_code)
@@ -488,9 +546,12 @@ class IRISXMLGenerator:
             name_control = issuer.business_name_control or self._derive_name_control(issuer.business_name, is_business=True)
             self._add_element(detail, "BusinessNameControlTxt", name_control)
             bus_name = self._add_element(detail, "BusinessName")
-            self._add_element(bus_name, "BusinessNameLine1Txt", issuer.business_name[:75])
+            # Sanitize business names to remove periods, commas, etc.
+            clean_name1 = self._sanitize_business_name(issuer.business_name)
+            self._add_element(bus_name, "BusinessNameLine1Txt", clean_name1[:75])
             if issuer.business_name_2:
-                self._add_element(bus_name, "BusinessNameLine2Txt", issuer.business_name_2[:75])
+                clean_name2 = self._sanitize_business_name(issuer.business_name_2)
+                self._add_element(bus_name, "BusinessNameLine2Txt", clean_name2[:75])
         else:
             name_control = issuer.person_name_control or self._derive_name_control(issuer.last_name or "", is_business=False)
             self._add_element(detail, "PersonNameControlTxt", name_control)
@@ -529,9 +590,12 @@ class IRISXMLGenerator:
             name_control = recipient.business_name_control or self._derive_name_control(recipient.business_name, is_business=True)
             self._add_element(detail, "BusinessNameControlTxt", name_control)
             bus_name = self._add_element(detail, "BusinessName")
-            self._add_element(bus_name, "BusinessNameLine1Txt", recipient.business_name[:75])
+            # Sanitize business names to remove periods, commas, etc.
+            clean_name1 = self._sanitize_business_name(recipient.business_name)
+            self._add_element(bus_name, "BusinessNameLine1Txt", clean_name1[:75])
             if recipient.business_name_2:
-                self._add_element(bus_name, "BusinessNameLine2Txt", recipient.business_name_2[:75])
+                clean_name2 = self._sanitize_business_name(recipient.business_name_2)
+                self._add_element(bus_name, "BusinessNameLine2Txt", clean_name2[:75])
         else:
             name_control = recipient.person_name_control or self._derive_name_control(recipient.last_name or "", is_business=False)
             self._add_element(detail, "PersonNameControlTxt", name_control)
