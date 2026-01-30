@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Recipient - Sherpa 1099{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Edit Recipient</h1>
+        <p class="text-gray-600">{{ recipient.name }}</p>
+    </div>
+    <a href="/filers/{{ recipient.filer_id }}" class="text-primary hover:underline">&larr; Back to Filer</a>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6" x-data="recipientForm()">
+    <form @submit.prevent="submitForm">
+        <!-- Basic Info -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">Recipient Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <input type="text" x-model="form.name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                    <p class="mt-1 text-xs text-gray-500">IRS compliant: no periods or commas allowed</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name Line 2</label>
+                    <input type="text" x-model="form.name_line_2"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">TIN (SSN/EIN) *</label>
+                    <input type="text" x-model="form.tin" required placeholder="XXX-XX-XXXX or XX-XXXXXXX"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">TIN Type</label>
+                    <select x-model="form.tin_type"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                        <option value="SSN">SSN</option>
+                        <option value="EIN">EIN</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">Address</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                    <input type="text" x-model="form.address1" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                    <p class="mt-1 text-xs text-gray-500">IRS compliant: no periods or commas allowed (e.g., "123 Main St" not "123 Main St.")</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
+                    <input type="text" x-model="form.address2"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                    <input type="text" x-model="form.city" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                    <select x-model="form.state" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                        <option value="">Select State</option>
+                        {% for code, name in states.items() %}
+                        <option value="{{ code }}">{{ code }} - {{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
+                    <input type="text" x-model="form.zip" required placeholder="12345 or 12345-6789"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <template x-if="errorMessage">
+            <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+                <p x-text="errorMessage"></p>
+            </div>
+        </template>
+
+        <!-- Success Message -->
+        <template x-if="successMessage">
+            <div class="mb-6 p-4 bg-green-100 text-green-700 rounded-md">
+                <p x-text="successMessage"></p>
+            </div>
+        </template>
+
+        <!-- Actions -->
+        <div class="flex justify-between pt-4 border-t">
+            <button type="button" @click="deleteRecipient()"
+                    class="px-4 py-2 text-red-600 hover:text-red-800">
+                Delete Recipient
+            </button>
+            <div class="flex gap-3">
+                <a href="/filers/{{ recipient.filer_id }}" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">Cancel</a>
+                <button type="submit" :disabled="isSubmitting"
+                        class="px-6 py-2 bg-primary text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+                    <span x-show="!isSubmitting">Save Changes</span>
+                    <span x-show="isSubmitting">Saving...</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function recipientForm() {
+    return {
+        form: {
+            name: '{{ recipient.name | replace("'", "\\'") if recipient.name else "" }}',
+            name_line_2: '{{ recipient.name_line_2 | replace("'", "\\'") if recipient.name_line_2 else "" }}',
+            tin: '{{ recipient.tin if recipient.tin else "" }}',
+            tin_type: '{{ recipient.tin_type if recipient.tin_type else "SSN" }}',
+            address1: '{{ recipient.address1 | replace("'", "\\'") if recipient.address1 else "" }}',
+            address2: '{{ recipient.address2 | replace("'", "\\'") if recipient.address2 else "" }}',
+            city: '{{ recipient.city if recipient.city else "" }}',
+            state: '{{ recipient.state if recipient.state else "" }}',
+            zip: '{{ recipient.zip if recipient.zip else "" }}'
+        },
+        isSubmitting: false,
+        errorMessage: '',
+        successMessage: '',
+
+        // Sanitize for IRS compliance
+        sanitizeName(name) {
+            if (!name) return '';
+            // Remove periods and commas
+            return name.replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+        },
+
+        sanitizeAddress(addr) {
+            if (!addr) return '';
+            // Remove periods and commas, replace # with No
+            return addr.replace(/[.,]/g, '').replace(/#/g, 'No ').replace(/\s+/g, ' ').trim();
+        },
+
+        async submitForm() {
+            this.isSubmitting = true;
+            this.errorMessage = '';
+            this.successMessage = '';
+
+            // Sanitize before submit
+            const sanitizedForm = {
+                ...this.form,
+                name: this.sanitizeName(this.form.name),
+                name_line_2: this.sanitizeName(this.form.name_line_2),
+                address1: this.sanitizeAddress(this.form.address1),
+                address2: this.sanitizeAddress(this.form.address2)
+            };
+
+            try {
+                const response = await fetch('/api/recipients/{{ recipient.id }}', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sanitizedForm)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to save recipient');
+                }
+
+                // Update the form with sanitized values
+                this.form.name = sanitizedForm.name;
+                this.form.name_line_2 = sanitizedForm.name_line_2;
+                this.form.address1 = sanitizedForm.address1;
+                this.form.address2 = sanitizedForm.address2;
+
+                this.successMessage = 'Recipient saved successfully!';
+                this.isSubmitting = false;
+
+            } catch (error) {
+                this.errorMessage = error.message;
+                this.isSubmitting = false;
+            }
+        },
+
+        async deleteRecipient() {
+            const recipientName = this.form.name || 'this recipient';
+            if (!confirm(`Are you sure you want to delete "${recipientName}"?\n\nThis will also delete all associated 1099 forms.\n\nThis action CANNOT be undone!`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/recipients/{{ recipient.id }}', {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to delete recipient');
+                }
+
+                window.location.href = '/filers/{{ recipient.filer_id }}';
+
+            } catch (error) {
+                this.errorMessage = error.message;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

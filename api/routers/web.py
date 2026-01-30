@@ -450,6 +450,33 @@ async def recipients_list(request: Request):
     })
 
 
+@router.get("/recipients/{recipient_id}/edit", response_class=HTMLResponse)
+async def recipients_edit(request: Request, recipient_id: str):
+    """Edit recipient form page."""
+    user = require_auth_redirect(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
+    client = get_supabase_client()
+    operating_year = get_operating_year()
+
+    recipient_result = client.table('recipients').select('*').eq('id', recipient_id).execute()
+    if not recipient_result.data:
+        return templates.TemplateResponse("error.html", {
+            "request": request,
+            "error": "Recipient not found"
+        }, status_code=404)
+
+    return templates.TemplateResponse("recipients/form.html", {
+        "request": request,
+        "active_page": "recipients",
+        "operating_year": operating_year,
+        "recipient": recipient_result.data[0],
+        "states": US_STATES,
+        "user": user
+    })
+
+
 # =============================================================================
 # FORMS
 # =============================================================================

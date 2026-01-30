@@ -224,6 +224,10 @@
                         </td>
                         <td class="px-4 py-3 text-sm text-right">
                             <div class="flex items-center justify-end gap-2">
+                                {% if form.recipients %}
+                                <a href="/recipients/{{ form.recipient_id }}/edit" class="text-sherpa-muted hover:text-sherpa-text text-xs font-medium" title="Edit Recipient">Edit</a>
+                                <span class="text-sherpa-border">|</span>
+                                {% endif %}
                                 <a href="/api/pdf/{{ form.id }}" target="_blank" class="text-sherpa-blue hover:text-sherpa-blue/80 text-xs font-medium">View</a>
                                 <a href="/api/pdf/{{ form.id }}?download=true" class="text-sherpa-teal hover:text-sherpa-teal/80 text-xs font-medium">Download</a>
                                 <a href="/api/pdf/{{ form.id }}" target="_blank" class="text-sherpa-muted hover:text-sherpa-text text-xs font-medium">Print</a>
