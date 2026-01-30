@@ -813,8 +813,9 @@ class IRISClient:
 
         logger.info(f"Checking status for: {receipt_id or transmission_id}")
 
-        # Build status request XML
-        request_xml = self._build_status_request(receipt_id, transmission_id)
+        # Build status request XML - use Acknowledgment type ("A") instead of Status ("S")
+        # because Acknowledgment returns more accurate status (e.g., "Rejected" vs "Processing")
+        request_xml = self._build_status_request(receipt_id, transmission_id, request_type="A")
 
         try:
             # Log the request XML for debugging

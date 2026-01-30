@@ -176,7 +176,12 @@ def normalize_zip(zip_code: Any) -> Tuple[Optional[str], List[dict]]:
 
 
 def normalize_name(name: Any) -> Tuple[Optional[str], List[dict]]:
-    """Normalize payee name."""
+    """
+    Normalize payee/business name for IRS compliance.
+
+    IRS BusinessNameLine1Type pattern allows: A-Za-z0-9 # - ( ) & ' and space
+    NOT allowed: periods, commas, colons, semicolons, etc.
+    """
     errors = []
     if name is None or (isinstance(name, float) and pd.isna(name)):
         return None, [{'field': 'recipient_name', 'code': 'MISSING_NAME',
@@ -187,15 +192,29 @@ def normalize_name(name: Any) -> Tuple[Optional[str], List[dict]]:
     # Remove extra whitespace
     name_str = ' '.join(name_str.split())
 
-    # Remove problematic characters (keep letters, numbers, common punctuation)
-    name_str = re.sub(r'[^\w\s\.\,\-\'\&\/\(\)]', '', name_str)
+    # IRS-compliant sanitization: remove periods and commas (common in Inc., LLC., etc.)
+    # These cause XML schema validation failures
+    original_name = name_str
+    name_str = name_str.replace('.', '').replace(',', '')
 
-    # Truncate to IRS limit (40 chars for name control purposes)
-    if len(name_str) > 40:
+    # Keep only IRS-allowed characters: A-Za-z0-9 # - ( ) & ' and space
+    name_str = re.sub(r'[^A-Za-z0-9#\-\(\)&\'\s]', '', name_str)
+
+    # Collapse multiple spaces
+    name_str = ' '.join(name_str.split())
+
+    # Add info if name was modified
+    if name_str != original_name.replace('.', '').replace(',', ''):
+        errors.append({'field': 'recipient_name', 'code': 'NAME_SANITIZED',
+                      'message': f'Name sanitized for IRS compliance',
+                      'severity': 'info'})
+
+    # Truncate to IRS limit (75 chars for BusinessNameLine1Txt)
+    if len(name_str) > 75:
         errors.append({'field': 'recipient_name', 'code': 'NAME_TRUNCATED',
-                      'message': f'Name truncated from {len(name_str)} to 40 chars',
+                      'message': f'Name truncated from {len(name_str)} to 75 chars',
                       'severity': 'warning'})
-        name_str = name_str[:40]
+        name_str = name_str[:75]
 
     if len(name_str) < 1:
         return None, [{'field': 'recipient_name', 'code': 'MISSING_NAME',
@@ -205,20 +224,37 @@ def normalize_name(name: Any) -> Tuple[Optional[str], List[dict]]:
 
 
 def normalize_address(address: Any) -> Tuple[Optional[str], List[dict]]:
-    """Normalize address line."""
+    """
+    Normalize address line for IRS compliance.
+
+    IRS StreetAddressType pattern allows: A-Za-z0-9 - / and space
+    NOT allowed: periods, commas, #, etc.
+    """
     errors = []
     if address is None or (isinstance(address, float) and pd.isna(address)):
         return None, []
 
     addr_str = str(address).strip()
     addr_str = ' '.join(addr_str.split())
-    addr_str = re.sub(r'[^\w\s\.\,\-\#\/]', '', addr_str)
 
-    if len(addr_str) > 40:
+    # IRS-compliant sanitization: remove periods and commas (common in Dr., St., Ave., etc.)
+    addr_str = addr_str.replace('.', '').replace(',', '')
+
+    # Replace # with "No " (common for apartment/suite numbers)
+    addr_str = addr_str.replace('#', 'No ')
+
+    # Keep only IRS-allowed characters: A-Za-z0-9 - / and space
+    addr_str = re.sub(r'[^A-Za-z0-9\-/\s]', '', addr_str)
+
+    # Collapse multiple spaces
+    addr_str = ' '.join(addr_str.split())
+
+    # Truncate to IRS limit (35 chars for AddressLine1Txt)
+    if len(addr_str) > 35:
         errors.append({'field': 'address', 'code': 'ADDRESS_TRUNCATED',
-                      'message': f'Address truncated from {len(addr_str)} to 40 chars',
+                      'message': f'Address truncated from {len(addr_str)} to 35 chars',
                       'severity': 'warning'})
-        addr_str = addr_str[:40]
+        addr_str = addr_str[:35]
 
     return addr_str if addr_str else None, errors
 
