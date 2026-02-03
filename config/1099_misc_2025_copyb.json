@@ -38,7 +38,7 @@
     "account_number":        { "x": 47,  "y": 274, "size": 9,  "font": "Helvetica" },
 
     "box1_rents":            { "x": 319, "y": 37, "size": 10, "font": "Helvetica" },
-    "box3_other_income":     { "x": 319, "y": 91, "size": 10, "font": "Helvetica" },
+    "box3_other_income":     { "x": 319, "y": 97, "size": 10, "font": "Helvetica" },
 
     "box4_federal_withheld": { "x": 310, "y": 214, "size": 10, "font": "Helvetica" },
 
