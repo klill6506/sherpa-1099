@@ -177,10 +177,12 @@ async def permanently_delete_filer(filer_id: str):
             raise HTTPException(status_code=404, detail="Filer not found")
 
         filer_name = filer.get("name", "Unknown")
+        logger.info(f"Permanently deleting filer: {filer_name} (ID: {filer_id})")
 
         success = hard_delete_filer(filer_id)
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to delete filer")
+            logger.error(f"Failed to delete filer {filer_id}: hard_delete_filer returned False")
+            raise HTTPException(status_code=500, detail="Failed to delete filer from database")
 
         log_activity(
             action="filer_permanently_deleted",
@@ -189,8 +191,10 @@ async def permanently_delete_filer(filer_id: str):
             details={"name": filer_name},
         )
 
-        return MessageResponse(message=f"Filer '{filer_name}' permanently deleted")
+        logger.info(f"Successfully deleted filer: {filer_name} (ID: {filer_id})")
+        return MessageResponse(message=f"Filer '{filer_name}' and all associated data permanently deleted")
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Error permanently deleting filer {filer_id}")
+        raise HTTPException(status_code=500, detail=f"Deletion failed: {str(e)}")

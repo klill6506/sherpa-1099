@@ -139,23 +139,43 @@ async def update_tin_status(recipient_id: str, tin_data: RecipientTINUpdate):
 
 
 @router.delete("/{recipient_id}", response_model=MessageResponse)
-async def deactivate_recipient(recipient_id: str):
-    """Soft-delete a recipient (sets is_active to false)."""
+async def permanently_delete_recipient(recipient_id: str):
+    """
+    Permanently delete a recipient and all associated forms.
+
+    This is irreversible! Deletes all 1099 forms for this recipient.
+    """
     try:
-        update_data = {"is_active": False}
-        recipient = update_recipient(recipient_id, update_data)
+        # Get recipient info before deletion
+        recipient = get_recipient(recipient_id)
         if not recipient:
             raise HTTPException(status_code=404, detail="Recipient not found")
 
+        recipient_name = recipient.get("name", "Unknown")
+        filer_id = recipient.get("filer_id")
+
+        # Delete associated forms first
+        from supabase_client import get_supabase_client
+        client = get_supabase_client()
+        client.table("forms_1099").delete().eq("recipient_id", recipient_id).execute()
+
+        # Delete the recipient
+        delete_response = client.table("recipients").delete().eq("id", recipient_id).execute()
+
+        if not delete_response.data:
+            raise HTTPException(status_code=500, detail="Failed to delete recipient")
+
         log_activity(
-            action="recipient_deactivated",
+            action="recipient_permanently_deleted",
             entity_type="recipient",
             entity_id=recipient_id,
-            filer_id=recipient.get("filer_id"),
+            filer_id=filer_id,
+            details={"name": recipient_name},
         )
 
-        return MessageResponse(message="Recipient deactivated successfully")
+        return MessageResponse(message=f"Recipient '{recipient_name}' and all associated forms permanently deleted")
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"Error deleting recipient {recipient_id}")
         raise HTTPException(status_code=500, detail=str(e))

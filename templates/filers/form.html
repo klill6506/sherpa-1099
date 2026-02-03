@@ -188,20 +188,29 @@ function filerForm() {
                 return;
             }
 
+            this.isSubmitting = true;
+            this.errorMessage = '';
+
             try {
                 const response = await fetch('/api/filers/{{ filer.id if filer else "" }}/permanent', {
                     method: 'DELETE'
                 });
 
                 if (!response.ok) {
-                    const error = await response.json();
+                    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
                     throw new Error(error.detail || 'Failed to delete filer');
                 }
 
-                window.location.href = '/filers';
+                // Successfully deleted - redirect
+                this.successMessage = 'Filer deleted successfully. Redirecting...';
+                setTimeout(() => {
+                    window.location.href = '/filers';
+                }, 500);
 
             } catch (error) {
-                this.errorMessage = error.message;
+                console.error('Delete error:', error);
+                this.errorMessage = `Failed to delete filer: ${error.message}`;
+                this.isSubmitting = false;
             }
         }
     }

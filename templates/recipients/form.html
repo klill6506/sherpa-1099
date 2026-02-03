@@ -201,20 +201,29 @@ function recipientForm() {
                 return;
             }
 
+            this.isSubmitting = true;
+            this.errorMessage = '';
+
             try {
                 const response = await fetch('/api/recipients/{{ recipient.id }}', {
                     method: 'DELETE'
                 });
 
                 if (!response.ok) {
-                    const error = await response.json();
+                    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
                     throw new Error(error.detail || 'Failed to delete recipient');
                 }
 
-                window.location.href = '/filers/{{ recipient.filer_id }}';
+                // Successfully deleted - redirect
+                this.successMessage = 'Recipient deleted successfully. Redirecting...';
+                setTimeout(() => {
+                    window.location.href = '/filers/{{ recipient.filer_id }}';
+                }, 500);
 
             } catch (error) {
-                this.errorMessage = error.message;
+                console.error('Delete error:', error);
+                this.errorMessage = `Failed to delete recipient: ${error.message}`;
+                this.isSubmitting = false;
             }
         }
     }
