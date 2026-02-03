@@ -569,6 +569,32 @@ def validate_form_data(
     elif len(recipient.get("name", "")) > 80:
         add_error("name", "Recipient name too long (max 80 characters)")
 
+    # Check for business entity with SSN (will cause XML errors)
+    recipient_name_str = recipient.get("name", "")
+    if recipient_name_str and tin_type:
+        # Import the detection function
+        from import_service import detect_business_entity
+
+        is_business_name = detect_business_entity(recipient_name_str)
+        if is_business_name and tin_type == "SSN":
+            add_error(
+                "tin_type",
+                f"Name '{recipient_name_str}' appears to be a business (LLC/Inc/Corp) but TIN type is SSN. "
+                "This will cause XML validation errors. Please change TIN type to EIN."
+            )
+        elif not is_business_name and tin_type == "EIN":
+            # Parse name to check if it will fit in person name fields
+            name_parts = recipient_name_str.split(" ")
+            if len(name_parts) > 1:
+                # Check if last name would exceed 20 char limit for PersonLastNameType
+                last_name = name_parts[-1]
+                if len(last_name) > 20:
+                    add_error(
+                        "name",
+                        f"Last name '{last_name}' is {len(last_name)} characters (max 20 for individuals). "
+                        "Either shorten the name or change TIN type to EIN if this is a business."
+                    )
+
     # Address validation
     if not recipient.get("address1") or not recipient.get("address1", "").strip():
         add_error("address1", "Street address is missing")
