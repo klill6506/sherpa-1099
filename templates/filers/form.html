@@ -197,15 +197,18 @@ function filerForm() {
                 });
 
                 if (!response.ok) {
-                    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-                    throw new Error(error.detail || 'Failed to delete filer');
+                    let errorDetail = 'Unknown error';
+                    try {
+                        const error = await response.json();
+                        errorDetail = error.detail || error.message || 'Unknown error';
+                    } catch (parseError) {
+                        errorDetail = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorDetail);
                 }
 
-                // Successfully deleted - redirect
-                this.successMessage = 'Filer deleted successfully. Redirecting...';
-                setTimeout(() => {
-                    window.location.href = '/filers';
-                }, 500);
+                // Successfully deleted - redirect immediately
+                window.location.href = '/filers?message=Filer deleted successfully';
 
             } catch (error) {
                 console.error('Delete error:', error);
