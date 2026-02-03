@@ -29,14 +29,15 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
-**Last session:** 2026-01-29
-**Working on:** Production filing is WORKING!
+**Last session:** 2026-02-03
+**Working on:** Individual form e-filing feature added!
 
 ### 🎉 PRODUCTION E-FILING WORKING! (2026-01-29)
 IRS approved Sherpa 1099 for production IRIS e-filing. First successful production submission completed!
 
 ### What's Working:
 - ✅ **Production e-filing to IRS** - Successfully submitted 1099-NEC forms
+- ✅ **Individual form e-filing** - Can now e-file single forms from filer detail page (2026-02-03)
 - ✅ ATS certification complete
 - ✅ Submission history tracking (both ATS and production)
 - ✅ Proper correction filing with stored original references
@@ -62,11 +63,20 @@ Required for production filing:
 5. **Submission history** - Production submissions now saved to `ats_submissions` table
 
 ### Workflow for Production Filing:
+
+**Batch Filing (all forms for a filer):**
 1. Ensure `IRIS_ENVIRONMENT=PROD` is set in Render
 2. Go to filer's e-file page
 3. Select form type (1099-NEC, etc.)
 4. Click Validate
 5. Click Submit to IRS (Production Mode should be default)
+
+**Individual Form Filing (single form):**
+1. Go to filer detail page
+2. Find the form in the recipient list
+3. Click "E-File" button on the form row
+4. Confirm production submission
+5. Success message shows receipt ID
 
 ### Database Migrations:
 Already run: `database/migrations/011_ats_submissions.sql`
@@ -117,7 +127,7 @@ python -m uvicorn api.main:app --port 8002 --host 0.0.0.0
 ```
 
 ## IRS IRIS Integration
-- **TCC:** DG5BW (Software Developer A2A)
+- **TCC:** DG5BV (Transmitter - Production) / DG5BW (Software Developer - ATS Testing)
 - **Auth:** OAuth 2.0 with client certificate
 - **Test endpoint:** https://la.www4.irs.gov/
 - **Prod endpoint:** https://la.irs.gov/
@@ -137,7 +147,7 @@ python -m uvicorn api.main:app --port 8002 --host 0.0.0.0
 ```
 TRANSMITTER_TIN=000000000          # Your transmitter TIN (9 digits)
 TRANSMITTER_TIN_TYPE=EIN           # EIN or SSN
-TRANSMITTER_TCC=DG5BW              # Transmitter Control Code
+TRANSMITTER_TCC=DG5BV              # Transmitter Control Code (V for production, W for ATS)
 TRANSMITTER_BUSINESS_NAME=...      # Your business name
 TRANSMITTER_ADDRESS1=...           # Street address
 TRANSMITTER_CITY=...
