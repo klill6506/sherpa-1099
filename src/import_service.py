@@ -39,6 +39,38 @@ FORM_TYPES = ['1099-NEC', '1099-MISC', '1099-DIV', '1099-INT', '1099-B', '1099-R
 # NORMALIZATION FUNCTIONS
 # =============================================================================
 
+def detect_business_entity(name: str) -> bool:
+    """
+    Detect if a name appears to be a business entity based on common suffixes.
+
+    Returns True if the name contains business entity indicators like LLC, Inc, Corp, etc.
+    """
+    if not name:
+        return False
+
+    name_upper = name.upper()
+    business_indicators = [
+        'LLC', 'L.L.C', 'L L C',
+        'INC', 'INCORPORATED',
+        'CORP', 'CORPORATION',
+        'LTD', 'LIMITED',
+        'CO', 'COMPANY',
+        'LP', 'L.P',
+        'LLP', 'L.L.P',
+        'PLLC', 'P.L.L.C',
+        'PA', 'P.A',
+        'PC', 'P.C',
+        'PROFESSIONAL ASSOCIATION',
+        'PROFESSIONAL CORPORATION',
+    ]
+
+    for indicator in business_indicators:
+        if indicator in name_upper:
+            return True
+
+    return False
+
+
 def normalize_tin(tin: Any) -> Tuple[Optional[str], Optional[str], List[dict]]:
     """
     Normalize TIN (SSN/EIN) to standard format.
@@ -1049,6 +1081,24 @@ class ImportService:
 
                     tin, tin_type, errs = normalize_tin(get_raw(row_data, 'recipient_tin'))
                     row_errors.extend(errs)
+
+                    # Check if TIN type matches entity type
+                    if name and tin_type:
+                        is_business_name = detect_business_entity(name)
+                        if is_business_name and tin_type == 'SSN':
+                            row_errors.append({
+                                'field': 'recipient_tin',
+                                'code': 'TIN_TYPE_MISMATCH',
+                                'message': f'Name "{name}" appears to be a business (LLC/Inc/Corp) but TIN type is SSN. Should be EIN.',
+                                'severity': 'warning'
+                            })
+                        elif not is_business_name and tin_type == 'EIN':
+                            row_errors.append({
+                                'field': 'recipient_tin',
+                                'code': 'TIN_TYPE_MISMATCH',
+                                'message': f'Name "{name}" appears to be an individual but TIN type is EIN. Should be SSN.',
+                                'severity': 'warning'
+                            })
 
                     address1, errs = normalize_address(get_raw(row_data, 'recipient_address1'))
                     row_errors.extend(errs)
