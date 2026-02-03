@@ -155,6 +155,7 @@ def create_overlay(
     recipient_tin: str = "",
     account_number: str = "",
     box1_rents: Decimal = Decimal("0"),
+    box3_other_income: Decimal = Decimal("0"),
     box4_federal_withheld: Decimal = Decimal("0"),
     box15_state_withheld: Decimal = Decimal("0"),
     box16_state: str = "",
@@ -203,6 +204,7 @@ def create_overlay(
 
     # Draw amounts - MISC Box 1 is Rents (different from NEC Box 1 which is compensation)
     draw_text("box1_rents", format_money(box1_rents))
+    draw_text("box3_other_income", format_money(box3_other_income))
     draw_text("box4_federal_withheld", format_money(box4_federal_withheld))
     draw_text("box15_state_withheld", format_money(box15_state_withheld))
 
@@ -280,6 +282,7 @@ def generate_1099_misc_overlay(
     recipient_account: str = "",
     tax_year: int = 2025,
     box1_rents: Decimal = Decimal("0"),
+    box3_other_income: Decimal = Decimal("0"),
     box4_federal_withheld: Decimal = Decimal("0"),
     box15_state_withheld: Decimal = Decimal("0"),
     box16_state_payer_no: str = "",
@@ -303,6 +306,7 @@ def generate_1099_misc_overlay(
         recipient_account: Optional account number
         tax_year: Tax year (for template selection)
         box1_rents: Rents amount (MISC Box 1)
+        box3_other_income: Other income amount (MISC Box 3)
         box4_federal_withheld: Federal income tax withheld
         box15_state_withheld: State tax withheld
         box16_state_payer_no: State/Payer's state no.
@@ -367,6 +371,7 @@ def generate_1099_misc_overlay(
         recipient_tin=display_recipient_tin,
         account_number=recipient_account,
         box1_rents=box1_rents,
+        box3_other_income=box3_other_income,
         box4_federal_withheld=box4_federal_withheld,
         box15_state_withheld=box15_state_withheld,
         box16_state=box16_state_payer_no,

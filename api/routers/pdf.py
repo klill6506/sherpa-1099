@@ -230,6 +230,7 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
             recipient_account=recipient_data.get("account_number", ""),
             tax_year=tax_year,
             box1_rents=Decimal(str(form_data.get("misc_box1", 0) or 0)),
+            box3_other_income=Decimal(str(form_data.get("misc_box3", 0) or 0)),
             box4_federal_withheld=Decimal(str(form_data.get("misc_box4", 0) or 0)),
             box15_state_withheld=Decimal(str(form_data.get("state1_withheld", 0) or 0)),
             box16_state_payer_no=f"{form_data.get('state1_code') or ''} {form_data.get('state1_id') or ''}".strip(),
