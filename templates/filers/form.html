@@ -119,7 +119,7 @@
             <div class="flex gap-3">
                 <a href="/filers" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">Cancel</a>
                 <button type="submit" :disabled="isSubmitting"
-                        class="px-6 py-2 bg-primary text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+                        class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium">
                     <span x-show="!isSubmitting">{{ 'Save Changes' if filer else 'Create Filer' }}</span>
                     <span x-show="isSubmitting">Saving...</span>
                 </button>
