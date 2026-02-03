@@ -110,11 +110,17 @@ async def create_new_filer(filer_data: FilerCreate):
 @router.put("/{filer_id}", response_model=Filer)
 async def update_existing_filer(filer_id: str, filer_data: FilerUpdate):
     """Update an existing filer."""
+    import html
     try:
         # Normalize field names and filter out None values
         update_data = _normalize_filer_data(filer_data.model_dump())
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
+
+        # Decode HTML entities in text fields
+        for field in ['name', 'name_line_2', 'address1', 'address2', 'city', 'contact_name', 'business_name']:
+            if field in update_data and isinstance(update_data[field], str):
+                update_data[field] = html.unescape(update_data[field])
 
         filer = update_filer(filer_id, update_data)
         if not filer:

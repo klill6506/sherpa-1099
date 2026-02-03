@@ -182,12 +182,16 @@ def normalize_name(name: Any) -> Tuple[Optional[str], List[dict]]:
     IRS BusinessNameLine1Type pattern allows: A-Za-z0-9 # - ( ) & ' and space
     NOT allowed: periods, commas, colons, semicolons, etc.
     """
+    import html
     errors = []
     if name is None or (isinstance(name, float) and pd.isna(name)):
         return None, [{'field': 'recipient_name', 'code': 'MISSING_NAME',
                       'message': 'Recipient name is required', 'severity': 'error'}]
 
     name_str = str(name).strip()
+
+    # Decode HTML entities (e.g., &amp; -> &, &lt; -> <)
+    name_str = html.unescape(name_str)
 
     # Remove extra whitespace
     name_str = ' '.join(name_str.split())
@@ -230,11 +234,16 @@ def normalize_address(address: Any) -> Tuple[Optional[str], List[dict]]:
     IRS StreetAddressType pattern allows: A-Za-z0-9 - / and space
     NOT allowed: periods, commas, #, etc.
     """
+    import html
     errors = []
     if address is None or (isinstance(address, float) and pd.isna(address)):
         return None, []
 
     addr_str = str(address).strip()
+
+    # Decode HTML entities (e.g., &amp; -> &)
+    addr_str = html.unescape(addr_str)
+
     addr_str = ' '.join(addr_str.split())
 
     # IRS-compliant sanitization: remove periods and commas (common in Dr., St., Ave., etc.)
@@ -295,12 +304,17 @@ def normalize_amount(amount: Any, field_name: str) -> Tuple[Optional[float], Lis
 
 def normalize_city(city: Any) -> Tuple[Optional[str], List[dict]]:
     """Normalize city name."""
+    import html
     errors: List[dict] = []
     if city is None or (isinstance(city, float) and pd.isna(city)):
         return None, [{'field': 'recipient_city', 'code': 'MISSING_CITY',
                       'message': 'City is required', 'severity': 'error'}]
 
     city_str = str(city).strip()
+
+    # Decode HTML entities (e.g., &amp; -> &)
+    city_str = html.unescape(city_str)
+
     city_str = ' '.join(city_str.split())
     city_str = re.sub(r'[^\w\s\.\-\']', '', city_str)
 

@@ -82,10 +82,16 @@ async def create_new_recipient(recipient_data: RecipientCreate):
 @router.put("/{recipient_id}", response_model=Recipient)
 async def update_existing_recipient(recipient_id: str, recipient_data: RecipientUpdate):
     """Update an existing recipient."""
+    import html
     try:
         update_data = {k: v for k, v in recipient_data.model_dump().items() if v is not None}
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
+
+        # Decode HTML entities in text fields
+        for field in ['name', 'name_line_2', 'address1', 'address2', 'city']:
+            if field in update_data and isinstance(update_data[field], str):
+                update_data[field] = html.unescape(update_data[field])
 
         recipient = update_recipient(recipient_id, update_data)
         if not recipient:
