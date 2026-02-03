@@ -30,7 +30,7 @@ Render deploys in ~2 minutes. Test at: https://sherpa-1099.onrender.com
 ## Current State / What I Was Working On
 <!-- UPDATE THIS SECTION BEFORE CLOSING CLAUDE CODE -->
 **Last session:** 2026-02-03
-**Working on:** Individual form e-filing feature added!
+**Working on:** Fixed email field, button visibility, and & character encoding!
 
 ### 🎉 PRODUCTION E-FILING WORKING! (2026-01-29)
 IRS approved Sherpa 1099 for production IRIS e-filing. First successful production submission completed!
@@ -38,6 +38,9 @@ IRS approved Sherpa 1099 for production IRIS e-filing. First successful producti
 ### What's Working:
 - ✅ **Production e-filing to IRS** - Successfully submitted 1099-NEC forms
 - ✅ **Individual form e-filing** - Can now e-file single forms from filer detail page (2026-02-03)
+- ✅ **Email 1099s to recipients** - Added email field to recipient form (2026-02-03)
+- ✅ **Save button visibility** - Fixed bg-primary to bg-blue-600 for light mode (2026-02-03)
+- ✅ **& character handling** - HTML entity decoding prevents &amp; display (2026-02-03)
 - ✅ ATS certification complete
 - ✅ Submission history tracking (both ATS and production)
 - ✅ Proper correction filing with stored original references
