@@ -54,6 +54,7 @@ from iris_xml_generator import (
 )
 from iris_xml_validator import IRISXMLValidator, validate_iris_xml
 from iris_client import IRISClient, IRISClientError, SubmissionStatus
+from iris_error_translator import translate_iris_errors
 from config import load_config
 
 logger = logging.getLogger(__name__)
@@ -1136,15 +1137,32 @@ async def submit_efile(
         # Validate XML before submission
         is_valid, validation_errors = validate_iris_xml(xml_bytes)
         if not is_valid:
-            error_messages = [e["message"] for e in validation_errors if e.get("type") == "error"]
-            logger.error(f"XML validation failed: {error_messages[:5]}")
+            # Translate errors to user-friendly messages
+            translated_errors = translate_iris_errors(validation_errors)
+
+            # Format errors for response
+            formatted_errors = []
+            for err in translated_errors:
+                formatted_errors.append({
+                    "type": err.get("severity", "error"),
+                    "field": err.get("field", "Unknown"),
+                    "message": err.get("message", ""),
+                    "fix": err.get("fix", ""),
+                    "highlight_field": err.get("highlight_field"),
+                })
+
+            # Get first user-friendly error message
+            first_error = translated_errors[0] if translated_errors else {}
+            user_message = f"{first_error.get('message', 'XML validation failed')}. {first_error.get('fix', '')}"
+
+            logger.error(f"XML validation failed: {user_message}")
             return EFileResponse(
                 success=False,
                 transmission_id="",
                 status="validation_error",
-                message=f"XML validation failed: {error_messages[0] if error_messages else 'Unknown error'}",
+                message=user_message,
                 record_count=len(form_data_list),
-                errors=validation_errors[:10],  # Limit errors returned
+                errors=formatted_errors[:10],  # Limit errors returned
             )
 
         # Submit to IRS
@@ -1480,12 +1498,29 @@ async def validate_xml_submission(request: EFileRequest):
         # Validate
         is_valid, errors = validate_iris_xml(xml_bytes)
 
+        # Translate errors to user-friendly messages
+        translated_errors = translate_iris_errors(errors) if errors else []
+
+        # Convert to frontend format
+        formatted_errors = []
+        for err in translated_errors:
+            formatted_errors.append({
+                "type": err.get("severity", "error"),
+                "field": err.get("field", "Unknown"),
+                "message": err.get("message", ""),
+                "fix": err.get("fix", ""),
+                "highlight_field": err.get("highlight_field"),
+                "line": err.get("line"),
+                "column": err.get("column"),
+                "original_error": err.get("original_error"),  # For debugging
+            })
+
         return {
             "is_valid": is_valid,
             "form_count": len(form_data_list),
-            "error_count": len([e for e in errors if e.get("type") == "error"]),
-            "warning_count": len([e for e in errors if e.get("type") == "warning"]),
-            "errors": errors,
+            "error_count": len([e for e in formatted_errors if e.get("type") == "error"]),
+            "warning_count": len([e for e in formatted_errors if e.get("type") == "warning"]),
+            "errors": formatted_errors,
         }
 
     except HTTPException:

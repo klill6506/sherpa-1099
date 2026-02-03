@@ -111,15 +111,46 @@
                             </div>
 
                             <template x-if="validationResult.errors && validationResult.errors.length > 0">
-                                <div class="space-y-2 max-h-48 overflow-y-auto">
-                                    <template x-for="error in validationResult.errors.slice(0, 10)" :key="error.row + error.field">
-                                        <div :class="error.severity === 'error' ? 'bg-red-500/10 text-red-400' : 'bg-sherpa-amber/10 text-sherpa-amber'"
-                                             class="p-2 rounded text-xs">
-                                            <span x-text="error.message"></span>
+                                <div class="space-y-3 max-h-96 overflow-y-auto">
+                                    <template x-for="(error, index) in validationResult.errors.slice(0, 15)" :key="index">
+                                        <div :class="error.severity === 'error' ? 'bg-red-500/10 border-red-500/30' : 'bg-sherpa-amber/10 border-sherpa-amber/30'"
+                                             class="p-3 rounded-lg border">
+                                            <!-- Field badge -->
+                                            <div class="flex items-start gap-2 mb-2">
+                                                <span :class="error.severity === 'error' ? 'bg-red-500 text-white' : 'bg-sherpa-amber text-white'"
+                                                      class="px-2 py-0.5 rounded text-xs font-medium"
+                                                      x-text="error.field || 'Unknown Field'"></span>
+                                                <template x-if="error.recipient_name">
+                                                    <span class="text-xs text-sherpa-muted" x-text="'(' + error.recipient_name + ')'"></span>
+                                                </template>
+                                            </div>
+
+                                            <!-- Error message -->
+                                            <div :class="error.severity === 'error' ? 'text-red-600' : 'text-sherpa-amber'"
+                                                 class="text-sm font-medium mb-1"
+                                                 x-text="error.message"></div>
+
+                                            <!-- Fix suggestion -->
+                                            <template x-if="error.fix">
+                                                <div class="text-xs text-sherpa-muted mt-1 pl-3 border-l-2 border-current">
+                                                    <span class="font-semibold">Fix: </span>
+                                                    <span x-text="error.fix"></span>
+                                                </div>
+                                            </template>
+
+                                            <!-- Debug info (collapsed) -->
+                                            <template x-if="error.original_error">
+                                                <details class="mt-2">
+                                                    <summary class="text-xs text-sherpa-subtle cursor-pointer">Technical details</summary>
+                                                    <div class="text-xs text-sherpa-subtle mt-1 font-mono bg-sherpa-panel p-2 rounded">
+                                                        <span x-text="error.original_error"></span>
+                                                    </div>
+                                                </details>
+                                            </template>
                                         </div>
                                     </template>
-                                    <template x-if="validationResult.errors.length > 10">
-                                        <div class="text-xs text-sherpa-muted">...and <span x-text="validationResult.errors.length - 10"></span> more</div>
+                                    <template x-if="validationResult.errors.length > 15">
+                                        <div class="text-xs text-sherpa-muted text-center">...and <span x-text="validationResult.errors.length - 15"></span> more</div>
                                     </template>
                                 </div>
                             </template>
