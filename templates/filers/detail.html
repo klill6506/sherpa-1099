@@ -259,7 +259,11 @@
                         </td>
                         <td class="px-4 py-3 text-sm text-sherpa-text text-right font-medium">
                             {% if form.form_type == '1099-MISC' %}
-                                ${{ "%.2f"|format(form.misc_box1 or 0) }}
+                                {% set misc_total = (form.misc_box1 or 0) + (form.misc_box3 or 0) %}
+                                ${{ "%.2f"|format(misc_total) }}
+                                {% if (form.misc_box1 or 0) > 0 and (form.misc_box3 or 0) > 0 %}
+                                    <span class="text-xs text-gray-500">(Box 1: ${{ "%.2f"|format(form.misc_box1) }}, Box 3: ${{ "%.2f"|format(form.misc_box3) }})</span>
+                                {% endif %}
                             {% elif form.form_type == '1099-S' %}
                                 ${{ "%.2f"|format(form.s_box2_gross_proceeds or 0) }}
                             {% elif form.form_type == '1098' %}
