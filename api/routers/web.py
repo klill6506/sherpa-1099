@@ -279,7 +279,8 @@ async def filers_detail(request: Request, filer_id: str):
 
     # Calculate totals by form type
     nec_total = sum(float(f.get('nec_box1') or 0) for f in forms if f.get('form_type') == '1099-NEC')
-    misc_total = sum(float(f.get('misc_box1') or 0) for f in forms if f.get('form_type') == '1099-MISC')
+    misc_box1_total = sum(float(f.get('misc_box1') or 0) for f in forms if f.get('form_type') == '1099-MISC')
+    misc_box3_total = sum(float(f.get('misc_box3') or 0) for f in forms if f.get('form_type') == '1099-MISC')
     s_total = sum(float(f.get('s_box2_gross_proceeds') or 0) for f in forms if f.get('form_type') == '1099-S')
     f1098_total = sum(float(f.get('f1098_box1_mortgage_interest') or 0) for f in forms if f.get('form_type') == '1098')
 
@@ -297,7 +298,8 @@ async def filers_detail(request: Request, filer_id: str):
         "recipients": recipients,
         "forms": forms,
         "nec_total": nec_total,
-        "misc_total": misc_total,
+        "misc_box1_total": misc_box1_total,
+        "misc_box3_total": misc_box3_total,
         "s_total": s_total,
         "f1098_total": f1098_total,
         "nec_count": nec_count,
