@@ -41,6 +41,7 @@
     "account_number":        { "x": 47,  "y": 274, "size": 9,  "font": "Helvetica" },
 
     "box1_amount":           { "x": 319, "y": 117, "size": 10, "font": "Helvetica" },
+    "box2_checkbox":         { "x": 343, "y": 150, "size": 12, "font": "Helvetica-Bold" },
     "box3_amount":           { "x": 310, "y": 178, "size": 10, "font": "Helvetica" },
     "box4_amount":           { "x": 310, "y": 214, "size": 10, "font": "Helvetica" },
 

@@ -210,6 +210,7 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
             recipient_account=recipient_data.get("account_number", ""),
             tax_year=tax_year,
             box1_compensation=Decimal(str(form_data.get("nec_box1", 0) or 0)),
+            box2_direct_sales=bool(form_data.get("nec_box2", False)),
             box3_golden_parachute=Decimal(str(form_data.get("nec_box3", 0) or 0)),
             box4_federal_withheld=Decimal(str(form_data.get("nec_box4", 0) or 0)),
             box5_state_withheld=Decimal(str(form_data.get("state1_withheld", 0) or 0)),

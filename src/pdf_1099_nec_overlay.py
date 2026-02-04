@@ -155,6 +155,7 @@ def create_overlay(
     recipient_tin: str = "",
     account_number: str = "",
     box1_amount: Decimal = Decimal("0"),
+    box2_direct_sales: bool = False,
     box3_amount: Decimal = Decimal("0"),
     box4_amount: Decimal = Decimal("0"),
     box5_amount: Decimal = Decimal("0"),
@@ -209,6 +210,11 @@ def create_overlay(
 
     # Draw amounts
     draw_text("box1_amount", format_money(box1_amount))
+
+    # Draw Box 2 checkbox if needed
+    if box2_direct_sales:
+        draw_text("box2_checkbox", "X")
+
     draw_text("box3_amount", format_money(box3_amount))
     draw_text("box4_amount", format_money(box4_amount))
     draw_text("box5_amount", format_money(box5_amount))
@@ -292,6 +298,7 @@ def generate_1099_nec_overlay(
     recipient_account: str = "",
     tax_year: int = 2025,
     box1_compensation: Decimal = Decimal("0"),
+    box2_direct_sales: bool = False,
     box3_golden_parachute: Decimal = Decimal("0"),
     box4_federal_withheld: Decimal = Decimal("0"),
     box5_state_withheld: Decimal = Decimal("0"),
@@ -383,6 +390,7 @@ def generate_1099_nec_overlay(
         recipient_tin=display_recipient_tin,
         account_number=recipient_account,
         box1_amount=box1_compensation,
+        box2_direct_sales=box2_direct_sales,
         box3_amount=box3_golden_parachute,
         box4_amount=box4_federal_withheld,
         box5_amount=box5_state_withheld,
