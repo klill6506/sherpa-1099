@@ -22,7 +22,9 @@
   "coords": {
     "_comment": "Text field positions: x, y (y-down from top), font_size, font_name. Coordinates copied from NEC for shared fields, Box 1 tuned for MISC layout.",
 
+    "payer_label":           { "x": 47,  "y": 27,  "size": 6,  "font": "Helvetica" },
     "payer_name":            { "x": 47,  "y": 76,  "size": 10, "font": "Helvetica" },
+    "payer_line2":           { "x": 47,  "y": 83,  "size": 10, "font": "Helvetica" },
     "payer_street":          { "x": 47,  "y": 89, "size": 10, "font": "Helvetica" },
     "payer_city_state_zip":  { "x": 47,  "y": 102, "size": 10, "font": "Helvetica" },
     "payer_phone":           { "x": 200, "y": 102, "size": 9,  "font": "Helvetica-Bold" },
@@ -30,6 +32,7 @@
     "payer_tin":             { "x": 47,  "y": 298, "size": 9,  "font": "Helvetica-Bold" },
     "recipient_tin":         { "x": 168, "y": 298, "size": 9,  "font": "Helvetica-Bold" },
 
+    "recipient_label":       { "x": 47,  "y": 126, "size": 6,  "font": "Helvetica" },
     "recipient_name":        { "x": 47,  "y": 199, "size": 10, "font": "Helvetica" },
     "recipient_line2":       { "x": 47,  "y": 212, "size": 10, "font": "Helvetica" },
     "recipient_street":      { "x": 47,  "y": 225, "size": 10, "font": "Helvetica" },

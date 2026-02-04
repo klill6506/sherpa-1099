@@ -144,9 +144,10 @@ def mask_tin(tin: str) -> str:
 def create_overlay(
     coords: dict,
     payer_name: str,
-    payer_street: str,
-    payer_city_state_zip: str,
-    payer_tin: str,
+    payer_line2: str = "",
+    payer_street: str = "",
+    payer_city_state_zip: str = "",
+    payer_tin: str = "",
     payer_phone: str = "",
     recipient_name: str = "",
     recipient_line2: str = "",
@@ -183,8 +184,13 @@ def create_overlay(
         else:
             c.drawString(x, y, str(text))
 
+    # Draw labels
+    draw_text("payer_label", "PAYER'S name, street address, city, state, ZIP code, and telephone no.")
+    draw_text("recipient_label", "RECIPIENT'S name, street address, city, state, and ZIP code")
+
     # Draw payer info
     draw_text("payer_name", payer_name)
+    draw_text("payer_line2", payer_line2)
     draw_text("payer_street", payer_street)
     draw_text("payer_city_state_zip", payer_city_state_zip)
     draw_text("payer_phone", format_phone(payer_phone))
@@ -279,6 +285,7 @@ def generate_1099_misc_overlay(
     recipient_address_lines: list,
     recipient_tin: str,
     payer_phone: str = "",
+    payer_line2: str = "",
     recipient_account: str = "",
     tax_year: int = 2025,
     box1_rents: Decimal = Decimal("0"),
@@ -360,6 +367,7 @@ def generate_1099_misc_overlay(
     overlay_bytes = create_overlay(
         coords=coords,
         payer_name=payer_name,
+        payer_line2=payer_line2,
         payer_street=payer_street,
         payer_city_state_zip=payer_city_state_zip,
         payer_tin=payer_tin,

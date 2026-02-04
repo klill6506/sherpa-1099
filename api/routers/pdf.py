@@ -200,6 +200,7 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
         # Use official IRS template overlay generator
         return generate_1099_nec_overlay(
             payer_name=filer_data.get("name", ""),
+            payer_line2=filer_data.get("name_line_2", ""),
             payer_address_lines=filer_address_lines,
             payer_tin=filer_tin,
             recipient_name=recipient_data.get("name", ""),
@@ -221,6 +222,7 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
         # Use official IRS template overlay generator (same approach as NEC)
         return generate_1099_misc_overlay(
             payer_name=filer_data.get("name", ""),
+            payer_line2=filer_data.get("name_line_2", ""),
             payer_address_lines=filer_address_lines,
             payer_tin=filer_tin,
             recipient_name=recipient_data.get("name", ""),
