@@ -191,6 +191,7 @@ class Form1099Base(BaseModel):
     # 1099-NEC boxes
     nec_box1: Optional[Decimal] = None  # Nonemployee compensation
     nec_box2: Optional[bool] = None  # Payer made direct sales
+    nec_box3: Optional[Decimal] = None  # Other income (golden parachute payments)
     nec_box4: Optional[Decimal] = None  # Federal income tax withheld
 
     # 1099-MISC boxes
@@ -251,6 +252,7 @@ class Form1099Update(BaseModel):
     # 1099-NEC boxes
     nec_box1: Optional[Decimal] = None
     nec_box2: Optional[bool] = None
+    nec_box3: Optional[Decimal] = None
     nec_box4: Optional[Decimal] = None
 
     # 1099-MISC boxes
