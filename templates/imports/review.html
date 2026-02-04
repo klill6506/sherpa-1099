@@ -277,8 +277,9 @@
                             <option value="1099-MISC">1099-MISC</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount (Box 1)</label>
+                    <!-- 1099-NEC Boxes -->
+                    <div x-show="editingRow.form_type === '1099-NEC'">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Box 1: Nonemployee compensation</label>
                         <input type="number" step="0.01" x-model="editingRow.nec_box1"
                                class="w-full px-3 py-2 border rounded-md">
                     </div>
@@ -289,6 +290,18 @@
                             <span>Box 2: Direct sales of $5,000+</span>
                         </label>
                         <p class="mt-1 text-xs text-gray-500">Check if payer made direct sales of $5,000 or more of consumer products to recipient for resale</p>
+                    </div>
+
+                    <!-- 1099-MISC Boxes -->
+                    <div x-show="editingRow.form_type === '1099-MISC'">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Box 1: Rents</label>
+                        <input type="number" step="0.01" x-model="editingRow.misc_box1"
+                               class="w-full px-3 py-2 border rounded-md">
+                    </div>
+                    <div x-show="editingRow.form_type === '1099-MISC'">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Box 3: Other income</label>
+                        <input type="number" step="0.01" x-model="editingRow.misc_box3"
+                               class="w-full px-3 py-2 border rounded-md">
                     </div>
                 </div>
 
