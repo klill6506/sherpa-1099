@@ -469,11 +469,20 @@ async def recipients_edit(request: Request, recipient_id: str):
             "error": "Recipient not found"
         }, status_code=404)
 
+    recipient = recipient_result.data[0]
+
+    # Get forms for this recipient
+    forms_query = client.table('forms_1099').select('*').eq('recipient_id', recipient_id)
+    if operating_year:
+        forms_query = forms_query.eq('operating_year_id', operating_year['id'])
+    forms = forms_query.execute().data
+
     return templates.TemplateResponse("recipients/form.html", {
         "request": request,
         "active_page": "recipients",
         "operating_year": operating_year,
-        "recipient": recipient_result.data[0],
+        "recipient": recipient,
+        "forms": forms,
         "states": US_STATES,
         "user": user
     })
