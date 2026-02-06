@@ -682,15 +682,15 @@ class Form1099NECDataOverlay:
             c.setFont("Helvetica", 9)
             c.drawString(pos['x'], pos['y'], account_number)
 
-    def render_amounts(self, amounts: FormAmounts):
+    def render_amounts(self, amounts: FormAmounts, corrected: bool = False):
         """Render box amounts."""
         c = self.c
 
-        # Box 1 - Nonemployee compensation
-        if amounts.box1_nonemployee_comp:
+        # Box 1 - Nonemployee compensation (show 0.00 on corrections)
+        if amounts.box1_nonemployee_comp or corrected:
             pos = self.t.data_positions['box1']
             c.setFont("Helvetica", 10)
-            amt_str = format_money(amounts.box1_nonemployee_comp)
+            amt_str = format_money(amounts.box1_nonemployee_comp) if amounts.box1_nonemployee_comp else "0.00"
             c.drawRightString(pos['right'], pos['y'], amt_str)
 
         # Box 4 - Federal withheld
@@ -727,7 +727,7 @@ class Form1099NECDataOverlay:
         if flags.corrected:
             pos = self.t.data_positions['corrected_checkbox']
             c.setFont("Helvetica-Bold", 8)
-            c.drawString(pos['x'] + 5, pos['y'] - 2, "X")
+            c.drawString(pos['x'] + 8, pos['y'] - 3, "x")
 
         if flags.box2_direct_sales:
             pos = self.t.data_positions['box2_checkbox']
@@ -773,7 +773,7 @@ def render_1099_nec_copy_b(
     overlay.render_recipient(recipient)
     overlay.render_recipient_tin(recipient.tin)
     overlay.render_account(recipient.account_number)
-    overlay.render_amounts(amounts)
+    overlay.render_amounts(amounts, corrected=flags.corrected)
     overlay.render_flags(flags)
 
     c.save()

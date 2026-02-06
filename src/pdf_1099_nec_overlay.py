@@ -208,8 +208,9 @@ def create_overlay(
     # Draw account number
     draw_text("account_number", account_number)
 
-    # Draw amounts
-    draw_text("box1_amount", format_money(box1_amount))
+    # Draw amounts - show 0.00 on corrections so the IRS sees the corrected value
+    box1_str = format_money(box1_amount) if box1_amount else ("0.00" if corrected else "")
+    draw_text("box1_amount", box1_str)
 
     # Draw Box 2 checkbox if needed
     if box2_direct_sales:
@@ -225,7 +226,7 @@ def create_overlay(
 
     # Draw CORRECTED checkbox if needed
     if corrected:
-        draw_text("corrected_x", "X")
+        draw_text("corrected_x", "x")
 
     c.showPage()
     c.save()
