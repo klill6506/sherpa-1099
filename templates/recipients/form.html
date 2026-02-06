@@ -99,6 +99,16 @@
                     <span class="text-xs text-gray-500">Form ID: {{ form.id[:8] }}...</span>
                 </div>
 
+                <!-- Corrected checkbox -->
+                <div class="mb-4 flex items-center gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="forms['{{ form.id }}'].is_correction"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="text-sm font-medium text-gray-700">CORRECTED</span>
+                    </label>
+                    <span class="text-xs text-gray-500">Check if this form corrects a previously filed return</span>
+                </div>
+
                 {% if form.form_type == '1099-NEC' %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -203,6 +213,7 @@ function recipientForm() {
         forms: {
             {% for form in forms %}
             '{{ form.id }}': {
+                is_correction: {{ 'true' if form.is_correction else 'false' }},
                 {% if form.form_type == '1099-NEC' %}
                 nec_box1: {{ form.nec_box1 or 0 }},
                 nec_box2: {{ 'true' if form.nec_box2 else 'false' }},

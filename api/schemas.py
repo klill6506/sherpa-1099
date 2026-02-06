@@ -300,6 +300,9 @@ class Form1099Update(BaseModel):
     state2_income: Optional[Decimal] = None
     state2_withheld: Optional[Decimal] = None
 
+    # Correction tracking
+    is_correction: Optional[bool] = None
+
     status: Optional[str] = Field(None, pattern="^(draft|validated|submitted|accepted|rejected|corrected)$")
 
 
