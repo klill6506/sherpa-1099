@@ -49,7 +49,7 @@
     "box6_state":            { "x": 380, "y": 250, "size": 9,  "font": "Helvetica" },
     "box7_amount":           { "x": 480, "y": 250, "size": 9,  "font": "Helvetica" },
 
-    "corrected_x":           { "x": 502, "y": 20,  "size": 12, "font": "Helvetica-Bold" }
+    "corrected_x":           { "x": 505, "y": 23,  "size": 12, "font": "Helvetica-Bold" }
   },
 
   "wipe_rects": {
