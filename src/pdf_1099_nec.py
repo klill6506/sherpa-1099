@@ -727,7 +727,7 @@ class Form1099NECDataOverlay:
         if flags.corrected:
             pos = self.t.data_positions['corrected_checkbox']
             c.setFont("Helvetica-Bold", 8)
-            c.drawString(pos['x'] + 8, pos['y'] - 3, "x")
+            c.drawString(pos['x'] + 10, pos['y'] - 3, "x")
 
         if flags.box2_direct_sales:
             pos = self.t.data_positions['box2_checkbox']
