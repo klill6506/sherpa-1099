@@ -188,11 +188,15 @@ def generate_1099_pdf(form_data: dict, filer_data: dict, recipient_data: dict, c
     filer_address_lines.append(city_state_zip)
 
     # Build recipient address lines
+    # name_line_2 must come first so the overlay generator places it correctly
     recipient_address_lines = []
-    if recipient_data.get("address1"):
-        recipient_address_lines.append(recipient_data["address1"])
+    if recipient_data.get("name_line_2"):
+        recipient_address_lines.append(recipient_data["name_line_2"])
+    recipient_street = recipient_data.get("address1", "")
     if recipient_data.get("address2"):
-        recipient_address_lines.append(recipient_data["address2"])
+        recipient_street += f", {recipient_data['address2']}"
+    if recipient_street:
+        recipient_address_lines.append(recipient_street)
     city_state_zip = f"{recipient_data.get('city', '')}, {recipient_data.get('state', '')} {recipient_data.get('zip', '')}"
     recipient_address_lines.append(city_state_zip)
 
